@@ -1,0 +1,133 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{controlbook}[2026/05/12 Single-column lecture style for control engineering]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage{lmodern}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{amsthm}
+\RequirePackage{bm}
+\RequirePackage[dvipdfmx]{graphicx}
+\RequirePackage{longtable}
+\RequirePackage{array}
+\RequirePackage{geometry}
+\RequirePackage[dvipdfmx,colorlinks=true,linkcolor=black,citecolor=black,urlcolor=black]{hyperref}
+\IfFileExists{pxjahyper.sty}{\RequirePackage{pxjahyper}}{}
+
+\geometry{a4paper,top=24mm,bottom=25mm,left=24mm,right=24mm,footskip=12mm}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.15\baselineskip}
+\pagestyle{plain}
+\allowdisplaybreaks[2]
+
+\makeatletter
+\providecommand{\Cvs}{\baselineskip}
+\providecommand{\Cdp}{\p@}
+
+\gdef\normalsize{%
+  \@setfontsize\normalsize{10.5}{16\p@}%
+  \abovedisplayskip 10\p@ \@plus3\p@ \@minus3\p@
+  \abovedisplayshortskip \z@ \@plus2\p@
+  \belowdisplayshortskip 4\p@ \@plus2\p@ \@minus2\p@
+  \belowdisplayskip \abovedisplayskip
+  \let\@listi\@listI}
+\gdef\small{%
+  \@setfontsize\small{9}{13\p@}%
+  \abovedisplayskip 8\p@ \@plus2\p@ \@minus2\p@
+  \abovedisplayshortskip \z@ \@plus2\p@
+  \belowdisplayshortskip 3\p@ \@plus2\p@ \@minus2\p@
+  \belowdisplayskip \abovedisplayskip}
+\gdef\footnotesize{\@setfontsize\footnotesize{8}{11\p@}}
+\gdef\scriptsize{\@setfontsize\scriptsize{7}{9\p@}}
+\gdef\tiny{\@setfontsize\tiny{5}{6\p@}}
+\gdef\large{\@setfontsize\large{13}{19\p@}}
+\gdef\Large{\@setfontsize\Large{15}{22\p@}}
+\gdef\LARGE{\@setfontsize\LARGE{18}{27\p@}}
+\gdef\huge{\@setfontsize\huge{22}{31\p@}}
+\gdef\Huge{\@setfontsize\Huge{26}{36\p@}}
+
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+  {1.0\Cvs \@plus.4\Cdp \@minus.2\Cdp}%
+  {.35\Cvs \@plus.2\Cdp}%
+  {\reset@font\Large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {.70\Cvs \@plus.25\Cdp \@minus.2\Cdp}%
+  {.25\Cvs \@plus.15\Cdp}%
+  {\reset@font\large\bfseries}}
+\renewcommand{\subsubsection}{\@startsection{subsubsection}{3}{\z@}%
+  {.45\Cvs \@plus.15\Cdp \@minus.2\Cdp}%
+  {.15\Cvs \@plus.10\Cdp}%
+  {\reset@font\normalsize\bfseries}}
+\renewcommand{\thesection}{\@arabic\c@section}
+\renewcommand{\thesubsection}{\thesection.\@arabic\c@subsection}
+\renewcommand{\thesubsubsection}{\thesubsection.\@arabic\c@subsubsection}
+\makeatother
+\AtBeginDocument{\normalsize}
+\numberwithin{equation}{section}
+
+\renewcommand{\refname}{参考文献}
+\setcounter{secnumdepth}{3}
+
+\theoremstyle{definition}
+\newtheorem{definition}{定義}[section]
+\newtheorem{example}[definition]{例}
+\newtheorem{practice}[definition]{練習}
+\newtheorem{remark}[definition]{注意}
+\newtheorem{formula}[definition]{公式}
+
+\theoremstyle{plain}
+\newtheorem{theorem}[definition]{定理}
+\newtheorem{proposition}[definition]{命題}
+\newtheorem{corollary}[definition]{系}
+\newtheorem{lemma}[definition]{補題}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\T}{\mathsf{T}}
+\newcommand{\inv}{^{-1}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\pp}{\partial}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\abs}[1]{\left|#1\right|}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\tr}{\operatorname{tr}}
+\DeclareMathOperator{\SO}{SO}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\mat}[2]{\left[\begin{array}{#1}#2\end{array}\right]}
+\newcommand{\weq}[1]{式(\ref{eq:#1})}
+\newcommand{\wfig}[1]{図\ref{fig:#1}}
+\newcommand{\wtab}[1]{表\ref{tab:#1}}
+\newcommand{\wsec}[1]{\textbf{\ref{sec:#1}}}
+\newenvironment{derivation}{\begin{quote}\small\textbf{式変形.}\par}{\end{quote}}
+\newenvironment{lecturepoint}{\begin{quote}\small\textbf{講義の要点.}\par}{\end{quote}}
+\newenvironment{why}{\begin{quote}\small\textbf{なぜそう見るか.}\par}{\end{quote}}
+
+\newcommand{\makecontrolcover}[2]{%
+  \hypersetup{pageanchor=false}%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \vspace*{38mm}
+    \begin{center}
+      {\Huge\bfseries #1\par}
+      \vspace{12mm}
+      {\Large #2\par}
+      \vfill
+      {\large Introduction to Control Engineering\par}
+      \vspace{6mm}
+      {\normalsize 2026\par}
+    \end{center}
+  \end{titlepage}
+  \setcounter{page}{1}%
+  \hypersetup{pageanchor=true}%
+}
+
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.9}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.8}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{3}
+\setcounter{totalnumber}{6}

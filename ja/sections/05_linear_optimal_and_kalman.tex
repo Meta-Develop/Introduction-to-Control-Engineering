@@ -1,0 +1,195 @@
+\section{線形最適制御}
+
+状態フィードバックでは、極をどこに置くかを設計者が選んだ。次に知りたいのは、その選び方を評価関数から決められるかである。状態を速く戻したいが、入力は大きくしたくない。この妥協を式にすると、線形系
+\begin{equation}
+  \dot{x}=Ax+Bu
+\end{equation}
+に対する評価関数
+\begin{equation}
+  J=\int_0^\infty \{x(t)^\T Qx(t)+u(t)^\T Ru(t)\}\,\dd t
+\end{equation}
+が得られる。$Q\ge0$ は状態のずれへの重み、$R>0$ は入力への重みである。$Q$ を大きくすればずれを強く嫌い、$R$ を大きくすれば入力を節約する。
+
+入力を $u=-Kx$ と置くと、閉ループは $\dot{x}=(A-BK)x$ になる。LQR は、すべての安定化ゲインの中から $J$ を最小にする $K$ を選ぶ。最適ゲインは
+\begin{equation}
+  K=R^{-1}B^\T P
+\end{equation}
+であり、$P$ は代数リカッチ方程式
+\begin{equation}
+  A^\T P+PA-PBR^{-1}B^\T P+Q=0
+  \label{eq:care}
+\end{equation}
+を満たす正定値解である。最適コストは
+\begin{equation}
+  V(x)=x^\T P x
+\end{equation}
+となる。前節のリアプノフ関数が安定性を見る関数だったのに対し、ここでの $V$ は「これから必要になる最小コスト」を表す関数でもある。
+
+有限時間だけを見る場合は、終端時刻 $T$ までの評価
+\begin{equation}
+  J=x(T)^\T P_f x(T)+\int_0^T(x^\T Qx+u^\T Ru)\,\dd t
+\end{equation}
+を最小にする。リカッチ方程式は終端条件 $P(T)=P_f$ から時間を逆向きに解く微分方程式になる。この有限ホライズンの考え方は後で MPC へ進むための入口だが、ここではまだ制約のない線形最適制御として理解しておく。
+
+\section{確率とノイズ}
+
+ここまでの制御では、状態 $x$ が分かっているか、少なくともオブザーバで滑らかに推定できると考えた。実際のセンサ値は真値そのものではない。測定値 $y$ を
+\begin{equation}
+  y=Cx+v
+\end{equation}
+と書くと、$v$ は測定ノイズである。平均が 0、分散が $\sigma^2$ のノイズなら
+\begin{equation}
+  E[v]=0,
+  \qquad
+  E[v^2]=\sigma^2
+\end{equation}
+である。多次元では共分散行列
+\begin{equation}
+  R=E[vv^\T]
+\end{equation}
+がノイズの大きさと相関を表す。
+
+モデルにも不確かさがある。離散時間モデルを
+\begin{align}
+  x_{k+1}&=A x_k+B u_k+w_k,\\
+  y_k&=C x_k+v_k
+\end{align}
+と書き、$w_k$ の共分散を $Q$、$v_k$ の共分散を $R$ とする。$Q$ が大きいほどモデルを疑い、$R$ が大きいほどセンサを疑う。推定とは、この二つの信頼度を使って状態を更新することである。
+
+\section{カルマンフィルタ}
+
+まず1次元で考える。事前推定値を $\hat{x}^-$、その分散を $P^-$、測定値を $y$、測定ノイズ分散を $R$ とする。更新後の推定値を
+\begin{equation}
+  \hat{x}=\hat{x}^-+K(y-\hat{x}^-)
+\end{equation}
+と置くと、$K$ は測定をどれだけ信じるかを表す。誤差分散を最小にするゲインは
+\begin{equation}
+  K=\frac{P^-}{P^-+R}
+\end{equation}
+である。事前分散が大きいほど測定を信じ、測定ノイズが大きいほど事前値を信じる。
+
+多次元のカルマンフィルタは、線形モデルに対する予測と更新で書ける。
+\begin{align}
+  \hat{x}_{k|k-1}&=A\hat{x}_{k-1|k-1}+Bu_{k-1},\\
+  P_{k|k-1}&=AP_{k-1|k-1}A^\T+Q,\\
+  K_k&=P_{k|k-1}C^\T(CP_{k|k-1}C^\T+R)^{-1},\\
+  \hat{x}_{k|k}&=\hat{x}_{k|k-1}+K_k(y_k-C\hat{x}_{k|k-1}),\\
+  P_{k|k}&=(I-K_kC)P_{k|k-1}.
+\end{align}
+ここで $P$ は推定誤差の共分散である。カルマンフィルタは、線形ガウス系では平均二乗誤差を最小にする推定器である。
+
+LQR とカルマンフィルタは対になる。LQR は状態が分かるときに入力を選び、カルマンフィルタはノイズの中から状態を推定する。線形系では、カルマンフィルタで得た $\hat{x}$ を LQR に入れる構造が自然に成立する。これが LQG の入口である。ただしこの時点では、対象も推定器も線形であることを忘れない。非線形に進む前に、線形の設計と推定が一本につながった。
+
+\section{LQR を平方完成で導く}
+
+\begin{theorem}[連続時間 LQR のリカッチ方程式]
+可安定な線形系 $\dot{x}=Ax+Bu$ に対し、評価関数
+\begin{equation}
+  J=\int_0^\infty (x^\T Qx+u^\T Ru)\,\dd t,
+  \qquad Q\ge0,
+  \quad R>0
+\end{equation}
+を最小にする状態フィードバックは
+\begin{equation}
+  u=-R^{-1}B^\T Px
+\end{equation}
+であり、$P$ は代数リカッチ方程式
+\begin{equation}
+  A^\T P+PA-PBR^{-1}B^\T P+Q=0
+\end{equation}
+を満たす。
+\end{theorem}
+
+\begin{derivation}
+最適な残りコストが二次形式
+\begin{equation}
+  V(x)=x^\T Px
+\end{equation}
+で表せると仮定する。最適制御の動的計画法、すなわち Hamilton--Jacobi--Bellman 方程式より
+\begin{equation}
+  0=\min_u\{x^\T Qx+u^\T Ru+\dot{V}(x)\}
+\end{equation}
+である。$\dot{x}=Ax+Bu$ なので
+\begin{align}
+  \dot{V}
+  &=\dot{x}^\T Px+x^\T P\dot{x}\\
+  &=(Ax+Bu)^\T Px+x^\T P(Ax+Bu)\\
+  &=x^\T A^\T Px+u^\T B^\T Px+x^\T PAx+x^\T PBu.
+\end{align}
+スカラーは転置しても同じなので $u^\T B^\T Px=x^\T PBu$ である。したがって
+\begin{equation}
+  \dot{V}=x^\T(A^\T P+PA)x+2u^\T B^\T Px.
+\end{equation}
+HJB 方程式の中身は
+\begin{equation}
+  x^\T Qx+x^\T(A^\T P+PA)x+u^\T Ru+2u^\T B^\T Px
+\end{equation}
+である。$u$ に関する部分を平方完成する。
+\begin{align}
+  u^\T Ru+2u^\T B^\T Px
+  &=(u+R^{-1}B^\T Px)^\T R(u+R^{-1}B^\T Px)\\
+  &\quad -x^\T PBR^{-1}B^\T Px.
+\end{align}
+第一項は $R>0$ より非負であり、最小にするには
+\begin{equation}
+  u+R^{-1}B^\T Px=0
+\end{equation}
+とすればよい。よって
+\begin{equation}
+  u=-R^{-1}B^\T Px
+\end{equation}
+である。残りの $x$ に関する項が任意の $x$ で 0 になる必要があるので
+\begin{equation}
+  A^\T P+PA-PBR^{-1}B^\T P+Q=0
+\end{equation}
+を得る。
+\end{derivation}
+
+\section{カルマンゲインを誤差分散最小化で導く}
+
+\begin{derivation}
+一次元の更新
+\begin{equation}
+  \hat{x}=\hat{x}^-+K(y-\hat{x}^-)
+\end{equation}
+を考える。測定値は $y=x+v$ とし、事前誤差を $e^-=x-\hat{x}^-$ とする。更新後誤差は
+\begin{align}
+  e&=x-\hat{x}\\
+   &=x-\hat{x}^- -K(y-\hat{x}^-)\\
+   &=e^- -K\{(x+v)-\hat{x}^-\}\\
+   &=e^- -K(e^-+v)\\
+   &=(1-K)e^- -Kv.
+\end{align}
+$e^-$ と $v$ が独立で、分散がそれぞれ $P^-$、$R$ なら、更新後分散は
+\begin{align}
+  P(K)&=E[e^2]\\
+  &=E\{(1-K)^2(e^-)^2-2K(1-K)e^-v+K^2v^2\}\\
+  &=(1-K)^2P^-+K^2R.
+\end{align}
+交差項は独立かつ平均 0 なので消える。$K$ で微分して
+\begin{align}
+  \frac{\dd P}{\dd K}
+  &=-2(1-K)P^-+2KR.
+\end{align}
+最小値ではこれが 0 なので
+\begin{align}
+  -2P^-+2KP^-+2KR&=0,\\
+  K(P^-+R)&=P^-,\\
+  K&=\frac{P^-}{P^-+R}.
+\end{align}
+これが一次元カルマンゲインである。
+\end{derivation}
+
+多次元の場合も考え方は同じである。更新を
+\begin{equation}
+  \hat{x}=\hat{x}^-+K(y-C\hat{x}^-)
+\end{equation}
+とし、革新 $y-C\hat{x}^-$ の共分散を
+\begin{equation}
+  S=CP^-C^\T+R
+\end{equation}
+と置く。平均二乗誤差、すなわち $\tr P$ を最小にする行列微分の結果として
+\begin{equation}
+  K=P^-C^\T S^{-1}=P^-C^\T(CP^-C^\T+R)^{-1}
+\end{equation}
+を得る。ここでも「モデルの不確かさ $P^-$」と「測定の不確かさ $R$」の比で信頼度を決めている。
