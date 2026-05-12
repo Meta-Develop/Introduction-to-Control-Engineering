@@ -1,0 +1,226 @@
+\section{一次遅れと二次遅れ}
+
+前節では、動く対象を状態方程式として書く方法を見た。ここでは、入力に対する出力の形を読み取る。制御器を設計する前に、「対象は速いのか遅いのか」「振動するのか」「落ち着くのか」を言葉と式の両方で説明できるようにする。
+
+\begin{definition}[一次遅れ]
+入力 $u(t)$ と出力 $y(t)$ が
+\begin{equation}
+  \tau\dot{y}(t)+y(t)=K u(t),\qquad \tau>0
+  \label{eq:first-order}
+\end{equation}
+を満たすとき、これを一次遅れ系という。$\tau$ を時定数、$K$ を静的ゲインという。
+\end{definition}
+
+ステップ入力 $u(t)=u_0$ を加えたときの応答を導く。\weq{first-order} を
+\begin{equation}
+  \dot{y}(t)= -\frac{1}{\tau}y(t)+\frac{K}{\tau}u_0
+\end{equation}
+と書く。定常値 $y_\infty$ は $\dot{y}=0$ とおいて求める。
+\begin{align}
+  0&=-\frac{1}{\tau}y_\infty+\frac{K}{\tau}u_0,\\
+  y_\infty&=K u_0.
+\end{align}
+そこで定常値からのずれ $z(t)=y(t)-y_\infty$ を考える。$y=z+y_\infty$、$\dot{y}=\dot{z}$ だから
+\begin{align}
+  \dot{z}
+  &=-\frac{1}{\tau}(z+y_\infty)+\frac{K}{\tau}u_0\\
+  &=-\frac{1}{\tau}z-\frac{1}{\tau}Ku_0+\frac{K}{\tau}u_0\\
+  &=-\frac{1}{\tau}z.
+\end{align}
+一次の同次線形微分方程式の解より
+\begin{equation}
+  z(t)=z(0)e^{-t/\tau}
+\end{equation}
+である。$z(0)=y(0)-Ku_0$ なので
+\begin{equation}
+  y(t)=Ku_0+\{y(0)-Ku_0\}e^{-t/\tau}
+  \label{eq:first-order-step}
+\end{equation}
+を得る。
+
+\begin{lecturepoint}
+時定数 $\tau$ は「指数関数の肩の時間」である。$t=\tau$ を代入すると、ずれは $e^{-1}\simeq0.368$ 倍になる。これは経験則ではなく、\weq{first-order-step} へ $t=\tau$ を代入した結果である。
+\end{lecturepoint}
+
+\begin{definition}[二次遅れの標準形]
+出力 $y$ が
+\begin{equation}
+  \ddot{y}+2\zeta\omega_n\dot{y}+\omega_n^2 y=K\omega_n^2 u
+  \label{eq:second-order}
+\end{equation}
+を満たすとき、これを二次遅れ系の標準形という。$\omega_n$ を固有角周波数、$\zeta$ を減衰比という。
+\end{definition}
+
+入力を 0 とした自然応答を見ると、特性方程式は
+\begin{equation}
+  s^2+2\zeta\omega_n s+\omega_n^2=0
+\end{equation}
+である。二次方程式の解の公式より
+\begin{align}
+  s&=\frac{-2\zeta\omega_n\pm
+  \sqrt{(2\zeta\omega_n)^2-4\omega_n^2}}{2}\\
+  &=-\zeta\omega_n\pm\omega_n\sqrt{\zeta^2-1}.
+\end{align}
+$0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}$ と書ける。したがって極は
+\begin{equation}
+  s=-\zeta\omega_n\pm j\omega_n\sqrt{1-\zeta^2}
+  \label{eq:second-order-poles}
+\end{equation}
+である。実部 $-\zeta\omega_n$ が減衰の速さ、虚部 $\omega_n\sqrt{1-\zeta^2}$ が振動の速さを表す。
+
+\section{ラプラス変換と伝達関数}
+
+\begin{definition}[ラプラス変換]
+時刻 $t\ge0$ の関数 $f(t)$ に対して
+\begin{equation}
+  F(s)=\mathcal{L}\{f(t)\}
+  =\int_0^\infty f(t)e^{-st}\,\dd t
+\end{equation}
+をラプラス変換という。
+\end{definition}
+
+ラプラス変換は、微分方程式を $s$ の代数方程式へ変える道具である。その核心は次の公式である。
+
+\begin{formula}[ラプラス変換の微分公式]
+十分よい関数 $f(t)$ について
+\begin{equation}
+  \mathcal{L}\{\dot{f}(t)\}=sF(s)-f(0)
+  \label{eq:laplace-derivative}
+\end{equation}
+である。また
+\begin{equation}
+  \mathcal{L}\{\ddot{f}(t)\}=s^2F(s)-sf(0)-\dot{f}(0)
+  \label{eq:laplace-second-derivative}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+定義より
+\begin{equation}
+  \mathcal{L}\{\dot{f}\}=\int_0^\infty \dot{f}(t)e^{-st}\,\dd t
+\end{equation}
+である。部分積分の公式
+\begin{equation}
+  \int_a^b u'(t)v(t)\,\dd t=[u(t)v(t)]_a^b-\int_a^b u(t)v'(t)\,\dd t
+\end{equation}
+を、$u(t)=f(t)$、$v(t)=e^{-st}$ として使う。すると
+\begin{align}
+  \int_0^\infty \dot{f}(t)e^{-st}\,\dd t
+  &=\left[f(t)e^{-st}\right]_0^\infty
+    -\int_0^\infty f(t)(-s)e^{-st}\,\dd t\\
+  &=\left(0-f(0)\right)+s\int_0^\infty f(t)e^{-st}\,\dd t\\
+  &=sF(s)-f(0).
+\end{align}
+二階微分はこの公式を $\dot{f}$ にもう一度使う。$\mathcal{L}\{\dot{f}\}=sF(s)-f(0)$ だから
+\begin{align}
+  \mathcal{L}\{\ddot{f}\}
+  &=s\mathcal{L}\{\dot{f}\}-\dot{f}(0)\\
+  &=s\{sF(s)-f(0)\}-\dot{f}(0)\\
+  &=s^2F(s)-sf(0)-\dot{f}(0).
+\end{align}
+\end{derivation}
+
+\begin{definition}[伝達関数]
+線形時不変系で初期値を 0 としたとき、入力のラプラス変換 $U(s)$ と出力のラプラス変換 $Y(s)$ の比
+\begin{equation}
+  G(s)=\frac{Y(s)}{U(s)}
+\end{equation}
+を伝達関数という。
+\end{definition}
+
+一次遅れ \weq{first-order} に初期値 0 のラプラス変換を使うと
+\begin{align}
+  \tau\mathcal{L}\{\dot{y}\}+\mathcal{L}\{y\}&=K\mathcal{L}\{u\},\\
+  \tau sY(s)+Y(s)&=KU(s),\\
+  (\tau s+1)Y(s)&=KU(s),\\
+  \frac{Y(s)}{U(s)}&=\frac{K}{\tau s+1}.
+\end{align}
+したがって一次遅れの伝達関数は
+\begin{equation}
+  G(s)=\frac{K}{\tau s+1}
+\end{equation}
+である。
+
+\begin{definition}[極と零点]
+伝達関数 $G(s)=N(s)/D(s)$ に対して、分母 $D(s)=0$ の解を極、分子 $N(s)=0$ の解を零点という。
+\end{definition}
+
+極は自然応答を決める。たとえば
+\begin{equation}
+  G(s)=\frac{1}{(s+1)(s+5)}
+\end{equation}
+なら極は $-1$ と $-5$ である。部分分数分解の形から、時間応答には $e^{-t}$ と $e^{-5t}$ が含まれる。$e^{-5t}$ は早く消え、$e^{-t}$ が長く残るので、$-1$ の極が支配的である。
+
+\section{閉ループと安定性}
+
+制御器 $C(s)$、制御対象 $G(s)$、目標値 $R(s)$、出力 $Y(s)$ を持つ負帰還を考える。偏差は
+\begin{equation}
+  E(s)=R(s)-Y(s)
+\end{equation}
+であり、制御器出力は
+\begin{equation}
+  U(s)=C(s)E(s)=C(s)\{R(s)-Y(s)\}
+\end{equation}
+である。対象は $Y(s)=G(s)U(s)$ だから
+\begin{align}
+  Y(s)&=G(s)C(s)\{R(s)-Y(s)\},\\
+  Y(s)&=C(s)G(s)R(s)-C(s)G(s)Y(s),\\
+  \{1+C(s)G(s)\}Y(s)&=C(s)G(s)R(s),\\
+  \frac{Y(s)}{R(s)}&=\frac{C(s)G(s)}{1+C(s)G(s)}.
+  \label{eq:closed-loop}
+\end{align}
+この分母 $1+C(s)G(s)$ が閉ループ極を決める。
+
+\begin{theorem}[線形連続時間系の極による安定判定]
+真にプロパーな線形時不変系で、すべての閉ループ極が左半平面 $\operatorname{Re}s<0$ にあれば、内部応答は指数的に減衰する。右半平面の極があれば応答は発散する。
+\end{theorem}
+
+\begin{formula}[Routh--Hurwitz 判別法の低次形]
+二次多項式 $s^2+a_1s+a_0$ が安定であるための必要十分条件は
+\begin{equation}
+  a_1>0,\qquad a_0>0
+\end{equation}
+である。三次多項式 $s^3+a_2s^2+a_1s+a_0$ が安定であるための必要十分条件は
+\begin{equation}
+  a_2>0,
+  \quad a_1>0,
+  \quad a_0>0,
+  \quad a_2a_1>a_0
+\end{equation}
+である。
+\end{formula}
+
+三次条件の最後の不等式は、係数が正なら安定という単純な話ではないことを示す。極を直接解けない高次系では、Routh 表を作って第一列の符号変化を数える。
+
+\section{PID 制御}
+
+\begin{definition}[PID 制御]
+偏差 $e(t)=r(t)-y(t)$ に対して
+\begin{equation}
+  u(t)=K_P e(t)+K_I\int_0^t e(\tau)\,\dd\tau+K_D\dot{e}(t)
+  \label{eq:pid-time}
+\end{equation}
+で入力を作る制御を PID 制御という。
+\end{definition}
+
+ラプラス変換を使うと、初期値を 0 として
+\begin{align}
+  U(s)&=K_P E(s)+K_I\frac{1}{s}E(s)+K_DsE(s),\\
+  \frac{U(s)}{E(s)}&=K_P+\frac{K_I}{s}+K_Ds.
+\end{align}
+したがって PID 制御器の伝達関数は
+\begin{equation}
+  C(s)=K_P+\frac{K_I}{s}+K_Ds
+\end{equation}
+である。比例は今の偏差を見る。積分は偏差の累積を見る。微分は偏差の変化率を見る。
+
+実装では微分 $s$ をそのまま使うと高周波ノイズを増幅するため、公式としての理想微分ではなく
+\begin{equation}
+  K_D\frac{Ns}{s+N}
+\end{equation}
+のようなフィルタ付き微分を使う。入力に飽和がある場合、積分器が偏差をため続けるワインドアップが起こる。飽和前の計算入力を $u_c$、実入力を $u$ とし、積分状態を $z$ とすると、アンチワインドアップの一つは
+\begin{equation}
+  \dot{z}=e+k_{aw}(u-u_c)
+\end{equation}
+である。$u=u_c$ なら通常の積分 $\dot{z}=e$ に戻り、飽和中は差 $u-u_c$ によって積分状態を戻す。

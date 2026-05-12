@@ -1,0 +1,219 @@
+\section{周波数応答}
+
+線形時不変系に正弦波を入れると、十分時間が経った後の出力も同じ周波数の正弦波になる。入力を $u(t)=A\sin \omega t$ とすると、出力は
+\begin{equation}
+  y(t)=A\abs{G(j\omega)}\sin\{\omega t+\angle G(j\omega)\}
+\end{equation}
+で表せる。$G(j\omega)$ は伝達関数 $G(s)$ に $s=j\omega$ を代入したもので、絶対値がゲイン、偏角が位相である。
+
+一次遅れ $G(s)=K/(\tau s+1)$ では
+\begin{align}
+  \abs{G(j\omega)}&=\frac{K}{\sqrt{1+(\tau\omega)^2}},\\
+  \angle G(j\omega)&=-\tan^{-1}(\tau\omega).
+\end{align}
+低周波では入力がゆっくり変わるため出力はほぼ追従し、高周波では対象が追いつけずゲインが下がり位相が遅れる。周波数応答は、速い目標値やノイズや振動が制御系をどう通るかを見るための道具である。
+
+\section{ボード線図}
+
+ボード線図は、$\abs{G(j\omega)}$ を dB 表示したゲイン線図と、$\angle G(j\omega)$ の位相線図を、横軸 $\omega$ の対数目盛で描く。ゲインは
+\begin{equation}
+  20\log_{10}\abs{G(j\omega)}
+\end{equation}
+で表す。積は dB では和になるため、複雑な伝達関数も因子ごとに読みやすい。
+
+積分器 $1/s$ はゲインが $-20$ dB/dec、位相が $-90^\circ$ である。微分器 $s$ は $+20$ dB/dec、位相が $+90^\circ$ である。一次遅れ $1/(\tau s+1)$ は折点周波数 $\omega=1/\tau$ を超えると $-20$ dB/dec で下がり、位相は $0^\circ$ から $-90^\circ$ へ移る。
+
+開ループ $L(s)=C(s)G(s)$ のボード線図から、ゲイン交差周波数 $\omega_{gc}$ を
+\begin{equation}
+  \abs{L(j\omega_{gc})}=1
+\end{equation}
+で定める。このとき位相余裕は
+\begin{equation}
+  \phi_m=180^\circ+\angle L(j\omega_{gc})
+\end{equation}
+である。位相余裕が小さいと、閉ループは振動的になりやすい。位相が $-180^\circ$ になる周波数 $\omega_{pc}$ でのゲインからはゲイン余裕
+\begin{equation}
+  g_m=\frac{1}{\abs{L(j\omega_{pc})}}
+\end{equation}
+が得られる。
+
+\section{ナイキスト線図}
+
+ナイキスト線図は $L(j\omega)$ を複素平面に描いたものである。閉ループの安定性は
+\begin{equation}
+  1+L(s)=0
+\end{equation}
+の根が右半平面にあるかで決まる。ナイキスト判別は、開ループ $L(s)$ の右半平面極の数 $P$ と、ナイキスト線図が点 $-1$ を時計回りに囲む回数 $N$ から、閉ループ右半平面極の数 $Z$ を
+\begin{equation}
+  Z=N+P
+\end{equation}
+として数える。
+
+この判別の強みは、むだ時間や高次系でも周波数応答から安定余裕を読めることである。むだ時間 $e^{-Ls}$ はゲインを変えず、位相だけを
+\begin{equation}
+  \angle e^{-j\omega L}=-\omega L
+\end{equation}
+だけ遅らせる。高周波ほど位相遅れが増えるため、むだ時間はフィードバックの帯域を強く制限する。
+
+\section{根軌跡}
+
+制御器を単純なゲイン $K$ として $L(s)=KG(s)$ と書くと、閉ループ極は
+\begin{equation}
+  1+KG(s)=0
+\end{equation}
+を満たす。$K$ を $0$ から大きくしたとき極が複素平面上をどう動くかを根軌跡と呼ぶ。
+
+根軌跡は開ループ極から出発し、開ループ零点または無限遠へ向かう。実軸上では、右側にある実極・実零点の数が奇数の区間に軌跡が存在する。設計者は軌跡を見ながら、応答を速くする極配置と、振動を増やしすぎない減衰の妥協点を探す。
+
+二次標準形と対応させると、望ましい極は
+\begin{equation}
+  s=-\zeta\omega_n\pm j\omega_n\sqrt{1-\zeta^2}
+\end{equation}
+である。根軌跡がこの近くを通るなら、ゲイン調整で目標応答に近づけることができる。通らないなら、零点や極を持つ補償器を加え、軌跡そのものを変える必要がある。
+
+\section{感度と相補感度}
+
+閉ループ \weq{closed-loop} の開ループを $L(s)=C(s)G(s)$ とおくと、目標値から出力への伝達は
+\begin{equation}
+  T(s)=\frac{L(s)}{1+L(s)}
+\end{equation}
+であり、感度関数は
+\begin{equation}
+  S(s)=\frac{1}{1+L(s)}
+\end{equation}
+である。両者は
+\begin{equation}
+  S(s)+T(s)=1
+\end{equation}
+を満たす。
+
+出力側外乱が加わると、その影響はおおむね $S(s)$ を通る。低周波で外乱を消したければ $\abs{S(j\omega)}$ を小さくしたい。そのためには $\abs{L(j\omega)}$ を大きくする。一方、測定ノイズは $T(s)$ を通って出力や入力へ入るため、高周波では $\abs{T(j\omega)}$ を小さくしたい。低周波で大きな $L$、高周波で小さな $L$ という形が望まれる理由はここにある。
+
+モデル誤差を乗法的不確かさとして
+\begin{equation}
+  G_{real}(s)=G(s)\{1+W(s)\Delta(s)\},\qquad \abs{\Delta(j\omega)}\le 1
+\end{equation}
+と書くと、ロバスト安定性の典型的な条件は
+\begin{equation}
+  \abs{W(j\omega)T(j\omega)}<1
+\end{equation}
+である。速くしたいからといって帯域を上げ続けると、高周波の未モデル dynamics やむだ時間にぶつかる。よい制御は、強く押す周波数と引く周波数を選ぶ技術である。
+
+\section{外乱抑制とフィードフォワード}
+
+フィードバックは偏差が出てから動く。もし外乱や目標値の変化を事前に測れるなら、フィードフォワードを加えることで偏差を小さくできる。対象が $Y=G U+G_dD$ と書け、外乱 $D$ が測れるなら
+\begin{equation}
+  U=C(R-Y)+F_dD
+\end{equation}
+とし、理想的には
+\begin{equation}
+  F_d(s)=-G(s)^{-1}G_d(s)
+\end{equation}
+を選ぶ。ただし $G^{-1}$ が不安定、非プロパー、または不確かな場合はそのまま使えない。実際には低周波成分だけを補償したり、飽和を考えて大きさを制限したりする。
+
+目標値フィードフォワードも同じ考え方である。位置制御で目標軌道 $r(t)$ の速度や加速度が分かっていれば、必要な力を
+\begin{equation}
+  u_{ff}=m\ddot{r}+c\dot{r}+kr
+\end{equation}
+として先に入れ、フィードバックはモデル誤差と外乱を補う役に回せる。制御器は一つの大きな公式ではなく、モデルに基づく先回りと、誤差に基づく修正の組み合わせとして考えると見通しがよい。
+
+\section{周波数領域を支える定理}
+
+周波数応答の説明で最も省略されやすいのは、「なぜ $s=j\omega$ を代入してよいのか」である。ここではその点を名前付きの事実として確認する。
+
+\begin{theorem}[正弦波定常応答の定理]
+安定な線形時不変系の伝達関数を $G(s)$ とする。入力 $u(t)=\operatorname{Re}\{Ue^{j\omega t}\}$ を加えると、過渡応答が消えた後の出力は
+\begin{equation}
+  y_{ss}(t)=\operatorname{Re}\{G(j\omega)Ue^{j\omega t}\}
+\end{equation}
+となる。
+\end{theorem}
+
+\begin{derivation}
+複素指数入力 $u_c(t)=Ue^{j\omega t}$ を考える。線形時不変系では微分作用素 $\dd/\dd t$ に対して
+\begin{equation}
+  \frac{\dd}{\dd t}e^{j\omega t}=j\omega e^{j\omega t}
+\end{equation}
+である。たとえば微分方程式
+\begin{equation}
+  a_n y^{(n)}+\cdots+a_1\dot{y}+a_0y
+  =b_m u^{(m)}+\cdots+b_0u
+\end{equation}
+に $y_c(t)=Ye^{j\omega t}$、$u_c(t)=Ue^{j\omega t}$ を代入する。$k$ 階微分は $(j\omega)^k$ 倍になるので
+\begin{equation}
+  \{a_n(j\omega)^n+\cdots+a_0\}Ye^{j\omega t}
+  =\{b_m(j\omega)^m+
+  \cdots+b_0\}Ue^{j\omega t}
+\end{equation}
+である。両辺を $e^{j\omega t}$ で割ると
+\begin{equation}
+  \frac{Y}{U}=\frac{b_m(j\omega)^m+\cdots+b_0}{a_n(j\omega)^n+\cdots+a_0}=G(j\omega)
+\end{equation}
+となる。したがって $Y=G(j\omega)U$ であり、実際の正弦波応答はその実部である。
+\end{derivation}
+
+\begin{formula}[ボード線図の積和変換]
+複数の因子の積 $G(s)=G_1(s)G_2(s)$ に対して
+\begin{equation}
+  20\log_{10}\abs{G(j\omega)}
+  =20\log_{10}\abs{G_1(j\omega)}+20\log_{10}\abs{G_2(j\omega)}
+\end{equation}
+である。また位相は
+\begin{equation}
+  \angle G(j\omega)=\angle G_1(j\omega)+\angle G_2(j\omega)
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+絶対値の性質 $\abs{ab}=\abs{a}\abs{b}$ と対数の性質 $\log(ab)=\log a+\log b$ より
+\begin{align}
+  20\log_{10}\abs{G_1G_2}
+  &=20\log_{10}\{\abs{G_1}\abs{G_2}\}\\
+  &=20\log_{10}\abs{G_1}+20\log_{10}\abs{G_2}.
+\end{align}
+複素数を $G_i=\abs{G_i}e^{j\phi_i}$ と書けば
+\begin{equation}
+  G_1G_2=\abs{G_1}\abs{G_2}e^{j(\phi_1+\phi_2)}
+\end{equation}
+なので、位相も和になる。
+\end{derivation}
+
+\begin{theorem}[ナイキスト安定判別]
+開ループ $L(s)$ の右半平面極の数を $P$、ナイキスト線図が点 $-1$ を時計回りに囲む回数を $N$ とする。このとき閉ループ特性方程式 $1+L(s)=0$ の右半平面根の数 $Z$ は
+\begin{equation}
+  Z=N+P
+\end{equation}
+である。閉ループ安定性には $Z=0$ が必要十分である。
+\end{theorem}
+
+この定理は複素解析の偏角原理を使う。本文で重要なのは、ナイキスト線図が単なる図ではなく、閉ループ極の個数を数えるための図だということである。
+
+\begin{formula}[根軌跡の角度条件と大きさ条件]
+閉ループ特性方程式を $1+KG(s)=0$ とする。$K>0$ の根軌跡上の点 $s$ は
+\begin{align}
+  \angle G(s)&=(2\ell+1)\pi,\qquad \ell\in\mathbb{Z},\\
+  K&=\frac{1}{\abs{G(s)}}
+\end{align}
+を満たす。
+\end{formula}
+
+\begin{derivation}
+$1+KG(s)=0$ より
+\begin{equation}
+  KG(s)=-1
+\end{equation}
+である。右辺 $-1$ は大きさが 1、偏角が $(2\ell+1)\pi$ の複素数である。$K$ は正の実数なので偏角を変えない。したがって
+\begin{equation}
+  \angle G(s)=(2\ell+1)\pi
+\end{equation}
+でなければならない。また大きさを比べると
+\begin{equation}
+  K\abs{G(s)}=1
+\end{equation}
+だから
+\begin{equation}
+  K=1/\abs{G(s)}
+\end{equation}
+を得る。
+\end{derivation}

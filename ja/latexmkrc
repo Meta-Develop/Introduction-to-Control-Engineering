@@ -1,0 +1,5 @@
+$latex = 'uplatex -interaction=nonstopmode -file-line-error %O %S';
+$dvipdf = 'dvipdfmx %O -o %D %S';
+$pdf_mode = 3;
+$out_dir = '../build/ja';
+$aux_dir = '../build/ja';

@@ -1,0 +1,498 @@
+\section{古典制御を設計科目として読む}
+
+ここまでで、一次遅れ、二次遅れ、ラプラス変換、伝達関数、周波数応答の入口を見た。しかし古典制御は、本来それだけで一つの授業になる分量を持つ。ここでは、古典制御を「図の読み方」ではなく「仕様から補償器を作る設計科目」として読むために、標準的な項目をまとめて厚くする。
+
+古典制御で毎回戻る問いは四つである。第一に、閉ループは安定か。第二に、目標値へどれだけ速く、どれだけ振動せずに近づくか。第三に、外乱やモデル誤差へどれだけ強いか。第四に、その入力は実際のアクチュエータで出せるか。この四つを、時間応答、根軌跡、周波数応答、感度関数で別々の角度から見る。
+
+\section{二次系のステップ応答を最後まで解く}
+
+二次標準形
+\begin{equation}
+  G(s)=\frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+に単位ステップ入力 $R(s)=1/s$ を入れる。出力は
+\begin{equation}
+  Y(s)=G(s)R(s)=
+  \frac{\omega_n^2}{s(s^2+2\zeta\omega_n s+\omega_n^2)}
+  \label{eq:second-order-step-laplace}
+\end{equation}
+である。$0<\zeta<1$ の不足減衰の場合をまず扱う。分母の二次式を平方完成する。
+\begin{align}
+  s^2+2\zeta\omega_n s+\omega_n^2
+  &=(s+\zeta\omega_n)^2+\omega_n^2-\zeta^2\omega_n^2\\
+  &=(s+\zeta\omega_n)^2+
+    \omega_n^2(1-
+    \zeta^2).
+\end{align}
+ここで
+\begin{equation}
+  \omega_d=\omega_n\sqrt{1-\zeta^2}
+\end{equation}
+を減衰固有角周波数という。
+
+\begin{derivation}
+\weq{second-order-step-laplace} を
+\begin{equation}
+  Y(s)=\frac{1}{s}-
+  \frac{s+2\zeta\omega_n}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+と分ける。右辺を通分すると
+\begin{align}
+  \frac{1}{s}-\frac{s+2\zeta\omega_n}{s^2+2\zeta\omega_n s+\omega_n^2}
+  &=\frac{s^2+2\zeta\omega_n s+\omega_n^2-s(s+2\zeta\omega_n)}{s(s^2+2\zeta\omega_n s+\omega_n^2)}\\
+  &=\frac{\omega_n^2}{s(s^2+2\zeta\omega_n s+\omega_n^2)}
+\end{align}
+となり、確かに元の $Y(s)$ と一致する。さらに
+\begin{equation}
+  s+2\zeta\omega_n=(s+\zeta\omega_n)+\zeta\omega_n
+\end{equation}
+なので
+\begin{align}
+  Y(s)
+  &=\frac{1}{s}-
+  \frac{s+\zeta\omega_n}{(s+\zeta\omega_n)^2+
+  \omega_d^2}
+  -\frac{\zeta\omega_n}{(s+\zeta\omega_n)^2+
+  \omega_d^2}.
+\end{align}
+ラプラス逆変換の公式
+\begin{align}
+  \mathcal{L}^{-1}\left\{\frac{s+a}{(s+a)^2+b^2}\right\}&=e^{-at}\cos bt,\\
+  \mathcal{L}^{-1}\left\{\frac{b}{(s+a)^2+b^2}\right\}&=e^{-at}\sin bt
+\end{align}
+より、
+\begin{equation}
+  y(t)=1-e^{-\zeta\omega_n t}\cos\omega_d t
+  -\frac{\zeta\omega_n}{\omega_d}e^{-\zeta\omega_n t}\sin\omega_d t.
+\end{equation}
+$\omega_d=\omega_n\sqrt{1-\zeta^2}$ を代入すると
+\begin{equation}
+  y(t)=1-e^{-\zeta\omega_n t}
+  \left(\cos\omega_d t+\frac{\zeta}{\sqrt{1-\zeta^2}}\sin\omega_d t\right)
+  \label{eq:underdamped-step-response}
+\end{equation}
+である。
+\end{derivation}
+
+\subsection{ピーク時刻とオーバーシュート}
+
+ピークは $\dot{y}(t)=0$ で決まる。二次系の単位ステップ応答では、最初のピーク時刻は
+\begin{equation}
+  t_p=\frac{\pi}{\omega_d}
+\end{equation}
+である。このときの行き過ぎ量を導く。
+
+\begin{derivation}
+\weq{underdamped-step-response} を位相付き正弦波にまとめる。角度 $\phi$ を
+\begin{equation}
+  \cos\phi=\sqrt{1-\zeta^2},
+  \qquad
+  \sin\phi=\zeta
+\end{equation}
+で定めると、加法定理より
+\begin{align}
+  \frac{1}{\sqrt{1-\zeta^2}}\sin(\omega_d t+\phi)
+  &=\frac{1}{\sqrt{1-\zeta^2}}
+  \{\sin\omega_d t\cos\phi+
+  \cos\omega_d t\sin\phi\}\\
+  &=\sin\omega_d t+
+  \frac{\zeta}{\sqrt{1-\zeta^2}}\cos\omega_d t.
+\end{align}
+同じ形へ整理すると、応答の振動部分の包絡線は $e^{-\zeta\omega_n t}$ で減衰する。最初のピーク $t_p=\pi/\omega_d$ での行き過ぎ量は
+\begin{align}
+  M_p&=y(t_p)-1\\
+  &=\exp(-\zeta\omega_n t_p)\\
+  &=\exp\left(-\zeta\omega_n\frac{\pi}{\omega_d}\right)\\
+  &=\exp\left(-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}\right).
+\end{align}
+百分率で表すと $100M_p\%$ である。
+\end{derivation}
+
+整定時間の目安も式から出る。振動部分の包絡線は $e^{-\zeta\omega_n t}$ なので、2\% 整定なら
+\begin{align}
+  e^{-\zeta\omega_n t}&=0.02,\\
+  -\zeta\omega_n t&=\log 0.02,\\
+  t&=\frac{-\log 0.02}{\zeta\omega_n}\simeq
+  \frac{3.9}{\zeta\omega_n}.
+\end{align}
+このため実務上は
+\begin{equation}
+  T_s\simeq\frac{4}{\zeta\omega_n}
+\end{equation}
+を使う。これは丸暗記の経験則ではなく、指数包絡線が 2\% まで下がる時刻の近似である。
+
+\section{逆ラプラス変換と極零点の読み方}
+
+古典制御では、$s$ 領域の式を時間応答へ戻す計算を何度も行う。基本は部分分数分解である。
+
+\begin{formula}[単純極の部分分数分解]
+相異なる極 $p_1,\ldots,p_n$ を持つ真にプロパーな伝達関数
+\begin{equation}
+  F(s)=\frac{N(s)}{(s-p_1)(s-p_2)\cdots(s-p_n)}
+\end{equation}
+は
+\begin{equation}
+  F(s)=\sum_{i=1}^{n}\frac{r_i}{s-p_i}
+\end{equation}
+と書ける。係数 $r_i$ を留数と呼び、
+\begin{equation}
+  r_i=\lim_{s\to p_i}(s-p_i)F(s)
+\end{equation}
+で求まる。
+\end{formula}
+
+\begin{derivation}
+例として
+\begin{equation}
+  F(s)=\frac{3s+5}{(s+1)(s+4)}
+\end{equation}
+を考える。部分分数分解を
+\begin{equation}
+  F(s)=\frac{A}{s+1}+\frac{B}{s+4}
+\end{equation}
+と置く。通分すると
+\begin{equation}
+  3s+5=A(s+4)+B(s+1)
+\end{equation}
+である。$s=-1$ を代入すると
+\begin{equation}
+  -3+5=A(3)+B(0)
+\end{equation}
+なので $A=2/3$。$s=-4$ を代入すると
+\begin{equation}
+  -12+5=A(0)+B(-3)
+\end{equation}
+なので $B=7/3$。したがって
+\begin{equation}
+  F(s)=\frac{2/3}{s+1}+\frac{7/3}{s+4}
+\end{equation}
+であり、逆ラプラス変換は
+\begin{equation}
+  f(t)=\frac{2}{3}e^{-t}+\frac{7}{3}e^{-4t}
+\end{equation}
+である。
+\end{derivation}
+
+複素共役極 $-\sigma\pm j\omega$ は、時間領域では
+\begin{equation}
+  e^{-\sigma t}\cos\omega t,
+  \qquad
+  e^{-\sigma t}\sin\omega t
+\end{equation}
+の組として現れる。したがって、実部は減衰、虚部は振動を決める。零点は指数成分そのものを新しく作るのではなく、それぞれの指数成分の重みを変える。右半平面零点があると、最終的に正へ動く応答が初めに逆向きへ動くことがある。
+
+\section{定常偏差と最終値の定理}
+
+速く安定に動いても、最後に目標値からずれていれば制御として困る。そこで定常偏差を調べる。
+
+\begin{theorem}[最終値の定理]
+$sF(s)$ のすべての極が左半平面にあるとき、
+\begin{equation}
+  \lim_{t\to\infty}f(t)=\lim_{s\to0}sF(s)
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+負帰還で開ループ $L(s)=C(s)G(s)$ とすると、偏差は
+\begin{align}
+  E(s)&=R(s)-Y(s),\\
+  Y(s)&=L(s)E(s).
+\end{align}
+よって
+\begin{align}
+  E(s)&=R(s)-L(s)E(s),\\
+  \{1+L(s)\}E(s)&=R(s),\\
+  E(s)&=\frac{1}{1+L(s)}R(s)=S(s)R(s).
+\end{align}
+単位ステップ $R(s)=1/s$ に対する定常偏差は、最終値の定理より
+\begin{align}
+  e_\infty&=\lim_{s\to0}sE(s)\\
+  &=\lim_{s\to0}s\frac{1}{1+L(s)}\frac{1}{s}\\
+  &=\frac{1}{1+L(0)}.
+\end{align}
+
+\begin{definition}[型と誤差定数]
+開ループ $L(s)$ が原点に持つ極の個数を系の型という。位置、速度、加速度誤差定数を
+\begin{align}
+  K_p&=\lim_{s\to0}L(s),\\
+  K_v&=\lim_{s\to0}sL(s),\\
+  K_a&=\lim_{s\to0}s^2L(s)
+\end{align}
+と定義する。
+\end{definition}
+
+ステップ、ランプ、放物線入力に対する定常偏差は、閉ループが安定であるという前提のもとで
+\begin{align}
+  e_{step}&=\frac{1}{1+K_p},\\
+  e_{ramp}&=\frac{1}{K_v},\\
+  e_{parabolic}&=\frac{1}{K_a}
+\end{align}
+となる。積分器 $1/s$ を制御器に入れると原点極が一つ増えるため、ステップ偏差を 0 にできる。ただし位相遅れも増えるため、安定余裕は悪くなりやすい。
+
+\section{ブロック線図の全経路}
+
+閉ループは目標値だけを見るものではない。入力外乱、出力外乱、測定ノイズ、制御入力も同時に見る必要がある。開ループ $L=CG$、感度 $S=1/(1+L)$、相補感度 $T=L/(1+L)$ とする。
+
+入力外乱 $d_i$ が対象入力に加わると
+\begin{align}
+  y&=G(u+d_i),\\
+  u&=C(r-y).
+\end{align}
+代入して
+\begin{align}
+  y&=G\{C(r-y)+d_i\},\\
+  y+GCy&=GCr+Gd_i,\\
+  (1+L)y&=Lr+Gd_i.
+\end{align}
+したがって
+\begin{equation}
+  y=Tr+GSd_i.
+\end{equation}
+出力外乱 $d_o$ が出力に直接足される場合は
+\begin{equation}
+  y=Tr+Sd_o
+\end{equation}
+となる。測定ノイズ $n$ がセンサに入ると、制御器が見る偏差は $r-(y+n)$ なので
+\begin{equation}
+  y=Tr-Tn
+\end{equation}
+となる。制御入力は
+\begin{equation}
+  u=CSr-CSd_o-CSn
+\end{equation}
+の形で現れる。つまり、出力だけでなく $u$ も見なければ、アクチュエータ飽和やノイズ増幅を見落とす。
+
+\section{Routh 表を作る}
+
+低次の条件だけでは、設計で出てくるゲイン範囲を扱えない。一般には Routh 表を作る。
+
+多項式
+\begin{equation}
+  a_4s^4+a_3s^3+a_2s^2+a_1s+a_0
+\end{equation}
+の Routh 表は、最初の二行を
+\begin{equation}
+\begin{array}{c|ccc}
+s^4&a_4&a_2&a_0\\
+s^3&a_3&a_1&0
+\end{array}
+\end{equation}
+と置く。次の行の第一要素は
+\begin{equation}
+  b_1=\frac{a_3a_2-a_4a_1}{a_3}
+\end{equation}
+であり、第二要素は
+\begin{equation}
+  b_2=\frac{a_3a_0-a_4\cdot0}{a_3}=a_0
+\end{equation}
+である。さらに
+\begin{equation}
+  c_1=\frac{b_1a_1-a_3b_2}{b_1}
+\end{equation}
+を作る。第一列
+\begin{equation}
+  a_4,
+  \quad a_3,
+  \quad b_1,
+  \quad c_1,
+  \quad a_0
+\end{equation}
+の符号変化の数が、右半平面極の数である。
+
+\begin{example}[ゲイン範囲の判定]
+特性多項式が
+\begin{equation}
+  s^3+4s^2+5s+K
+\end{equation}
+であるとする。三次の Routh 表は
+\begin{equation}
+\begin{array}{c|cc}
+s^3&1&5\\
+s^2&4&K\\
+s^1&(20-K)/4&0\\
+s^0&K&
+\end{array}
+\end{equation}
+である。安定のためには第一列がすべて正なので
+\begin{align}
+  1&>0,\\
+  4&>0,\\
+  (20-K)/4&>0,\\
+  K&>0.
+\end{align}
+したがって
+\begin{equation}
+  0<K<20
+\end{equation}
+が安定なゲイン範囲である。
+\end{example}
+
+\section{根軌跡の作図規則}
+
+根軌跡は $1+KG(s)=0$ の根が、$K$ を 0 から $\infty$ へ動かすとどこを通るかを見る方法である。作図規則は暗記に見えるが、すべて角度条件と大きさ条件から来る。
+
+\begin{formula}[根軌跡の基本規則]
+開ループ極の数を $n$、零点の数を $m$ とする。
+\begin{itemize}
+  \item 枝の数は $n$ 本である。
+  \item 枝は開ループ極から出発し、開ループ零点または無限遠へ向かう。
+  \item 実軸上では、右側にある実極・実零点の個数が奇数の区間に根軌跡がある。
+  \item 無限遠へ向かう漸近線の角度は
+  \begin{equation}
+    \theta_k=\frac{(2k+1)\pi}{n-m},
+    \qquad k=0,1,\ldots,n-m-1
+  \end{equation}
+  である。
+  \item 漸近線の重心は
+  \begin{equation}
+    \sigma_a=\frac{\sum \text{極}-\sum \text{零点}}{n-m}
+  \end{equation}
+  である。
+\end{itemize}
+\end{formula}
+
+分岐点は $K=-1/G(s)$ とおき、
+\begin{equation}
+  \frac{\dd K}{\dd s}=0
+\end{equation}
+を解いて候補を出す。虚軸との交点は、閉ループ特性多項式に Routh 表を使うか、$s=j\omega$ を代入して実部と虚部を分ける。
+
+\section{ボード線図を手で描く}
+
+ボード線図の手描きは、因子ごとに分けると理解しやすい。伝達関数を
+\begin{equation}
+  G(s)=K\frac{(1+s/z_1)(1+s/z_2)\cdots}{s^r(1+s/p_1)(1+s/p_2)\cdots}
+\end{equation}
+のように分解する。定数 $K$ はゲインを $20\log_{10}K$ dB だけ上下に動かす。積分器 $1/s$ は傾き $-20$ dB/dec と位相 $-90^\circ$ を加える。一次零点 $(1+s/z)$ は折点 $z$ 以後に傾き $+20$ dB/dec を加え、一次極 $(1+s/p)^{-1}$ は折点 $p$ 以後に傾き $-20$ dB/dec を加える。
+
+\begin{example}[一次遅れの正確なゲイン]
+一次遅れ $G(s)=1/(1+s/p)$ では
+\begin{align}
+  \abs{G(j\omega)}
+  &=\frac{1}{\abs{1+j\omega/p}}\\
+  &=\frac{1}{\sqrt{1+(\omega/p)^2}}.
+\end{align}
+$\omega=p$ では
+\begin{equation}
+  \abs{G(jp)}=\frac{1}{\sqrt{2}}
+\end{equation}
+である。dB では
+\begin{equation}
+  20\log_{10}\frac{1}{\sqrt{2}}
+  =-10\log_{10}2\simeq -3\,\mathrm{dB}
+\end{equation}
+となる。折点で $-3$ dB と言うのは、この計算の結果である。
+\end{example}
+
+二次遅れでは共振が起こることがある。ゲイン
+\begin{equation}
+  \abs{G(j\omega)}=\frac{\omega_n^2}{\sqrt{(\omega_n^2-\omega^2)^2+(2\zeta\omega_n\omega)^2}}
+\end{equation}
+を見ると、$\zeta$ が小さいほど分母が小さくなる周波数が現れ、山ができる。この山は速い応答の代償として振動しやすくなることを表す。
+
+\section{古典補償器の設計}
+
+補償器設計は、要求仕様を開ループ $L(s)=C(s)G(s)$ の形へ翻訳する作業である。位相余裕を増やしたいなら進み補償、低周波ゲインを増やして定常偏差を減らしたいなら遅れ補償、両方必要なら遅れ進み補償を使う。
+
+\begin{definition}[進み補償]
+\begin{equation}
+  C_{lead}(s)=K\frac{1+Ts}{1+\alpha Ts},
+  \qquad 0<\alpha<1
+\end{equation}
+を進み補償という。零点が極より低い周波数にあるため、ある周波数帯で正の位相を加える。
+\end{definition}
+
+最大位相進みは
+\begin{equation}
+  \phi_{max}=\sin^{-1}\frac{1-\alpha}{1+\alpha}
+\end{equation}
+であり、その周波数は
+\begin{equation}
+  \omega_m=\frac{1}{T\sqrt{\alpha}}
+\end{equation}
+である。設計では、必要な位相余裕の不足分に安全余裕を足し、$\alpha$ を決め、望むゲイン交差周波数を $\omega_m$ 付近へ置くように $T$ を決める。
+
+\begin{definition}[遅れ補償]
+\begin{equation}
+  C_{lag}(s)=K\frac{1+Ts}{1+\beta Ts},
+  \qquad \beta>1
+\end{equation}
+を遅れ補償という。低周波ゲインを相対的に上げ、定常偏差を小さくするために使う。
+\end{definition}
+
+遅れ補償は位相を少し遅らせるので、ゲイン交差周波数の近くに置くと安定余裕を悪くする。したがって、折点はゲイン交差周波数より十分低く置き、低周波の精度改善を主目的にする。
+
+\section{PID を実装として設計する}
+
+理想 PID は
+\begin{equation}
+  u=K_Pe+K_I\int e\,\dd t+K_D\dot{e}
+\end{equation}
+だが、実装ではこのまま使わない。目標値が急に変わると $\dot{e}$ が大きくなり、微分項が入力を跳ね上げる。これを微分キックという。そこで微分は偏差ではなく測定値へかけることが多い。
+\begin{equation}
+  u=K_P(r-y)+K_I\int(r-y)\,\dd t-K_D\dot{y}
+\end{equation}
+とすれば、目標値 $r$ の段差に微分項が直接反応しない。
+
+離散時間では、サンプリング周期 $T_s$ に対して
+\begin{align}
+  I_k&=I_{k-1}+T_s e_k,\\
+  D_k&=\frac{e_k-e_{k-1}}{T_s}
+\end{align}
+と近似する。後退差分、前進差分、双一次変換のどれを使うかで高周波の性質が変わる。フィルタ付き微分なら
+\begin{equation}
+  D(s)=\frac{Ns}{s+N}E(s)
+\end{equation}
+を使い、$N$ を大きくしすぎないことでノイズ増幅を抑える。
+
+アンチワインドアップにも複数の方法がある。単純な積分停止では、入力が飽和し、かつ偏差が飽和を悪化させる向きなら積分を止める。バック計算では
+\begin{equation}
+  \dot{I}=e+k_{aw}(u-u_c)
+\end{equation}
+とし、計算入力 $u_c$ と実入力 $u$ の差で積分状態を戻す。これは「飽和で実際には入らなかった入力」を積分器へ知らせる操作である。
+
+\section{例：質量ばねダンパを古典制御で設計する}
+
+質量 $m$、粘性 $c$、ばね $k$ の対象に力 $u$ を加える。
+\begin{equation}
+  m\ddot{q}+c\dot{q}+kq=u
+\end{equation}
+初期値 0 でラプラス変換すると
+\begin{align}
+  m s^2Q(s)+csQ(s)+kQ(s)&=U(s),\\
+  (ms^2+cs+k)Q(s)&=U(s),\\
+  G(s)=\frac{Q(s)}{U(s)}&=\frac{1}{ms^2+cs+k}.
+\end{align}
+標準形と比べるために分母を $m$ で割る。
+\begin{equation}
+  G(s)=\frac{1/m}{s^2+(c/m)s+k/m}.
+\end{equation}
+二次標準形 $s^2+2\zeta\omega_ns+\omega_n^2$ と係数を比べると
+\begin{align}
+  \omega_n^2&=k/m,\\
+  2\zeta\omega_n&=c/m.
+\end{align}
+よって
+\begin{align}
+  \omega_n&=\sqrt{k/m},\\
+  \zeta&=\frac{c}{2\sqrt{mk}}.
+\end{align}
+このように、物理パラメータ $m,c,k$ は応答仕様 $\omega_n,\zeta$ に直接つながる。重い質量は遅くし、大きな粘性は減衰を増やし、大きなばねは固有周波数を上げる。
+
+比例制御 $u=K_p(r-q)$ を入れると
+\begin{equation}
+  m\ddot{q}+c\dot{q}+kq=K_p(r-q)
+\end{equation}
+である。整理して
+\begin{equation}
+  m\ddot{q}+c\dot{q}+(k+K_p)q=K_pr
+\end{equation}
+となる。閉ループの固有角周波数は
+\begin{equation}
+  \omega_{n,cl}=\sqrt{\frac{k+K_p}{m}}
+\end{equation}
+であり、減衰比は
+\begin{equation}
+  \zeta_{cl}=\frac{c}{2\sqrt{m(k+K_p)}}.
+\end{equation}
+したがって $K_p$ を大きくすると速くなるが、粘性 $c$ が変わらなければ減衰比は下がり、振動しやすくなる。これは「ゲインを上げると速いが振動する」という経験則の式による説明である。

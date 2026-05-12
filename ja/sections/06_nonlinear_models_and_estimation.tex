@@ -1,0 +1,217 @@
+\section{非線形系への拡張}
+
+線形系では、応答、安定性、状態フィードバック、オブザーバ、LQR、カルマンフィルタが一つの流れとしてつながった。次に扱うのは、その流れを非線形系へ広げることである。非線形状態方程式は
+\begin{align}
+  \dot{x}&=f(x,u),\\
+  y&=h(x,u)
+\end{align}
+と書く。平衡点 $(x_e,u_e)$ の近くでは、ずれ $\tilde{x}=x-x_e$、$\tilde{u}=u-u_e$ に対して
+\begin{equation}
+  \dot{\tilde{x}}=A\tilde{x}+B\tilde{u},
+  \qquad
+  A=\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)},
+  \quad
+  B=\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}
+\end{equation}
+と線形化できる。非線形制御を学ぶときも、最初の足場はこの局所線形モデルである。
+
+線形化が使える範囲は、平衡点の近くに限られる。大きく動く対象では、状態の表し方そのものが重要になる。特に姿勢、剛体運動、接触、飽和を含む系では、座標系と力学を先に整えないと、推定や最適化の式が何を意味しているか分からなくなる。
+
+\section{座標系と回転}
+
+空間を動く対象では、どの座標系でベクトルを表しているかを明確にしなければならない。慣性座標系で見た位置を $p^I$、機体座標系で見た力を $f^B$ と書く。機体から慣性系への回転行列を $R\in\SO(3)$ とすれば
+\begin{equation}
+  f^I=R f^B
+\end{equation}
+である。回転行列は
+\begin{equation}
+  R^\T R=I,
+  \qquad
+  \det R=1
+\end{equation}
+を満たす。
+
+$z$ 軸まわりの回転は
+\begin{equation}
+  R_z(\psi)=\begin{bmatrix}
+    \cos\psi&-\sin\psi&0\\
+    \sin\psi& \cos\psi&0\\
+    0&0&1
+  \end{bmatrix}
+\end{equation}
+である。ロール $\phi$、ピッチ $\theta$、ヨー $\psi$ の ZYX オイラー角では
+\begin{equation}
+  R=R_z(\psi)R_y(\theta)R_x(\phi)
+\end{equation}
+と表せる。ただし $\theta=\pm \pi/2$ 近くでは角速度との対応が特異になり、ジンバルロックが起こる。
+
+四元数 $q=[q_0,q_v^\T]^\T$ は、単位制約 $\norm{q}=1$ のもとで回転を表す。角速度 $\omega$ による時間変化は
+\begin{equation}
+  \dot{q}=\frac{1}{2}q\otimes
+  \begin{bmatrix}0\\ \omega\end{bmatrix}
+\end{equation}
+である。回転軸 $a$、角度 $\theta$ の回転は
+\begin{equation}
+  q=\begin{bmatrix}\cos(\theta/2)\\ a\sin(\theta/2)\end{bmatrix}
+\end{equation}
+と書ける。四元数は冗長な4変数を使う代わりに、姿勢の特異点を避けられる。
+
+\section{ニュートン・オイラー法}
+
+質点の運動は $m\ddot{p}=F$ から始まる。剛体では並進と回転を同時に扱う。重心位置を $p$、機体系角速度を $\omega$、慣性テンソルを $J$ とすると、機体系でのニュートン・オイラー方程式は
+\begin{align}
+  m\dot{v}^I&=mg^I+R f^B,\\
+  J\dot{\omega}+\omega\times J\omega&=\tau^B
+  \label{eq:euler-rigid}
+\end{align}
+である。$\omega\times J\omega$ は、回転座標系で角運動量の向きが変わることから生じる項である。
+
+複数の推力を持つ機体では、各アクチュエータの力 $f_i$ と位置 $r_i$ から合力と合モーメントを作る。
+\begin{align}
+  f^B&=\sum_{i=1}^{m} f_i^B,\\
+  \tau^B&=\sum_{i=1}^{m} r_i^B\times f_i^B+\tau_i^B.
+\end{align}
+推力の向きが変えられる場合、入力から合力・合モーメントへの写像は非線形になる。ここではまだ最適化へ飛ばず、まず「入力が力学へどう入るか」を読む。
+
+6自由度の状態を
+\begin{equation}
+  x=\begin{bmatrix}p^I&v^I&q&\omega^B\end{bmatrix}^\T
+\end{equation}
+とすると、並進、姿勢、角速度の式を合わせて非線形状態方程式が得られる。ホバリングや定常走行の平衡点を求め、そのまわりで線形化すれば、線形制御で学んだ道具へ戻れる。
+
+\section{オイラー・ラグランジュ法}
+
+拘束の多い機械では、力をすべて分解するより、エネルギーから式を作る方が見通しがよい。一般化座標を $q\in\R^n$、運動エネルギーを $T(q,\dot{q})$、ポテンシャルエネルギーを $V(q)$ とし、ラグランジアンを
+\begin{equation}
+  L(q,\dot{q})=T(q,\dot{q})-V(q)
+\end{equation}
+と定義する。一般化力を $Q$ とすれば
+\begin{equation}
+  \frac{\dd}{\dd t}\frac{\pp L}{\pp \dot{q}_i}-\frac{\pp L}{\pp q_i}=Q_i
+\end{equation}
+で運動方程式が得られる。
+
+たとえば単振子では
+\begin{equation}
+  T=\frac{1}{2}ml^2\dot{\theta}^2,
+  \qquad
+  V=mgl(1-\cos\theta)
+\end{equation}
+なので
+\begin{equation}
+  ml^2\ddot{\theta}+mgl\sin\theta=\tau
+\end{equation}
+となる。小角近似で $\sin\theta\simeq\theta$ とすれば線形振動子になり、大きな角度では非線形性が残る。ニュートン・オイラー法とラグランジュ法は競合する公式ではなく、同じ物理を別の座標で見る二つの方法である。
+
+\section{EKF}
+
+線形カルマンフィルタは、線形モデル $A,C$ と共分散 $Q,R$ を使って予測と更新を行った。非線形系
+\begin{align}
+  x_{k+1}&=f(x_k,u_k)+w_k,\\
+  y_k&=h(x_k)+v_k
+\end{align}
+では、拡張カルマンフィルタを使う。現在の推定値のまわりで
+\begin{equation}
+  F_k=\left.\frac{\pp f}{\pp x}\right|_{\hat{x}_k,u_k},
+  \qquad
+  H_k=\left.\frac{\pp h}{\pp x}\right|_{\hat{x}_{k|k-1}}
+\end{equation}
+を計算し、カルマンフィルタの $A,C$ を $F_k,H_k$ に置き換える。
+
+つまり EKF は、KF と別物ではない。KF の予測・更新という骨格を保ち、非線形モデルをその時点の接線で線形化して使う方法である。線形化が粗い、初期推定が悪い、ノイズが非ガウス的である、といった場合には性能が落ちる。この限界を理解しておくと、より進んだフィルタを学ぶときにも軸を失わない。
+
+\section{ESKF}
+
+姿勢を四元数で表す場合、四元数 $q$ は $\norm{q}=1$ を満たす必要がある。通常の EKF で $q$ の4成分をそのまま足し引きすると、この制約から外れやすい。誤差状態カルマンフィルタでは、名目状態 $\hat{q}$ と小さな姿勢誤差 $\delta\theta\in\R^3$ を分ける。更新は
+\begin{equation}
+  \hat{q}\leftarrow \hat{q}\otimes
+  \begin{bmatrix}1\\ \delta\theta/2\end{bmatrix},
+  \qquad
+  \hat{q}\leftarrow \frac{\hat{q}}{\norm{\hat{q}}}
+\end{equation}
+のように乗法的に行う。これにより、姿勢が属する曲面を保ちながら小さな誤差だけを線形フィルタで扱える。
+
+IMU のジャイロ測定は
+\begin{equation}
+  \omega_m=\omega+b_g+n_g
+\end{equation}
+と書ける。$b_g$ はゆっくり変わるバイアス、$n_g$ は白色ノイズである。バイアスを状態に含めると、姿勢だけでなくセンサのずれも推定できる。ESKF は EKF の並列候補ではなく、四元数や回転のように「状態そのものを足し算しにくい」対象へ EKF を適用するための発展形である。
+
+\section{非線形モデルで何を線形化しているか}
+
+\begin{definition}[接線モデル]
+非線形写像 $f(x,u)$ を現在の点 $(\bar{x},\bar{u})$ の近くで一次テイラー展開した
+\begin{equation}
+  f(x,u)\simeq f(\bar{x},\bar{u})+F(x-\bar{x})+G(u-\bar{u})
+\end{equation}
+を接線モデルという。ただし
+\begin{equation}
+  F=\left.\frac{\pp f}{\pp x}\right|_{(\bar{x},\bar{u})},
+  \qquad
+  G=\left.\frac{\pp f}{\pp u}\right|_{(\bar{x},\bar{u})}
+\end{equation}
+である。
+\end{definition}
+
+EKF で行っていることは、非線形モデルを捨てることではない。予測そのものは
+\begin{equation}
+  \hat{x}_{k+1|k}=f(\hat{x}_{k|k},u_k)
+\end{equation}
+で非線形に進める。一方、共分散は「小さな誤差がどう伝わるか」を見るので、誤差 $\delta x_k=x_k-\hat{x}_{k|k}$ を用いて
+\begin{align}
+  x_{k+1}-\hat{x}_{k+1|k}
+  &=f(\hat{x}_{k|k}+\delta x_k,u_k)-f(\hat{x}_{k|k},u_k)\\
+  &\simeq F_k\delta x_k
+\end{align}
+と近似する。したがって
+\begin{equation}
+  P_{k+1|k}=F_kP_{k|k}F_k^\T+Q
+\end{equation}
+になる。
+
+\begin{definition}[特殊直交群]
+三次元回転行列全体の集合
+\begin{equation}
+  \SO(3)=\{R\in\R^{3\times3}\mid R^\T R=I,\ \det R=1\}
+\end{equation}
+を特殊直交群という。
+\end{definition}
+
+姿勢推定で難しいのは、回転が普通のベクトル空間ではない点である。回転行列 $R$ に小さな行列を単純に足すと、一般には $R^\T R=I$ が壊れる。四元数でも同じで、単位制約 $\norm{q}=1$ を保つ必要がある。このため、ESKF は「状態そのものを足す」のではなく、「小さな誤差を接空間で足してから、回転へ戻す」構造にする。
+
+\begin{formula}[小角度四元数]
+小さな回転ベクトル $\delta\theta\in\R^3$ に対応する四元数は一次近似で
+\begin{equation}
+  \delta q\simeq
+  \begin{bmatrix}1\\ \delta\theta/2\end{bmatrix}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+回転軸 $a$、角度 $\alpha$ の四元数は
+\begin{equation}
+  q=\begin{bmatrix}\cos(\alpha/2)\\ a\sin(\alpha/2)\end{bmatrix}
+\end{equation}
+である。小角度ではテイラー展開より
+\begin{equation}
+  \cos(\alpha/2)\simeq1,
+  \qquad
+  \sin(\alpha/2)\simeq\alpha/2.
+\end{equation}
+また $\delta\theta=a\alpha$ なので
+\begin{equation}
+  a\sin(\alpha/2)\simeq a\alpha/2=\delta\theta/2
+\end{equation}
+となり、小角度四元数の式を得る。
+\end{derivation}
+
+\begin{theorem}[オイラー・ラグランジュ方程式]
+作用積分 $S=\int_{t_0}^{t_1}L(q,\dot{q},t)\,\dd t$ が、端点固定の微小変分に対して停留値をとるなら
+\begin{equation}
+  \frac{\dd}{\dd t}\frac{\pp L}{\pp\dot{q}_i}-\frac{\pp L}{\pp q_i}=0
+\end{equation}
+が成り立つ。非保存力が一般化力 $Q_i$ として入ると右辺は $Q_i$ になる。
+\end{theorem}
+
+この定理は、力を一つずつ座標軸へ分解する代わりに、エネルギーから運動方程式を得るための道具である。単振子の導出では、$L=T-V$ を書き、$\pp L/\pp\dot{\theta}$、$\pp L/\pp\theta$ を実際に計算して代入している。

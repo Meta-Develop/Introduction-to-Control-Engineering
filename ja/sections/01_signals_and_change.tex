@@ -1,0 +1,249 @@
+\section{時間、信号、変化率}
+
+制御工学の出発点は、公式を覚えることではない。時間とともに変わる量を見て、その量が次にどう動くかを式で言い当て、望む動きになるように入力を選ぶことである。したがって最初に必要なのは、時間、信号、変化率、入力、出力、状態という言葉を、感覚と式の両方で結びつけることである。
+
+\begin{definition}[信号]
+時刻 $t$ の各値に対して数、ベクトル、または行列を対応させるものを信号という。温度 $T(t)$、角度 $\theta(t)$、電圧 $v(t)$、位置 $p(t)\in\R^3$ はすべて信号である。
+\end{definition}
+
+水槽の水位を 1 秒ごとに読むと、時刻ごとに数が並ぶ。その並びを理想化して、任意の時刻 $t$ で値が決まる関数として扱う。制御では、センサが信号を測り、制御器が信号を計算し、アクチュエータが信号を対象へ加える。
+
+単位は式の意味を守る。角度 $\theta$ の単位を rad、時刻 $t$ の単位を s とすれば、角速度は rad/s でなければならない。したがって
+\begin{equation}
+  \omega(t)=\frac{\dd \theta(t)}{\dd t}
+  \label{eq:angular-speed-definition}
+\end{equation}
+は「角度の時間変化率」として自然である。逆に、角速度を時間で積み上げれば角度に戻る。
+
+\begin{formula}[微分と積分の対応]
+初期角度 $\theta(0)$ と角速度 $\omega(t)$ が分かっているとき、角度は
+\begin{equation}
+  \theta(t)=\theta(0)+\int_0^t \omega(\tau)\,\dd \tau
+  \label{eq:integral-angle}
+\end{equation}
+で与えられる。
+\end{formula}
+
+\begin{derivation}
+\weq{angular-speed-definition} より
+\begin{equation}
+  \frac{\dd\theta}{\dd t}=\omega(t)
+\end{equation}
+である。両辺に $\dd t$ を掛ける記法で考えると
+\begin{equation}
+  \dd\theta=\omega(t)\,\dd t
+\end{equation}
+となる。時刻 $0$ から $t$ まで足し合わせるので
+\begin{equation}
+  \int_{\theta(0)}^{\theta(t)}\dd\theta
+  =\int_0^t\omega(\tau)\,\dd\tau
+\end{equation}
+である。左辺は $\theta(t)-\theta(0)$ だから
+\begin{equation}
+  \theta(t)-\theta(0)=\int_0^t\omega(\tau)\,\dd\tau
+\end{equation}
+となり、移項して \weq{integral-angle} を得る。
+\end{derivation}
+
+\subsection{指数関数が出る理由}
+
+温度差、速度誤差、電気回路の電流のように「現在大きいほど速く減る」量は多い。このとき最小のモデルは
+\begin{equation}
+  \dot{x}(t)=-a x(t),\qquad a>0
+  \label{eq:basic-decay-ode}
+\end{equation}
+である。ここで点は時間微分を表す。
+
+\begin{theorem}[一次の同次線形微分方程式の解]
+\weq{basic-decay-ode} の解は
+\begin{equation}
+  x(t)=x(0)e^{-at}
+  \label{eq:basic-decay-solution}
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+$x(t)\ne0$ の区間で両辺を $x(t)$ で割ると
+\begin{equation}
+  \frac{\dot{x}(t)}{x(t)}=-a
+\end{equation}
+である。合成関数の微分公式より、$\log |x(t)|$ の微分は
+\begin{equation}
+  \frac{\dd}{\dd t}\log |x(t)|=\frac{\dot{x}(t)}{x(t)}
+\end{equation}
+である。したがって
+\begin{equation}
+  \frac{\dd}{\dd t}\log |x(t)|=-a
+\end{equation}
+となる。時刻 $0$ から $t$ まで積分して
+\begin{align}
+  \int_0^t\frac{\dd}{\dd \tau}\log |x(\tau)|\,\dd\tau
+  &=\int_0^t -a\,\dd\tau,\\
+  \log |x(t)|-\log |x(0)|&=-at.
+\end{align}
+対数の性質 $\log A-\log B=\log(A/B)$ より
+\begin{equation}
+  \log \left|\frac{x(t)}{x(0)}\right|=-at
+\end{equation}
+である。両辺の指数をとれば
+\begin{equation}
+  \left|\frac{x(t)}{x(0)}\right|=e^{-at}
+\end{equation}
+となる。初期値の符号は解の途中で変わらないので、符号を含めて
+\begin{equation}
+  x(t)=x(0)e^{-at}
+\end{equation}
+を得る。
+\end{derivation}
+
+この導出を見ると、指数関数は突然現れる魔法ではない。「変化率が現在値に比例する」という仮定から、対数の微分を通って出てくる必然的な形である。
+
+\subsection{近い未来を読むためのテイラー展開}
+
+制御器は未来を完全には知らない。しかし、現在の値と変化率が分かれば、ごく近い未来は近似できる。
+
+\begin{theorem}[テイラーの定理の一次近似]
+十分なめらかな関数 $x(t)$ について、$\Delta t$ が小さいとき
+\begin{equation}
+  x(t+\Delta t)=x(t)+\dot{x}(t)\Delta t+O(\Delta t^2)
+\end{equation}
+である。二次まで残すと
+\begin{equation}
+  x(t+\Delta t)=x(t)+\dot{x}(t)\Delta t+
+  \frac{1}{2}\ddot{x}(t)\Delta t^2+O(\Delta t^3)
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+テイラーの定理より、$t$ のまわりの展開は
+\begin{equation}
+  x(t+\Delta t)=x(t)+x'(t)\Delta t+
+  \frac{x''(t)}{2!}\Delta t^2+
+  \frac{x^{(3)}(t)}{3!}\Delta t^3+\cdots
+\end{equation}
+である。ここで $x'(t)=\dot{x}(t)$、$x''(t)=\ddot{x}(t)$ と書き直す。一次近似では $\Delta t^2$ 以上の項をまとめて $O(\Delta t^2)$ と書くので、最初の式を得る。二次近似では $\Delta t^3$ 以上の項をまとめるので、二つ目の式を得る。
+\end{derivation}
+
+この定理は、線形化、数値積分、離散化の土台になる。小さい $\Delta t$ では $\Delta t^2$ や $\Delta t^3$ はさらに小さくなるため、短い時間だけなら最初の数項で動きを読める。
+
+\section{入力、出力、状態}
+
+\begin{definition}[入力、出力、外乱]
+制御対象へ意図的に加える操作を入力 $u$、センサや目的関数を通じて見る量を出力 $y$、意図せず対象へ入る作用を外乱 $d$ という。
+\end{definition}
+
+DC モータなら、端子電圧 $v(t)$ は入力、角速度 $\omega(t)$ や角度 $\theta(t)$ は出力になりうる。負荷トルク $\tau_L(t)$ は、制御器が直接選んでいないので外乱である。単純化したモデルは
+\begin{align}
+  L\dot{i}(t)&=-R i(t)-K_e\omega(t)+v(t),\label{eq:dc-motor-current}\\
+  J\dot{\omega}(t)&=K_t i(t)-b\omega(t)-\tau_L(t),\label{eq:dc-motor-speed}\\
+  \dot{\theta}(t)&=\omega(t).\label{eq:dc-motor-angle}
+\end{align}
+となる。
+
+\begin{why}
+なぜ電圧から角度を直接求めないのか。電圧はまず電流を変え、電流がトルクを作り、トルクが角速度を変え、角速度を積分して角度が変わるからである。この因果の鎖を式に残すために、状態を導入する。
+\end{why}
+
+\begin{definition}[状態]
+現在の値とこれから加える入力が分かれば、以後の変化を計算するのに十分な量の組を状態という。
+\end{definition}
+
+DC モータでは
+\begin{equation}
+  x(t)=\begin{bmatrix}i(t)\\ \omega(t)\\ \theta(t)\end{bmatrix}
+\end{equation}
+を状態にできる。状態 $x$、入力 $u$、出力 $y$ を使うと、多くの対象は
+\begin{align}
+  \dot{x}(t)&=f(x(t),u(t),t),\label{eq:nonlinear-state-model}\\
+  y(t)&=g(x(t),u(t),t)
+\end{align}
+と書ける。$f$ は内部がどう変わるか、$g$ は何が見えるかを表す。
+
+\section{平衡点、ずれ、線形化}
+
+\begin{definition}[平衡点]
+時間に陽に依存しない系 $\dot{x}=f(x,u)$ において、一定入力 $u_e$ と状態 $x_e$ が
+\begin{equation}
+  f(x_e,u_e)=0
+\end{equation}
+を満たすとき、$(x_e,u_e)$ を平衡点という。
+\end{definition}
+
+平衡点では状態の変化率が 0 なので、入力を $u_e$ に保てば状態は $x_e$ に留まる。温度制御なら目標温度付近、モータなら一定速度、飛行体ならホバリングが平衡点の例である。
+
+制御では絶対値より平衡点からのずれを見る。そこで
+\begin{equation}
+  \tilde{x}=x-x_e,
+  \qquad
+  \tilde{u}=u-u_e
+  \label{eq:deviation-definition}
+\end{equation}
+と定義する。すると $x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ である。
+
+\begin{definition}[ヤコビアン]
+ベクトル値関数 $f(x,u)\in\R^n$ の各成分を各変数で偏微分して並べた行列をヤコビアンという。$x\in\R^n$、$u\in\R^m$ なら
+\begin{equation}
+  \frac{\pp f}{\pp x}=\left[\frac{\pp f_i}{\pp x_j}\right]_{i,j},
+  \qquad
+  \frac{\pp f}{\pp u}=\left[\frac{\pp f_i}{\pp u_j}\right]_{i,j}
+\end{equation}
+である。
+\end{definition}
+
+\begin{theorem}[一次テイラー展開による線形化]
+非線形系 $\dot{x}=f(x,u)$ が平衡点 $(x_e,u_e)$ の近くで十分なめらかなら、ずれ $\tilde{x}$、$\tilde{u}$ は一次近似で
+\begin{equation}
+  \dot{\tilde{x}}=A\tilde{x}+B\tilde{u}
+  \label{eq:linearized-model}
+\end{equation}
+に従う。ただし
+\begin{equation}
+  A=\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)},
+  \qquad
+  B=\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+$x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ を $\dot{x}=f(x,u)$ に代入する。$x_e$ は定数なので $\dot{x}=\dot{\tilde{x}}$ である。したがって
+\begin{equation}
+  \dot{\tilde{x}}=f(x_e+\tilde{x},u_e+\tilde{u})
+\end{equation}
+となる。多変数のテイラー展開を一次まで使うと
+\begin{align}
+  f(x_e+\tilde{x},u_e+\tilde{u})
+  &=f(x_e,u_e)
+    +\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)}\tilde{x}
+    +\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}\tilde{u}
+    +\text{二次以上の項}.
+\end{align}
+平衡点の定義より $f(x_e,u_e)=0$ である。さらに平衡点近傍だけを見る一次近似では二次以上の項を捨てる。よって
+\begin{equation}
+  \dot{\tilde{x}}\simeq A\tilde{x}+B\tilde{u}
+\end{equation}
+を得る。
+\end{derivation}
+
+倒立振子で $x=[\theta,\dot{\theta}]^\T$ とし、
+\begin{equation}
+  f(x,u)=\begin{bmatrix}x_2\\ (mgl\sin x_1+bu)/J\end{bmatrix}
+\end{equation}
+と書く。直立平衡点 $(x_e,u_e)=(0,0)$ まわりのヤコビアンは
+\begin{align}
+  A&=\left.\frac{\pp f}{\pp x}\right|_{(0,0)}
+   =\begin{bmatrix}
+      \pp f_1/\pp x_1 & \pp f_1/\pp x_2\\
+      \pp f_2/\pp x_1 & \pp f_2/\pp x_2
+    \end{bmatrix}_{(0,0)}\\
+   &=\begin{bmatrix}
+      0&1\\
+      (mgl/J)\cos x_1&0
+    \end{bmatrix}_{x_1=0}
+    =\begin{bmatrix}0&1\\ mgl/J&0\end{bmatrix},\\
+  B&=\left.\frac{\pp f}{\pp u}\right|_{(0,0)}
+   =\begin{bmatrix}0\\ b/J\end{bmatrix}.
+\end{align}
+この計算で、$\sin\theta\simeq\theta$ という近似を単独の経験則として使ったのではない。ヤコビアンを計算した結果として、直立近傍の一次モデルが得られている。

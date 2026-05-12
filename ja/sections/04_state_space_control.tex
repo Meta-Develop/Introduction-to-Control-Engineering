@@ -1,0 +1,254 @@
+\section{状態変数}
+
+伝達関数は入力から出力への関係をよく表すが、内部の量を直接扱いたいときには状態空間表現が必要になる。状態 $x\in\R^n$、入力 $u\in\R^m$、出力 $y\in\R^p$ に対して、線形時不変系は
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t),\\
+  y(t)&=Cx(t)+Du(t)
+  \label{eq:ss}
+\end{align}
+と書く。$A$ は内部の自然な変化、$B$ は入力の入り方、$C$ は出力として見る向き、$D$ は入力が直接出力へ抜ける成分である。
+
+ベクトルは複数の量を一つの点として扱う記法であり、内積
+\begin{equation}
+  x^\T y=\sum_{i=1}^{n}x_i y_i
+\end{equation}
+は向きのそろい具合を表す。ノルム
+\begin{equation}
+  \norm{x}=\sqrt{x^\T x}
+\end{equation}
+は状態の大きさを測る。3次元の力学では外積
+\begin{equation}
+  a\times b=\begin{bmatrix}
+    a_2b_3-a_3b_2\\ a_3b_1-a_1b_3\\ a_1b_2-a_2b_1
+  \end{bmatrix}
+\end{equation}
+がモーメントや角運動量に現れる。
+
+行列は線形写像である。ランク $\rank A$ は、行列がどれだけ独立な方向を作れるかを表す。正方行列 $A$ の固有値と固有ベクトルは
+\begin{equation}
+  Av=\lambda v
+\end{equation}
+で定義される。状態方程式では、$A$ の固有値が内部モードの速さと振動を決める。
+
+\section{行列指数関数}
+
+入力なしの状態方程式 $\dot{x}=Ax$ の解は
+\begin{equation}
+  x(t)=e^{At}x(0)
+\end{equation}
+である。行列指数関数は級数
+\begin{equation}
+  e^{At}=I+At+\frac{1}{2!}A^2t^2+\frac{1}{3!}A^3t^3+\cdots
+\end{equation}
+で定義される。$A$ が対角化できて $A=V\Lambda V^{-1}$ なら
+\begin{equation}
+  e^{At}=V e^{\Lambda t}V^{-1},\qquad
+  e^{\Lambda t}=\diag(e^{\lambda_1t},\ldots,e^{\lambda_nt}).
+\end{equation}
+固有値の実部が負なら対応する指数は減衰し、正なら増大する。
+
+入力がある場合、解は
+\begin{equation}
+  x(t)=e^{At}x(0)+\int_0^t e^{A(t-\tau)}Bu(\tau)\,\dd\tau
+  \label{eq:ss-solution}
+\end{equation}
+である。第一項は零入力応答、第二項は零状態応答である。状態空間で「自然に動く部分」と「入力で作る部分」を分けて見られるのは、この式があるからである。
+
+\section{離散化}
+
+計算機で制御するには、連続時間モデルをサンプリング周期 $T_s$ の離散時間モデルへ移す。入力をサンプル間で一定とみなすゼロ次ホールドでは
+\begin{align}
+  x_{k+1}&=A_d x_k+B_d u_k,\\
+  A_d&=e^{AT_s},\\
+  B_d&=\int_0^{T_s}e^{A\tau}B\,\dd\tau
+\end{align}
+となる。$A$ が正則なら
+\begin{equation}
+  B_d=A^{-1}(A_d-I)B
+\end{equation}
+と計算できる。
+
+もっと粗い近似として、前進オイラー法は
+\begin{equation}
+  x_{k+1}=x_k+T_s f(x_k,u_k)
+\end{equation}
+である。4次の Runge--Kutta 法では
+\begin{align}
+  k_1&=f(x_k,u_k),\\
+  k_2&=f(x_k+T_s k_1/2,u_k),\\
+  k_3&=f(x_k+T_s k_2/2,u_k),\\
+  k_4&=f(x_k+T_s k_3,u_k),\\
+  x_{k+1}&=x_k+\frac{T_s}{6}(k_1+2k_2+2k_3+k_4)
+\end{align}
+と進める。制御計算では、この数値積分の精度と計算時間の釣り合いが重要になる。
+
+\section{可制御性}
+
+状態を望む方向へ動かせるかは、可制御性で決まる。連続時間線形系 \weq{ss} の可制御行列は
+\begin{equation}
+  \mathcal{C}=\begin{bmatrix}B&AB&A^2B&\cdots&A^{n-1}B\end{bmatrix}
+\end{equation}
+である。$\rank\mathcal{C}=n$ なら、任意の初期状態から任意の終端状態へ有限時間で移せる。
+
+この式は、入力 $B$ が直接押せる方向だけでなく、$A$ による自然な回転や結合を通じて広がる方向も数えている。倒立振子では、台車の力が直接角度を押すわけではないが、力が台車加速度を作り、拘束を通じて角度へ効くため、可制御になる。
+
+可制御でないモードが不安定なら、どんな状態フィードバックでも安定化できない。制御器の工夫より前に、アクチュエータ配置やモデルの取り方を見直す必要がある。
+
+\section{可観測性}
+
+状態を測れるか、または出力から推定できるかは可観測性で決まる。可観測行列は
+\begin{equation}
+  \mathcal{O}=\begin{bmatrix}C\\ CA\\ CA^2\\ \vdots\\ CA^{n-1}\end{bmatrix}
+\end{equation}
+であり、$\rank\mathcal{O}=n$ なら初期状態を出力履歴から一意に復元できる。
+
+可制御性と可観測性は双対である。$(A,B)$ の可制御性は $(A^\T,C^\T)$ の可観測性と同じ形で判定できる。これは、入力で状態へ影響を広げる問題と、状態の影響が出力へ現れる問題が、行列の向きを反転した同じ構造を持つことを意味する。
+
+\section{状態フィードバックと極配置}
+
+状態が利用できるなら、入力を
+\begin{equation}
+  u=-Kx+r_u
+\end{equation}
+と作れる。閉ループは
+\begin{equation}
+  \dot{x}=(A-BK)x+Br_u
+\end{equation}
+であり、$K$ によって $A-BK$ の固有値を動かす。可制御なら、望む極集合を原理的には配置できる。
+
+SISO 系では、可制御正準形に変換すると極配置の意味が分かりやすい。特性多項式を
+\begin{equation}
+  \det(sI-A+BK)=s^n+\alpha_{n-1}s^{n-1}+\cdots+\alpha_0
+\end{equation}
+にしたいなら、$K$ を係数が一致するように選ぶ。実務では極を左へ動かすほど応答は速くなるが、入力が大きくなり、ノイズや未モデル dynamics に弱くなる。
+
+\section{オブザーバと分離定理}
+
+すべての状態が測れるとは限らない。そこで推定状態 $\hat{x}$ を
+\begin{equation}
+  \dot{\hat{x}}=A\hat{x}+Bu+L(y-C\hat{x})
+\end{equation}
+で更新する。推定誤差 $e_x=x-\hat{x}$ は
+\begin{equation}
+  \dot{e}_x=(A-LC)e_x
+\end{equation}
+に従う。$(A,C)$ が可観測なら、$L$ によって $A-LC$ の極を望ましく置ける。
+
+推定状態を使って $u=-K\hat{x}$ としても、状態フィードバックの極とオブザーバの極は別々に設計できる。これを分離定理という。閉ループ全体の固有値は、$A-BK$ の固有値と $A-LC$ の固有値を合わせたものになる。ただし、分離定理は線形モデルと理想化された条件の話であり、飽和やノイズが強い実装では相互作用を確認する必要がある。
+
+\section{線形系のリアプノフ安定性}
+
+固有値を見る方法は線形系に強いが、同じ安定性をエネルギーのような関数でも表せる。ここではまず線形系だけを見る。平衡点 $x=0$ に対し、正定値関数 $V(x)$ があり
+\begin{equation}
+  V(x)>0\quad(x\ne0),\qquad V(0)=0
+\end{equation}
+を満たすとする。さらに軌道に沿った微分
+\begin{equation}
+  \dot{V}(x)=\frac{\pp V}{\pp x}f(x)
+\end{equation}
+が負定値なら、平衡点は漸近安定である。
+
+線形系 $\dot{x}=Ax$ では、二次形式
+\begin{equation}
+  V(x)=x^\T P x,\qquad P=P^\T>0
+\end{equation}
+を考える。微分は
+\begin{equation}
+  \dot{V}=x^\T(A^\T P+PA)x
+\end{equation}
+である。任意の正定値 $Q$ に対して
+\begin{equation}
+  A^\T P+PA=-Q
+\end{equation}
+を満たす $P>0$ が存在すれば、$A$ は安定である。このリアプノフ方程式は、次に扱う LQR の価値関数へそのままつながる。
+
+正定値行列は、ベクトルの重み付き大きさを作る行列である。$P>0$ なら $x^\T P x$ は $x\ne0$ で常に正になる。半正定値 $P\ge0$ では 0 になる方向が残る。評価関数や共分散行列で正定値性が重要になるのは、距離や不確かさを破綻なく測るためである。
+
+\section{状態空間の式変形を省略しない}
+
+\begin{theorem}[行列指数関数による解公式]
+線形時不変系 $\dot{x}=Ax+Bu$ の解は
+\begin{equation}
+  x(t)=e^{At}x(0)+\int_0^t e^{A(t-\tau)}Bu(\tau)\,\dd\tau
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+まず $u=0$ のとき、$x(t)=e^{At}x(0)$ とおく。行列指数関数の微分公式
+\begin{equation}
+  \frac{\dd}{\dd t}e^{At}=Ae^{At}
+\end{equation}
+より
+\begin{equation}
+  \dot{x}(t)=Ae^{At}x(0)=Ax(t)
+\end{equation}
+である。次に入力がある場合、定数変化法として $x(t)=e^{At}z(t)$ とおく。微分すると
+\begin{align}
+  \dot{x}(t)&=Ae^{At}z(t)+e^{At}\dot{z}(t),\\
+  Ax(t)+Bu(t)&=Ae^{At}z(t)+Bu(t).
+\end{align}
+両者を等しいとおくと
+\begin{equation}
+  e^{At}\dot{z}(t)=Bu(t)
+\end{equation}
+である。左から $e^{-At}$ を掛けて
+\begin{equation}
+  \dot{z}(t)=e^{-At}Bu(t)
+\end{equation}
+となる。時刻 $0$ から $t$ まで積分すると
+\begin{equation}
+  z(t)=z(0)+\int_0^t e^{-A\tau}Bu(\tau)\,\dd\tau.
+\end{equation}
+$x(0)=z(0)$ なので
+\begin{align}
+  x(t)&=e^{At}x(0)+e^{At}\int_0^t e^{-A\tau}Bu(\tau)\,\dd\tau\\
+  &=e^{At}x(0)+\int_0^t e^{A(t-\tau)}Bu(\tau)\,\dd\tau.
+\end{align}
+\end{derivation}
+
+\begin{theorem}[Kalman の可制御性ランク条件]
+連続時間線形系 $(A,B)$ が可制御であるための必要十分条件は
+\begin{equation}
+  \rank\begin{bmatrix}B&AB&\cdots&A^{n-1}B\end{bmatrix}=n
+\end{equation}
+である。
+\end{theorem}
+
+\begin{why}
+この行列は、入力が直接作る方向 $B$、一度自然な運動 $A$ を通って現れる方向 $AB$、さらに繰り返した方向 $A^2B$ を並べている。ランクが $n$ なら、状態空間のすべての方向を入力から組み合わせて作れる。
+\end{why}
+
+\begin{derivation}
+オブザーバ誤差の式も省略せずに出す。$y=Cx$、推定器
+\begin{equation}
+  \dot{\hat{x}}=A\hat{x}+Bu+L(y-C\hat{x})
+\end{equation}
+を使う。誤差を $e_x=x-\hat{x}$ とおくと
+\begin{align}
+  \dot{e}_x
+  &=\dot{x}-\dot{\hat{x}}\\
+  &=(Ax+Bu)-\{A\hat{x}+Bu+L(Cx-C\hat{x})\}\\
+  &=A(x-\hat{x})-LC(x-\hat{x})\\
+  &=(A-LC)e_x.
+\end{align}
+したがって $A-LC$ の固有値を左半平面に置けば、推定誤差は減衰する。
+\end{derivation}
+
+\begin{theorem}[Lyapunov の直接法]
+平衡点 $x=0$ の近くで、正定値関数 $V(x)$ が存在し、軌道に沿った微分 $\dot{V}(x)$ が負定値なら、その平衡点は漸近安定である。
+\end{theorem}
+
+線形系で $V=x^\T Px$ と置くとき、$P=P^\T>0$ なら $V$ は正定値である。微分は積の微分公式より
+\begin{align}
+  \dot{V}
+  &=\dot{x}^\T Px+x^\T P\dot{x}\\
+  &=(Ax)^\T Px+x^\T P(Ax)\\
+  &=x^\T A^\T Px+x^\T PAx\\
+  &=x^\T(A^\T P+PA)x.
+\end{align}
+ここで $A^\T P+PA=-Q$、$Q>0$ なら
+\begin{equation}
+  \dot{V}=-x^\T Qx<0\quad(x\ne0)
+\end{equation}
+なので、Lyapunov の直接法より原点は漸近安定である。
