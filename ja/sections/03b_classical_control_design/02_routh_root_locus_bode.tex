@@ -1,0 +1,270 @@
+\subsection{Routh-Hurwitz 判別法と特殊ケース}
+
+低次の条件だけでは、設計で出てくるゲイン範囲を扱えない。二次式なら係数条件で判定できるが、三次以上の閉ループ特性多項式では、極を実際に解かずに右半平面極の個数を数える判別法が必要になる。そこで使うのが Routh-Hurwitz 判別法である。
+
+\begin{theorem}[Routh-Hurwitz 判別法]
+実係数多項式
+\begin{equation}
+  p(s)=a_ns^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0,
+  \qquad a_n>0
+\end{equation}
+に対して Routh 表を作る。第一列に 0 がなく、全零行も現れない通常の場合、第一列の符号変化の数は $p(s)$ の右半平面根の数に等しい。したがって、閉ループ特性多項式が漸近安定であるための必要十分条件は、Routh 表の第一列がすべて同符号であることである。
+\end{theorem}
+
+Routh 表の最初の二行は、係数を一つ飛ばしに並べて作る。
+\begin{equation}
+\begin{array}{c|ccccc}
+s^n&a_n&a_{n-2}&a_{n-4}&a_{n-6}&\cdots\\
+s^{n-1}&a_{n-1}&a_{n-3}&a_{n-5}&a_{n-7}&\cdots
+\end{array}
+\end{equation}
+存在しない係数は 0 とみなす。上の行を
+\begin{equation}
+  u_1,\ u_2,\ u_3,\ldots
+\end{equation}
+下の行を
+\begin{equation}
+  v_1,\ v_2,\ v_3,\ldots
+\end{equation}
+と書くと、その次の行の $j$ 番目の要素は
+\begin{equation}
+  w_j=\frac{v_1u_{j+1}-u_1v_{j+1}}{v_1}
+  \label{eq:routh-recursion}
+\end{equation}
+である。分母 $v_1$ はその段の計算のピボットであり、ここが 0 になると通常の割り算ができない。これが後で扱う第一列 0 の特殊ケースである。
+
+四次多項式
+\begin{equation}
+  p(s)=a_4s^4+a_3s^3+a_2s^2+a_1s+a_0
+\end{equation}
+なら、最初の二行は
+\begin{equation}
+\begin{array}{c|ccc}
+s^4&a_4&a_2&a_0\\
+s^3&a_3&a_1&0
+\end{array}
+\end{equation}
+である。\weq{routh-recursion} より
+\begin{align}
+  b_1&=\frac{a_3a_2-a_4a_1}{a_3},\\
+  b_2&=\frac{a_3a_0-a_4\cdot0}{a_3}=a_0
+\end{align}
+となる。さらに
+\begin{equation}
+  c_1=\frac{b_1a_1-a_3b_2}{b_1}
+\end{equation}
+を作るので、表は
+\begin{equation}
+\begin{array}{c|ccc}
+s^4&a_4&a_2&a_0\\
+s^3&a_3&a_1&0\\
+s^2&b_1&b_2&0\\
+s^1&c_1&0&0\\
+s^0&a_0&&
+\end{array}
+\end{equation}
+となる。第一列
+\begin{equation}
+  a_4,\quad a_3,\quad b_1,\quad c_1,\quad a_0
+\end{equation}
+の符号を上から下へ確認する。正から負、または負から正へ変わる回数が、右半平面にある根の個数である。
+
+\begin{example}[ゲイン範囲の判定]
+閉ループ特性多項式が
+\begin{equation}
+  p_K(s)=s^3+4s^2+5s+K
+\end{equation}
+であるとする。三次の Routh 表は
+\begin{equation}
+\begin{array}{c|cc}
+s^3&1&5\\
+s^2&4&K\\
+s^1&(20-K)/4&0\\
+s^0&K&
+\end{array}
+\end{equation}
+である。漸近安定のためには第一列がすべて正でなければならないので、
+\begin{align}
+  1&>0,\\
+  4&>0,\\
+  \frac{20-K}{4}&>0,\\
+  K&>0
+\end{align}
+を同時に満たす必要がある。したがって安定なゲイン範囲は
+\begin{equation}
+  0<K<20
+\end{equation}
+である。$K<0$ では最後の $K$ が負になり、第一列の符号変化が一つ生じる。$K>20$ では
+\begin{equation}
+  1,\quad 4,\quad \frac{20-K}{4},\quad K
+\end{equation}
+の符号が
+\begin{equation}
+  +,\quad +,\quad -,\quad +
+\end{equation}
+となるため、符号変化は二つである。つまり右半平面極が二つ現れる。
+\end{example}
+
+\subsubsection{第一列の要素だけが 0 になる場合}
+
+Routh 表では、ある行の第一列だけが 0 になり、その行の他の要素は 0 でないことがある。この 0 は、特性多項式に $s=0$ の根があるという意味ではない。むしろ、表を作る割り算のピボットだけが 0 になり、\weq{routh-recursion} をそのまま使えないという意味である。このときは、その 0 を小さい正数 $\varepsilon$ で置き換え、表を最後まで作り、$\varepsilon\to0^+$ の極限で第一列の符号を判定する。これを $\varepsilon$ 法という。
+
+\begin{example}[第一列 0 と $\varepsilon$ 法]
+多項式
+\begin{equation}
+  p(s)=s^4+s^3+s^2+s+2
+\end{equation}
+を考える。最初の二行から計算すると
+\begin{equation}
+\begin{array}{c|ccc}
+s^4&1&1&2\\
+s^3&1&1&0\\
+s^2&0&2&0
+\end{array}
+\end{equation}
+となり、$s^2$ 行の第一要素だけが 0 になる。そこでこの要素を $\varepsilon>0$ に置き換えて続ける。
+\begin{equation}
+\begin{array}{c|ccc}
+s^4&1&1&2\\
+s^3&1&1&0\\
+s^2&\varepsilon&2&0\\
+s^1&(\varepsilon-2)/\varepsilon&0&0\\
+s^0&2&&
+\end{array}
+\end{equation}
+$0<\varepsilon<2$ とすれば
+\begin{equation}
+  \frac{\varepsilon-2}{\varepsilon}<0
+\end{equation}
+である。したがって第一列の符号は
+\begin{equation}
+  +,\quad +,\quad +,\quad -,\quad +
+\end{equation}
+となり、符号変化は二つである。この多項式は右半平面根を二つ持つため、対応する閉ループは不安定である。
+\end{example}
+
+$\varepsilon$ 法で重要なのは、$\varepsilon$ を新しい物理パラメータとして解釈しないことである。もとの特性多項式は変えていない。0 になったピボットを、正側から近づけた極限として扱っているだけである。したがって、第一列に $\varepsilon$ を含む式が出たら、十分小さい正の $\varepsilon$ に対する符号だけを見ればよい。
+
+\subsubsection{一行すべてが 0 になる場合}
+
+第一列だけでなく、一つの行の要素がすべて 0 になる場合は、さらに別の意味を持つ。この現象は、特性多項式が原点に関して対称な根の組を含むときに起こる。実係数多項式では、ある根が $\lambda$ なら複素共役 $\overline{\lambda}$ も根になる。さらに全零行が出る場合には、補助多項式に対応する部分が $+\lambda$ と $-\lambda$ の対称性を持つ。安定限界でよく現れるのは、$\pm j\omega$ という虚軸上の共役対である。
+
+全零行が出たときは、その直上の行から補助多項式を作る。全零行が $s^m$ 行で、直上の $s^{m+1}$ 行が
+\begin{equation}
+  q_0,\quad q_1,\quad q_2,\ldots
+\end{equation}
+であるなら、
+\begin{equation}
+  A(s)=q_0s^{m+1}+q_1s^{m-1}+q_2s^{m-3}+\cdots
+\end{equation}
+を補助多項式という。全零行を $A'(s)$ の係数で置き換え、Routh 表の計算を続ける。補助多項式 $A(s)$ の根は、もとの特性多項式の根でもある。したがって、$A(s)$ が $s^2+\omega^2$ の因子を持てば、閉ループには $\pm j\omega$ の虚軸極があり、持続振動が残る。
+
+先ほどのゲイン例で境界 $K=20$ を代入すると、
+\begin{equation}
+  p_{20}(s)=s^3+4s^2+5s+20
+\end{equation}
+である。Routh 表は
+\begin{equation}
+\begin{array}{c|cc}
+s^3&1&5\\
+s^2&4&20\\
+s^1&0&0\\
+s^0&20&
+\end{array}
+\end{equation}
+となり、$s^1$ 行が全零行になる。直上の $s^2$ 行から補助多項式
+\begin{equation}
+  A(s)=4s^2+20
+\end{equation}
+を作る。微分すると
+\begin{equation}
+  A'(s)=8s
+\end{equation}
+なので、全零行を
+\begin{equation}
+\begin{array}{c|cc}
+s^1&8&0
+\end{array}
+\end{equation}
+で置き換える。補正後の表は
+\begin{equation}
+\begin{array}{c|cc}
+s^3&1&5\\
+s^2&4&20\\
+s^1&8&0\\
+s^0&20&
+\end{array}
+\end{equation}
+であり、第一列の符号変化はない。しかしこれは漸近安定を意味しない。補助多項式から
+\begin{align}
+  A(s)&=4s^2+20\\
+  &=4(s^2+5)
+\end{align}
+なので、
+\begin{equation}
+  s=\pm j\sqrt{5}
+\end{equation}
+が実際に特性根である。したがって $K=20$ は安定範囲の端であり、角周波数 $\sqrt{5}$ の減衰しない振動を持つ。Routh 表の補助多項式は、右半平面極の個数を数えるためだけでなく、虚軸上に現れた振動モードを読み取るためにも使える。
+
+\subsection{根軌跡の作図規則}
+
+根軌跡は $1+KG(s)=0$ の根が、$K$ を 0 から $\infty$ へ動かすとどの軌道を取るかを表す図法である。作図規則は経験的な手順として扱われやすいが、すべて角度条件と大きさ条件から来る。
+
+\begin{formula}[根軌跡の基本規則]
+開ループ極の数を $n$、零点の数を $m$ とする。
+\begin{itemize}
+  \item 枝の数は $n$ 本である。
+  \item 枝は開ループ極から出発し、開ループ零点または無限遠へ向かう。
+  \item 実軸上では、右側にある実極・実零点の個数が奇数の区間に根軌跡がある。
+  \item 無限遠へ向かう漸近線の角度は
+  \begin{equation}
+    \theta_k=\frac{(2k+1)\pi}{n-m},
+    \qquad k=0,1,\ldots,n-m-1
+  \end{equation}
+  である。
+  \item 漸近線の重心は
+  \begin{equation}
+    \sigma_a=\frac{\sum \text{極}-\sum \text{零点}}{n-m}
+  \end{equation}
+  である。
+\end{itemize}
+\end{formula}
+
+分岐点は $K=-1/G(s)$ とおき、
+\begin{equation}
+  \frac{\dd K}{\dd s}=0
+\end{equation}
+を解いて候補を出す。虚軸との交点は、閉ループ特性多項式に Routh 表を使うか、$s=j\omega$ を代入して実部と虚部を分ける。
+
+\subsection{ボード線図の漸近作図}
+
+ボード線図の漸近作図は、因子ごとに分けると理解しやすい。伝達関数を
+\begin{equation}
+  G(s)=K\frac{(1+s/z_1)(1+s/z_2)\cdots}{s^r(1+s/p_1)(1+s/p_2)\cdots}
+\end{equation}
+のように分解する。定数 $K$ はゲインを $20\log_{10}K$ dB だけ上下に動かす。積分器 $1/s$ は傾き $-20$ dB/dec と位相 $-90^\circ$ を加える。一次零点 $(1+s/z)$ は折点 $z$ 以後に傾き $+20$ dB/dec を加え、一次極 $(1+s/p)^{-1}$ は折点 $p$ 以後に傾き $-20$ dB/dec を加える。
+
+\begin{example}[一次遅れの正確なゲイン]
+一次遅れ $G(s)=1/(1+s/p)$ では
+\begin{align}
+  \abs{G(j\omega)}
+  &=\frac{1}{\abs{1+j\omega/p}}\\
+  &=\frac{1}{\sqrt{1+(\omega/p)^2}}.
+\end{align}
+$\omega=p$ では
+\begin{equation}
+  \abs{G(jp)}=\frac{1}{\sqrt{2}}
+\end{equation}
+である。dB では
+\begin{equation}
+  20\log_{10}\frac{1}{\sqrt{2}}
+  =-10\log_{10}2\simeq -3\,\mathrm{dB}
+\end{equation}
+となる。折点で $-3$ dB と言うのは、この計算の結果である。
+\end{example}
+
+二次遅れでは共振が起こることがある。ゲイン
+\begin{equation}
+  \abs{G(j\omega)}=\frac{\omega_n^2}{\sqrt{(\omega_n^2-\omega^2)^2+(2\zeta\omega_n\omega)^2}}
+\end{equation}
+から、$\zeta$ が小さいほど分母が小さくなる周波数が現れ、山ができる。この山は速い応答の代償として振動しやすくなることを表す。

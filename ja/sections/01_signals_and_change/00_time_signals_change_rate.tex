@@ -1,0 +1,388 @@
+\subsection{時間、信号、変化率}
+
+水槽の水位制御では、最初に得られる情報は測定記録である。時刻 $t=0,1,2,\ldots$ [s] ごとに、水位計が返した測定値 $y_m(t)$ [cm]、目標水位 $r(t)$ [cm]、ポンプへ送った指令 $u_c(t)$ [\%]、対象へ実際に入った流量 $u(t)$ [L/s]、排水量や手で加えた水のような外乱 $d(t)$ [L/s]、水位計の読みのばらつき $n(t)$ [cm] が表に並ぶ。モータの角度、部屋の温度、移動ロボットの横ずれでも、時刻、測定された量、目標、入力指令、外乱、ノイズを同じ形式で記録できる。
+
+制御工学では、この記録から次の値を予測し、望む動きになるように入力を選ぶ。したがって最初に必要なのは、時刻ごとに値をもつ量を一つの対象として扱い、その量の単位、変化率、入力、出力、状態との関係を区別することである。
+
+\begin{definition}[信号]
+時刻 $t$ の各値に対して数、ベクトル、または行列を対応させるものを信号という。水位 $h(t)$、温度 $T(t)$、角度 $\theta(t)$、電圧 $v(t)$、位置 $p(t)\in\R^3$ はすべて信号である。
+\end{definition}
+
+実験の記録は通常、一定のサンプリング間隔で並んだ数列である。その並びを理想化して、任意の時刻 $t$ で値が決まる関数として扱う。制御では、センサが信号を測り、制御器が信号を計算し、アクチュエータが信号を対象へ加える。
+
+単位は式の意味を守る。角度 $\theta$ の単位を rad、時刻 $t$ の単位を s とすれば、角速度は rad/s でなければならない。したがって
+\begin{equation}
+  \omega(t)=\frac{\dd \theta(t)}{\dd t}
+  \label{eq:angular-speed-definition}
+\end{equation}
+は「角度の時間変化率」として自然である。逆に、角速度を時間で積み上げれば角度に戻る。
+
+\begin{formula}[微分と積分の対応]
+初期角度 $\theta(0)$ と角速度 $\omega(t)$ が分かっているとき、角度は
+\begin{equation}
+  \theta(t)=\theta(0)+\int_0^t \omega(\tau)\,\dd \tau
+  \label{eq:integral-angle}
+\end{equation}
+で与えられる。
+\end{formula}
+
+\begin{derivation}
+\weq{angular-speed-definition} より
+\begin{equation}
+  \frac{\dd\theta}{\dd t}=\omega(t)
+\end{equation}
+である。両辺に $\dd t$ を掛ける記法で考えると
+\begin{equation}
+  \dd\theta=\omega(t)\,\dd t
+\end{equation}
+となる。時刻 $0$ から $t$ まで足し合わせるので
+\begin{equation}
+  \int_{\theta(0)}^{\theta(t)}\dd\theta
+  =\int_0^t\omega(\tau)\,\dd\tau
+\end{equation}
+である。左辺は $\theta(t)-\theta(0)$ だから
+\begin{equation}
+  \theta(t)-\theta(0)=\int_0^t\omega(\tau)\,\dd\tau
+\end{equation}
+となり、移項して \weq{integral-angle} を得る。
+\end{derivation}
+
+\subsubsection{指数関数解の導出}
+
+温度差、速度誤差、電気回路の電流のように「現在大きいほど速く減る」量は多い。このとき最小のモデルは
+\begin{equation}
+  \dot{x}(t)=-a x(t),\qquad a>0
+  \label{eq:basic-decay-ode}
+\end{equation}
+である。ここで点は時間微分を表す。
+
+\begin{theorem}[一次の同次線形微分方程式の解]
+\weq{basic-decay-ode} の解は
+\begin{equation}
+  x(t)=x(0)e^{-at}
+  \label{eq:basic-decay-solution}
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+$x(t)\ne0$ の区間で両辺を $x(t)$ で割ると
+\begin{equation}
+  \frac{\dot{x}(t)}{x(t)}=-a
+\end{equation}
+である。合成関数の微分公式より、$\log |x(t)|$ の微分は
+\begin{equation}
+  \frac{\dd}{\dd t}\log |x(t)|=\frac{\dot{x}(t)}{x(t)}
+\end{equation}
+である。したがって
+\begin{equation}
+  \frac{\dd}{\dd t}\log |x(t)|=-a
+\end{equation}
+となる。時刻 $0$ から $t$ まで積分して
+\begin{align}
+  \int_0^t\frac{\dd}{\dd \tau}\log |x(\tau)|\,\dd\tau
+  &=\int_0^t -a\,\dd\tau,\\
+  \log |x(t)|-\log |x(0)|&=-at.
+\end{align}
+対数の性質 $\log A-\log B=\log(A/B)$ より
+\begin{equation}
+  \log \left|\frac{x(t)}{x(0)}\right|=-at
+\end{equation}
+である。両辺の指数をとれば
+\begin{equation}
+  \left|\frac{x(t)}{x(0)}\right|=e^{-at}
+\end{equation}
+となる。初期値の符号は解の途中で変わらないので、符号を含めて
+\begin{equation}
+  x(t)=x(0)e^{-at}
+\end{equation}
+を得る。
+\end{derivation}
+
+この導出を見ると、指数関数は経験的に仮定する形ではない。「変化率が現在値に比例する」という仮定から、対数の微分を通って出てくる必然的な形である。
+
+\subsubsection{一次線形微分方程式の初期値問題}
+
+制御対象の最小モデルは、減衰だけを表す \weq{basic-decay-ode} から、入力や外乱を受ける一次線形微分方程式へ広がる。係数 $a$ [1/s] を一定、右辺の信号 $r(t)$ の単位を $x$/s として
+\begin{equation}
+  \dot{x}(t)+a x(t)=r(t)
+  \label{eq:first-order-linear-ivp}
+\end{equation}
+を考える。微分方程式だけでは解は一つに決まらない。時刻 $0$ の値
+\begin{equation}
+  x(0)=x_0
+  \label{eq:first-order-linear-initial}
+\end{equation}
+を合わせて指定したものを初期値問題という。初期値は、コンデンサに最初から蓄えられている電荷、物体の初期温度、台車の初期位置や速度のように、入力を加える前から対象の内部に残っている情報を表す。
+
+\begin{theorem}[一次線形微分方程式の積分因子解]
+$a$ を定数、$r(t)$ を区分的に連続な信号とする。\weq{first-order-linear-ivp} と \weq{first-order-linear-initial} の解は
+\begin{equation}
+  x(t)=e^{-at}x_0+\int_0^t e^{-a(t-\tau)}r(\tau)\,\dd\tau
+  \label{eq:first-order-integrating-factor-solution}
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+\weq{first-order-linear-ivp} の両辺に $e^{at}$ を掛ける。
+\begin{equation}
+  e^{at}\dot{x}(t)+a e^{at}x(t)=e^{at}r(t)
+\end{equation}
+左辺は積の微分公式により
+\begin{equation}
+  \frac{\dd}{\dd t}\{e^{at}x(t)\}=e^{at}\dot{x}(t)+a e^{at}x(t)
+\end{equation}
+である。したがって
+\begin{equation}
+  \frac{\dd}{\dd t}\{e^{at}x(t)\}=e^{at}r(t)
+\end{equation}
+を得る。ここで $e^{at}$ を積分因子という。時刻 $0$ から $t$ まで積分すると
+\begin{align}
+  e^{at}x(t)-x(0)&=\int_0^t e^{a\tau}r(\tau)\,\dd\tau,\\
+  x(t)&=e^{-at}x_0+\int_0^t e^{-a(t-\tau)}r(\tau)\,\dd\tau
+\end{align}
+となる。
+\end{derivation}
+
+\weq{first-order-integrating-factor-solution} の第一項は初期値から生じる応答であり、入力を 0 とした同次方程式
+\begin{equation}
+  \dot{x}+a x=0
+\end{equation}
+の解である。この応答を自然応答または自由応答という。特性方程式は $s+a=0$ であり、根 $s=-a$ に対応する固有モードは $e^{-at}$ である。したがって一次系の固有応答は指数関数一つで決まる。第二項は右辺信号 $r(t)$ によって作られる応答であり、強制応答という。線形方程式では、全応答は
+\begin{equation}
+  x(t)=x_{\mathrm{free}}(t)+x_{\mathrm{forced}}(t)
+\end{equation}
+のように、同次解と特殊解の和として表される。
+
+右辺が一定値 $r(t)=r_0$ の場合は、特殊解を定数 $x_p$ として求められる。$\dot{x}_p=0$ を \weq{first-order-linear-ivp} に代入すると
+\begin{equation}
+  a x_p=r_0,\qquad x_p=\frac{r_0}{a}
+  \label{eq:first-order-particular-constant}
+\end{equation}
+である。ただし $a\ne0$ とする。偏差 $z=x-x_p$ を置くと
+\begin{equation}
+  \dot{z}=\dot{x},\qquad
+  \dot{z}+a z=0
+\end{equation}
+となる。変数分離法により
+\begin{equation}
+  \frac{\dot{z}}{z}=-a
+\end{equation}
+を積分して
+\begin{equation}
+  z(t)=z(0)e^{-at}
+\end{equation}
+を得る。したがって
+\begin{equation}
+  x(t)=\frac{r_0}{a}+
+  \left(x_0-\frac{r_0}{a}\right)e^{-at}
+  \label{eq:first-order-constant-input-solution}
+\end{equation}
+である。この式では $r_0/a$ が特殊解、括弧内の係数をもつ指数項が同次解である。
+
+\begin{definition}[時定数]
+$a>0$ の一次安定系では
+\begin{equation}
+  \tau=\frac{1}{a}
+\end{equation}
+を時定数という。時定数の単位は s であり、偏差 $z(t)$ は
+\begin{equation}
+  z(\tau)=z(0)e^{-1}\simeq0.368z(0)
+\end{equation}
+まで小さくなる。
+\end{definition}
+
+時定数は「何秒で完全に定常値へ到達するか」ではなく、偏差が同じ比率で減る速さを表す量である。$t=2\tau$ では $e^{-2}\simeq0.135$、$t=3\tau$ では $e^{-3}\simeq0.050$ になる。制御設計で応答を速くするとは、多くの場合、閉ループ方程式の係数を変えて固有モードの時定数を小さくすることを意味する。
+
+\begin{example}[比例制御された一次対象の初期値応答]
+一次対象
+\begin{equation}
+  \tau_p\dot{y}(t)+y(t)=K_0u(t),\qquad \tau_p>0
+\end{equation}
+を、比例制御器
+\begin{equation}
+  u(t)=k_c\{r(t)-y(t)\}
+\end{equation}
+で制御する。ここで $y$ は出力、$u$ は入力、$r$ は参照信号、$K_0$ は対象の静的ゲイン、$k_c$ は比例ゲインである。参照信号を一定値 $r(t)=r_0$ とすると
+\begin{align}
+  \tau_p\dot{y}+y&=K_0k_c(r_0-y),\\
+  \tau_p\dot{y}+(1+K_0k_c)y&=K_0k_c r_0.
+\end{align}
+$1+K_0k_c>0$ のとき閉ループは一次安定系であり、
+\begin{equation}
+  a_{\mathrm{cl}}=\frac{1+K_0k_c}{\tau_p},
+  \qquad
+  r_{\mathrm{cl}}=\frac{K_0k_c}{\tau_p}r_0
+\end{equation}
+と置けば $\dot{y}+a_{\mathrm{cl}}y=r_{\mathrm{cl}}$ である。定常値と時定数は
+\begin{equation}
+  y_\infty=\frac{K_0k_c}{1+K_0k_c}r_0,
+  \qquad
+  \tau_{\mathrm{cl}}=\frac{1}{a_{\mathrm{cl}}}
+  =\frac{\tau_p}{1+K_0k_c}
+\end{equation}
+となる。初期値を $y(0)=y_0$ とすれば
+\begin{equation}
+  y(t)=y_\infty+(y_0-y_\infty)e^{-t/\tau_{\mathrm{cl}}}
+  \label{eq:proportional-first-order-response}
+\end{equation}
+である。\weq{proportional-first-order-response} の指数項は閉ループの自然応答であり、$y_\infty$ は一定参照信号に対する強制応答である。比例ゲイン $k_c$ を大きくすると $\tau_{\mathrm{cl}}$ は小さくなるが、定常値は一般に $r_0$ と一致しない。この残りの偏差を消すには、後で扱う積分動作やフィードフォワードの設計が必要になる。
+\end{example}
+
+\subsubsection{二次微分方程式への接続}
+
+機械系では、一つの状態だけでは未来を決められないことが多い。質量ばねダンパ系の変位 $q(t)$ は、入力力 $u(t)$ と外力外乱を無視すれば
+\begin{equation}
+  M\ddot{q}(t)+c\dot{q}(t)+kq(t)=u(t)
+  \label{eq:second-order-ode-connection}
+\end{equation}
+のような二次微分方程式に従う。$M$ [kg]、$c$ [N\,s/m]、$k$ [N/m] は正のパラメータである。一定入力 $u(t)=u_0$ に対する特殊解は
+\begin{equation}
+  q_p=\frac{u_0}{k}
+\end{equation}
+であり、偏差 $z=q-q_p$ は
+\begin{equation}
+  M\ddot{z}+c\dot{z}+kz=0
+\end{equation}
+を満たす。指数関数形 $z=e^{st}$ を代入すると
+\begin{equation}
+  Ms^2+cs+k=0
+  \label{eq:mass-spring-characteristic}
+\end{equation}
+を得る。\weq{mass-spring-characteristic} が二次系の特性方程式であり、その二つの根が固有モードを決める。根が相異なる実数 $s_1,s_2$ なら固有応答は
+\begin{equation}
+  z(t)=C_1e^{s_1t}+C_2e^{s_2t}
+\end{equation}
+であり、複素共役根なら減衰振動として表される。係数 $C_1,C_2$ は、初期変位 $q(0)$ と初期速度 $\dot{q}(0)$ の二つの初期値から決まる。
+
+この二次方程式も、状態を
+\begin{equation}
+  x(t)=\begin{bmatrix}q(t)\\ \dot{q}(t)\end{bmatrix}
+\end{equation}
+と選べば一階の連立微分方程式になる。つまり一次系で見た同次解、特殊解、初期値、時定数、固有応答という考えは、二次系では「固有根が一つから二つへ増える」形で拡張される。後の章で扱う行列指数関数は、この連立一次系の自然応答をまとめて書くための記法である。
+
+\subsubsection{テイラー展開による局所近似}
+
+制御器が利用できる情報は、現在値、過去の測定値、既知の入力に限られる。それでも、現在の値と変化率が分かれば、短い時間後の値は近似できる。
+
+\begin{theorem}[テイラーの定理の一次近似]
+十分なめらかな関数 $x(t)$ について、$\Delta t$ が小さいとき
+\begin{equation}
+  x(t+\Delta t)=x(t)+\dot{x}(t)\Delta t+O(\Delta t^2)
+\end{equation}
+である。二次まで残すと
+\begin{equation}
+  x(t+\Delta t)=x(t)+\dot{x}(t)\Delta t+
+  \frac{1}{2}\ddot{x}(t)\Delta t^2+O(\Delta t^3)
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+テイラーの定理より、$t$ のまわりの展開は
+\begin{equation}
+  x(t+\Delta t)=x(t)+x'(t)\Delta t+
+  \frac{x''(t)}{2!}\Delta t^2+
+  \frac{x^{(3)}(t)}{3!}\Delta t^3+\cdots
+\end{equation}
+である。ここで $x'(t)=\dot{x}(t)$、$x''(t)=\ddot{x}(t)$ と書き直す。一次近似では $\Delta t^2$ 以上の項をまとめて $O(\Delta t^2)$ と書くので、最初の式を得る。二次近似では $\Delta t^3$ 以上の項をまとめるので、二つ目の式を得る。
+\end{derivation}
+
+この定理は、線形化、数値積分、離散化の土台になる。小さい $\Delta t$ では $\Delta t^2$ や $\Delta t^3$ はさらに小さくなるため、短い時間だけなら最初の数項で動きを近似できる。
+
+\subsubsection{陽的 Euler 法による数値積分と刻み幅}
+
+連続時間モデル
+\begin{equation}
+  \dot{x}(t)=f(x(t),u(t),d(t),p,t)
+  \label{eq:continuous-state-model-for-integration}
+\end{equation}
+は、各時刻における状態の変化率を与える。計算機シミュレーションでは、連続なすべての時刻をそのまま扱わず、時刻列
+\begin{equation}
+  t_k=t_0+kh,\qquad k=0,1,2,\ldots
+\end{equation}
+上の近似値 $x_k\simeq x(t_k)$ を順に更新する。ここで $h>0$ は刻み幅またはシミュレーションステップサイズであり、単位は s である。$x_i$ の単位が温度 K、電圧 V、位置 m のいずれであっても、$f_i$ の単位は $x_i$/s でなければならない。したがって $h f_i$ は $x_i$ と同じ単位をもち、状態更新で足し合わせられる量になる。
+
+\begin{formula}[陽的 Euler 法]
+\weq{continuous-state-model-for-integration} において、区間 $[t_k,t_{k+1})$ で入力と外乱を代表値 $u_k$、$d_k$ により近似する。$f$ が十分なめらかで、刻み幅 $h$ が小さいとき、陽的 Euler 法は
+\begin{equation}
+  x_{k+1}=x_k+h f(x_k,u_k,d_k,p,t_k)
+  \label{eq:explicit-euler-state-update}
+\end{equation}
+により状態を更新する。
+\end{formula}
+
+\begin{derivation}
+微分方程式を時刻 $t_k$ から $t_{k+1}=t_k+h$ まで積分すると、厳密解は
+\begin{equation}
+  x(t_{k+1})=x(t_k)+
+  \int_{t_k}^{t_k+h} f(x(\tau),u(\tau),d(\tau),p,\tau)\,\dd\tau
+  \label{eq:exact-integral-state-update}
+\end{equation}
+を満たす。陽的 Euler 法では、この積分区間の被積分関数を左端の値
+\begin{equation}
+  f(x(t_k),u_k,d_k,p,t_k)
+\end{equation}
+で一定と近似する。すると
+\begin{align}
+  x(t_{k+1})
+  &\simeq x(t_k)+
+  \int_{t_k}^{t_k+h} f(x(t_k),u_k,d_k,p,t_k)\,\dd\tau\\
+  &=x(t_k)+h f(x(t_k),u_k,d_k,p,t_k)
+\end{align}
+となる。厳密値 $x(t_k)$ の代わりに近似値 $x_k$ を使うと \weq{explicit-euler-state-update} を得る。
+\end{derivation}
+
+この更新式は、微分を差分で置き換えただけの記法ではなく、現在の変化率を時間 $h$ だけ積み上げる近似である。一回の更新を厳密値 $x(t_k)$ から開始した場合、テイラー展開により
+\begin{align}
+  x(t_k+h)
+  &=x(t_k)+h\dot{x}(t_k)+\frac{h^2}{2}\ddot{x}(\xi_k)\\
+  &=x(t_k)+h f(x(t_k),u_k,d_k,p,t_k)+O(h^2)
+\end{align}
+と書ける。ただし $\xi_k$ は $t_k$ と $t_k+h$ の間の時刻であり、区間内で入力と外乱を一定値で近似しているとする。したがって一ステップの局所離散化誤差は $O(h^2)$ である。一方、固定した時間区間 $[t_0,T]$ を $N=(T-t_0)/h$ ステップで進むと、局所誤差が各ステップで蓄積する。$f$ が状態に関して Lipschitz 連続で、必要な導関数が有界であるなら、陽的 Euler 法の大域誤差は $O(h)$ で抑えられる。刻み幅を半分にすると、同じ時間区間のステップ数はほぼ二倍になり、大域誤差は一次の精度で小さくなる。
+
+刻み幅は精度だけでなく数値安定性にも関わる。最も単純な減衰方程式
+\begin{equation}
+  \dot{z}(t)=-a z(t),\qquad a>0
+\end{equation}
+に陽的 Euler 法を適用すると
+\begin{equation}
+  z_{k+1}=(1-ah)z_k
+  \label{eq:euler-stability-test}
+\end{equation}
+である。連続時間では任意の $a>0$ で $z(t)$ は 0 へ減衰する。しかし離散更新では
+\begin{equation}
+  |1-ah|<1
+\end{equation}
+すなわち
+\begin{equation}
+  0<h<\frac{2}{a}
+  \label{eq:euler-stability-step-bound}
+\end{equation}
+でなければ、数列 $z_k$ は減衰しない。$h$ が大きすぎると、連続時間モデルは安定であるにもかかわらず、数値解だけが符号反転を伴って増大することがある。これは対象の物理的な不安定性ではなく、数値積分法と刻み幅の組合せから生じる数値不安定性である。
+
+RC 回路
+\begin{equation}
+  C_e\dot{v}_C(t)=\frac{u(t)-v_C(t)}{R}
+\end{equation}
+で、抵抗 $R$ [$\Omega$]、容量 $C_e$ [F] を一定、入力電圧を区間ごとに $u_k$ [V] で一定と仮定する。時定数を
+\begin{equation}
+  \tau=R C_e
+\end{equation}
+と置くと、状態 $x=v_C$ は
+\begin{equation}
+  \dot{x}(t)=-\frac{1}{\tau}x(t)+\frac{1}{\tau}u(t)
+\end{equation}
+に従う。陽的 Euler 法では
+\begin{align}
+  x_{k+1}
+  &=x_k+h\left(-\frac{1}{\tau}x_k+\frac{1}{\tau}u_k\right)\\
+  &=\left(1-\frac{h}{\tau}\right)x_k+\frac{h}{\tau}u_k
+  \label{eq:rc-explicit-euler-update}
+\end{align}
+である。比 $h/\tau$ は無次元であり、電圧 $x_k$ と $u_k$ に掛けられる係数として解釈できる。入力を 0 とした自然応答では、数値的な減衰条件は
+\begin{equation}
+  0<h<2\tau
+\end{equation}
+である。たとえば $\tau=0.5\,\mathrm{s}$ なら $h=0.01\,\mathrm{s}$ は時定数に比べて十分小さいが、$h=1.5\,\mathrm{s}$ は \weq{euler-stability-step-bound} を破り、連続時間の RC 回路とは異なる発散的な数列を作る。後の状態空間離散化や実装章で扱うサンプリング周期は、この刻み幅を制御器、センサ、アクチュエータ、数値積分法の条件と合わせて選ぶ問題である。

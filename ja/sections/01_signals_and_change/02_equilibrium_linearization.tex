@@ -1,0 +1,160 @@
+\subsection{平衡点、偏差変数、線形化}
+
+\begin{definition}[平衡点]
+時間に陽に依存しない系 $\dot{x}=f(x,u)$ において、一定入力 $u_e$ と状態 $x_e$ が
+\begin{equation}
+  f(x_e,u_e)=0
+\end{equation}
+を満たすとき、$(x_e,u_e)$ を平衡点という。
+\end{definition}
+
+平衡点では状態の変化率が 0 なので、入力を $u_e$ に保てば状態は $x_e$ に留まる。熱系なら一定温度、RC 回路なら一定電圧、モータなら一定速度、水槽なら一定水位が平衡点の例である。外乱やパラメータを明示するモデル
+\begin{equation}
+  \dot{x}=f(x,u,d,p)
+\end{equation}
+では、一定外乱 $d_e$ とパラメータ $p$ を固定したうえで
+\begin{equation}
+  f(x_e,u_e,d_e,p)=0
+\end{equation}
+を満たす組を平衡点として扱う。周囲温度や負荷トルクが変われば、同じ入力でも平衡点は変わりうる。時間に陽に依存するモデルや周期的に動く基準運動では、厳密には一点の平衡点ではなく基準軌道のまわりで偏差を考えるが、本節ではまず一定値に留まる動作点を扱う。
+
+\begin{definition}[偏差変数]
+制御では絶対値より平衡点からのずれを見る。そこで
+\begin{equation}
+  \tilde{x}=x-x_e,
+  \qquad
+  \tilde{u}=u-u_e
+  \label{eq:deviation-definition}
+\end{equation}
+を偏差変数という。すると $x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ である。
+\end{definition}
+
+偏差変数は無次元の誤差ではない。$x_i$ が温度なら $\tilde{x}_i$ も温度差の単位 K をもち、$u_j$ が力なら $\tilde{u}_j$ も N をもつ。必要なら後で基準値や許容幅で割って無次元化するが、線形化そのものでは物理単位を保ったまま計算する。平衡点は定数なので $\dot{x}_e=0$ であり、
+\begin{equation}
+  \dot{\tilde{x}}=\frac{\dd}{\dd t}(x-x_e)=\dot{x}
+\end{equation}
+である。出力も同じ考えで、$y_e=g(x_e,u_e)$ と置けば $\tilde{y}=y-y_e$ を出力偏差として使える。
+
+\begin{definition}[ヤコビアン]
+ベクトル値関数 $f(x,u)\in\R^n$ の各成分を各変数で偏微分して並べた行列をヤコビアンという。$x\in\R^n$、$u\in\R^m$ なら
+\begin{equation}
+  \frac{\pp f}{\pp x}=\left[\frac{\pp f_i}{\pp x_j}\right]_{i,j},
+  \qquad
+  \frac{\pp f}{\pp u}=\left[\frac{\pp f_i}{\pp u_j}\right]_{i,j}
+\end{equation}
+である。
+\end{definition}
+
+$\dot{x}=f(x,u)$ では $f_i$ の単位は $x_i$/s である。したがって $\pp f_i/\pp x_j$ の単位は $(x_i/\mathrm{s})/x_j$、$\pp f_i/\pp u_j$ の単位は $(x_i/\mathrm{s})/u_j$ になる。$A=\pp f/\pp x$ は $n\times n$ 行列、$B=\pp f/\pp u$ は $n\times m$ 行列であり、$A\tilde{x}$ と $B\tilde{u}$ の各成分はどちらも $x_i$/s の単位をもつ。状態の各成分が位置、速度、電流のように違う単位をもつとき、行列の成分も同じ単位ではない。
+
+\begin{theorem}[一次テイラー展開による線形化]
+非線形系 $\dot{x}=f(x,u)$ が平衡点 $(x_e,u_e)$ の近くで十分なめらかなら、偏差変数 $\tilde{x}$、$\tilde{u}$ は一次近似で
+\begin{equation}
+  \dot{\tilde{x}}=A\tilde{x}+B\tilde{u}
+  \label{eq:linearized-model}
+\end{equation}
+に従う。ただし
+\begin{equation}
+  A=\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)},
+  \qquad
+  B=\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}
+\end{equation}
+である。
+\end{theorem}
+
+ここで「十分なめらか」とは、少なくとも平衡点の近傍で $f$ の一次偏微分が存在して連続であり、二次の誤差項を小さくできるという意味である。より安全には $f$ が二回連続微分可能で、二階偏微分が近傍で有界であると仮定する。この仮定により、$\delta z=[\tilde{x}^\T,\tilde{u}^\T]^\T$ と置いたとき、捨てた項 $r_2(\delta z)$ は
+\begin{equation}
+  \lVert r_2(\delta z)\rVert \le c\lVert \delta z\rVert^2
+\end{equation}
+を満たす定数 $c$ で抑えられる。したがって一次モデルは $\tilde{x}$ と $\tilde{u}$ が小さい範囲でだけ信頼できる。入力飽和、摩擦の符号切替、接触の有無のように式が滑らかでない現象をまたぐと、この線形化の仮定は崩れる。
+
+\begin{derivation}
+$x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ を $\dot{x}=f(x,u)$ に代入する。$x_e$ は定数なので $\dot{x}=\dot{\tilde{x}}$ である。したがって
+\begin{equation}
+  \dot{\tilde{x}}=f(x_e+\tilde{x},u_e+\tilde{u})
+\end{equation}
+となる。多変数のテイラー展開を一次まで使うと
+\begin{align}
+  f(x_e+\tilde{x},u_e+\tilde{u})
+  &=f(x_e,u_e)
+    +\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)}\tilde{x}
+    +\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}\tilde{u}
+    +\text{二次以上の項}.
+\end{align}
+平衡点の定義より $f(x_e,u_e)=0$ である。もし選んだ $(x_e,u_e)$ が平衡点でなければ、この定数項が残り、偏差モデルは原点へ留まらない。平衡点近傍だけを見る一次近似では二次以上の項を捨てるので
+\begin{equation}
+  \dot{\tilde{x}}\simeq A\tilde{x}+B\tilde{u}
+\end{equation}
+を得る。
+\end{derivation}
+
+\begin{example}[熱系の動作点まわりの線形化]
+小さな物体の温度 $T(t)$ [K] を、周囲温度 $T_a$ [K] の環境でヒータ電圧 $v(t)$ [V] により調整する。熱容量を $C_{\mathrm{th}}$ [J/K]、熱抵抗を $R_{\mathrm{th}}$ [K/W]、ヒータの電圧二乗係数を $\eta$ [W/V$^2$] とし、ヒータ電力が $\eta v^2$ で近似できるとする。このとき
+\begin{equation}
+  C_{\mathrm{th}}\dot{T}
+  =-\frac{T-T_a}{R_{\mathrm{th}}}+\eta v^2
+\end{equation}
+である。状態を $x=T$、入力を $u=v$ とすれば
+\begin{equation}
+  f(T,v)=\frac{1}{C_{\mathrm{th}}}
+  \left(-\frac{T-T_a}{R_{\mathrm{th}}}+\eta v^2\right)
+\end{equation}
+である。一定電圧 $v_e$ で温度が止まる平衡点は
+\begin{align}
+  0&=-\frac{T_e-T_a}{R_{\mathrm{th}}}+\eta v_e^2,\\
+  T_e&=T_a+R_{\mathrm{th}}\eta v_e^2
+\end{align}
+を満たす。偏差を $\tilde{T}=T-T_e$、$\tilde{v}=v-v_e$ と置くと、
+\begin{align}
+  \dot{\tilde{T}}
+  &=\frac{1}{C_{\mathrm{th}}}
+    \left(-\frac{T_e+\tilde{T}-T_a}{R_{\mathrm{th}}}
+    +\eta(v_e+\tilde{v})^2\right)\\
+  &=\frac{1}{C_{\mathrm{th}}}
+    \left(-\frac{T_e-T_a}{R_{\mathrm{th}}}
+    -\frac{\tilde{T}}{R_{\mathrm{th}}}
+    +\eta v_e^2+2\eta v_e\tilde{v}+\eta\tilde{v}^2\right).
+\end{align}
+平衡条件により $-(T_e-T_a)/R_{\mathrm{th}}+\eta v_e^2=0$ なので
+\begin{equation}
+  \dot{\tilde{T}}
+  =-\frac{1}{R_{\mathrm{th}}C_{\mathrm{th}}}\tilde{T}
+   +\frac{2\eta v_e}{C_{\mathrm{th}}}\tilde{v}
+   +\frac{\eta}{C_{\mathrm{th}}}\tilde{v}^2
+\end{equation}
+となる。一次線形化では最後の二次項を捨てて
+\begin{equation}
+  \dot{\tilde{T}}
+  \simeq
+  -\frac{1}{R_{\mathrm{th}}C_{\mathrm{th}}}\tilde{T}
+  +\frac{2\eta v_e}{C_{\mathrm{th}}}\tilde{v}
+\end{equation}
+を得る。ここで
+\begin{equation}
+  A=-\frac{1}{R_{\mathrm{th}}C_{\mathrm{th}}},
+  \qquad
+  B=\frac{2\eta v_e}{C_{\mathrm{th}}}
+\end{equation}
+であり、$A$ の単位は 1/s、$B$ の単位は K/(s\,V) である。$v_e=0$ の動作点では $B=0$ となり、電圧の小さな正負の偏差は一次近似では温度を変えないという式になる。これはヒータ電力を電圧の二乗で近似したためであり、制御入力を電力 $P=\eta v^2$ として選ぶか、実際に使う非零の動作点まわりで線形化する必要がある。
+\end{example}
+
+倒立振子で $x=[\theta,\dot{\theta}]^\T$ とし、
+\begin{equation}
+  f(x,u)=\begin{bmatrix}x_2\\ (mgl\sin x_1+bu)/J\end{bmatrix}
+\end{equation}
+と書く。直立平衡点 $(x_e,u_e)=(0,0)$ まわりのヤコビアンは
+\begin{align}
+  A&=\left.\frac{\pp f}{\pp x}\right|_{(0,0)}
+   =\begin{bmatrix}
+      \pp f_1/\pp x_1 & \pp f_1/\pp x_2\\
+      \pp f_2/\pp x_1 & \pp f_2/\pp x_2
+    \end{bmatrix}_{(0,0)}\\
+   &=\begin{bmatrix}
+      0&1\\
+      (mgl/J)\cos x_1&0
+    \end{bmatrix}_{x_1=0}
+    =\begin{bmatrix}0&1\\ mgl/J&0\end{bmatrix},\\
+  B&=\left.\frac{\pp f}{\pp u}\right|_{(0,0)}
+   =\begin{bmatrix}0\\ b/J\end{bmatrix}.
+\end{align}
+この計算で、$\sin\theta\simeq\theta$ という近似を単独の経験則として使ったのではない。ヤコビアンを計算した結果として、直立近傍の一次モデルが得られている。

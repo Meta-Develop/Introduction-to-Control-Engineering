@@ -1,0 +1,306 @@
+\subsection{状態フィードバックと極配置}
+
+状態が利用できるなら、入力を
+\begin{equation}
+  u=-Kx+r_u
+\end{equation}
+と作れる。閉ループは
+\begin{equation}
+  \dot{x}=(A-BK)x+Br_u
+\end{equation}
+であり、$K$ によって $A-BK$ の固有値を動かす。可制御なら、望む極集合を原理的には配置できる。
+
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{0.72mm}
+\begin{picture}(165,64)
+  \scriptsize
+  \thinlines
+  \put(5,38){\makebox(0,0)[r]{$r_u$}}
+  \put(8,38){\vector(1,0){22}}
+  \put(34,38){\circle{8}}
+  \put(29,43){\makebox(0,0){$+$}}
+  \put(29,31){\makebox(0,0){$-$}}
+  \put(38,38){\vector(1,0){18}}
+  \put(47,42){\makebox(0,0)[b]{$u$}}
+  \put(56,30){\framebox(42,16){\shortstack{対象\\$\dot{x}=Ax+Bu$}}}
+  \put(98,38){\vector(1,0){30}}
+  \put(130,38){\makebox(0,0)[l]{$x$}}
+  \put(114,38){\line(0,1){14}}
+  \put(114,52){\vector(1,0){8}}
+  \put(122,47){\framebox(18,10){$C$}}
+  \put(140,52){\vector(1,0){14}}
+  \put(158,52){\makebox(0,0)[l]{$y$}}
+  \put(114,38){\line(0,-1){22}}
+  \put(114,16){\vector(-1,0){22}}
+  \put(70,10){\framebox(22,12){$K$}}
+  \put(70,16){\vector(-1,0){32}}
+  \put(34,16){\vector(0,1){18}}
+  \put(56,19){\makebox(0,0)[b]{$Kx$}}
+  \put(124,24){\makebox(0,0)[l]{状態の帰還}}
+\end{picture}
+\caption{状態フィードバック $u=-Kx+r_u$ の信号経路。参照入力 $r_u$、制御入力 $u$、状態 $x$、出力 $y$、および $Kx$ の負帰還経路を分けて示している。}
+\label{fig:state-feedback-block}
+\end{figure}
+
+図\ref{fig:state-feedback-block} の和差点は、設計式 $u=-Kx+r_u$ の符号を表している。$r_u$ は閉ループ極そのものを決める信号ではなく、状態が原点へ戻った後の平衡値や目標値を与えるための入力である。極配置で扱うのは、まず $r_u=0$ とした同次閉ループ $\dot{x}=(A-BK)x$ の内部モードである。
+
+以下では、連続時間の有限次元線形時不変 SISO 系
+\begin{equation}
+  \dot{x}=Ax+bu
+\end{equation}
+に対する状態フィードバックを考える。仮定は、$(A,b)$ が可制御であり、制御に用いる状態 $x$ が利用可能であり、設計モデル $A,b$ が対象の線形近似として用いられることである。希望極は実数係数の特性多項式を作る必要があるため、複素極を指定するときは共役対で指定する。アクチュエータ飽和、未モデル化の高周波ダイナミクス、測定ノイズはこの代数計算には含まれない。
+
+望む閉ループ特性多項式を
+\begin{equation}
+  p_d(s)=s^n+\alpha_{n-1}s^{n-1}+\cdots+\alpha_1s+\alpha_0
+  \label{eq:desired-poly}
+\end{equation}
+と書く。極配置とは、
+\begin{equation}
+  \det\{sI-(A-bK)\}=p_d(s)
+\end{equation}
+となる行ベクトル $K$ を求めることである。
+
+\subsubsection{可制御正準形}
+
+可制御 SISO 系では、座標変換により入力行列を正準形へ変換できる。多項式
+\begin{equation}
+  a(s)=s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0
+\end{equation}
+をもつ可制御正準形は
+\begin{align}
+  A_c&=\begin{bmatrix}
+    0&1&0&\cdots&0\\
+    0&0&1&\cdots&0\\
+    \vdots&\vdots&\vdots&\ddots&\vdots\\
+    0&0&0&\cdots&1\\
+    -a_0&-a_1&-a_2&\cdots&-a_{n-1}
+  \end{bmatrix},&
+  b_c&=\begin{bmatrix}0\\0\\\vdots\\0\\1\end{bmatrix}
+\end{align}
+である。この形では、入力は最後の状態方程式にのみ直接入る。$A_c$ の特性多項式は
+\begin{equation}
+  \det(sI-A_c)=s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0
+\end{equation}
+であり、最下行の係数がそのまま特性多項式の係数を決める。
+
+一般の可制御対 $(A,b)$ からこの形へ移るには、$x=Tz$ とおく。可制御行列を
+\begin{align}
+  \mathcal{C}&=\begin{bmatrix}b&Ab&\cdots&A^{n-1}b\end{bmatrix},&
+  \mathcal{C}_c&=\begin{bmatrix}b_c&A_cb_c&\cdots&A_c^{n-1}b_c\end{bmatrix}
+\end{align}
+とすると、
+\begin{equation}
+  T=\mathcal{C}\mathcal{C}_c^{-1}
+\end{equation}
+により
+\begin{equation}
+  T^{-1}AT=A_c,\qquad T^{-1}b=b_c
+\end{equation}
+が成り立つ。可制御性により $\mathcal{C}$ は正則であり、正準形側の $\mathcal{C}_c$ も正則である。座標 $z$ で設計したゲインを $K_c$ とすれば、元の座標のゲインは
+\begin{equation}
+  K=K_cT^{-1}
+\end{equation}
+で与えられる。
+
+\subsubsection{伝達関数実現と可観測正準形}
+
+可制御正準形は、極配置のためだけでなく、伝達関数から状態空間モデルを作る標準的な実現でもある。零初期状態で \weq{ss} をラプラス変換すると
+\begin{align}
+  sX(s)&=AX(s)+BU(s),\\
+  Y(s)&=CX(s)+DU(s)
+\end{align}
+である。$sI-A$ が正則な $s$ について
+\begin{equation}
+  X(s)=(sI-A)^{-1}BU(s)
+\end{equation}
+だから、入力から出力への伝達関数行列は
+\begin{equation}
+  G(s)=C(sI-A)^{-1}B+D
+  \label{eq:ss-transfer-realization}
+\end{equation}
+となる。逆に、同じ $G(s)$ を与える組 $(A,B,C,D)$ を、その伝達関数の実現という。実現は一意ではない。状態座標を変えれば行列は変わるし、入力出力には現れない余分な状態を足しても同じ伝達関数が得られる。
+
+SISO のプロパーな伝達関数を、直達項と厳密にプロパーな部分に分けて
+\begin{equation}
+  G(s)=d+
+  \frac{\beta_{n-1}s^{n-1}+\beta_{n-2}s^{n-2}+\cdots+\beta_1s+\beta_0}
+       {a(s)},\qquad
+  a(s)=s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0
+  \label{eq:proper-transfer-split}
+\end{equation}
+と書く。直達項 $d$ は、入力が状態を介さず出力へ直接現れる成分であり、\weq{ss-transfer-realization} の $D$ に対応する。先ほどの可制御正準形の $A_c,b_c$ に
+\begin{equation}
+  c_c=\begin{bmatrix}\beta_0&\beta_1&\cdots&\beta_{n-1}\end{bmatrix},
+  \qquad D=d
+\end{equation}
+を組み合わせると、一つの実現
+\begin{equation}
+  \dot{z}=A_cz+b_cu,\qquad y=c_cz+du
+\end{equation}
+が得られる。実際、
+\begin{equation}
+  (sI-A_c)^{-1}b_c
+  =\frac{1}{a(s)}
+  \begin{bmatrix}1&s&\cdots&s^{n-1}\end{bmatrix}^\T
+\end{equation}
+であるため、
+\begin{align}
+  c_c(sI-A_c)^{-1}b_c+d
+  &=d+
+  \frac{\beta_0+\beta_1s+\cdots+\beta_{n-1}s^{n-1}}{a(s)}\\
+  &=G(s)
+\end{align}
+となる。
+
+可観測正準形は、この可制御正準形の双対として作れる。すなわち
+\begin{equation}
+  A_o=A_c^\T,\qquad b_o=c_c^\T,\qquad c_o=b_c^\T,\qquad D=d
+  \label{eq:observable-canonical-realization}
+\end{equation}
+とおく。すると
+\begin{equation}
+  c_o(sI-A_o)^{-1}b_o+d
+  =
+  c_c(sI-A_c)^{-1}b_c+d
+\end{equation}
+なので、同じ伝達関数を表す。この形では出力行列が
+\begin{equation}
+  c_o=\begin{bmatrix}0&0&\cdots&1\end{bmatrix}
+\end{equation}
+となり、可制御正準形で入力が最後の状態方程式へ入っていた構造を、行列の転置によって出力が最後の状態を取り出す構造へ移している。したがって $(A_o,c_o)$ の可観測性は、$(A_c,b_c)$ の可制御性と同じランク条件で保証される。
+
+\begin{theorem}[最小実現の判定]
+有限次元線形時不変系の実現 $(A,B,C,D)$ が、同じ伝達関数をもつ実現の中で状態次数をこれ以上下げられない最小実現であるための必要十分条件は、$(A,B)$ が可制御であり、かつ $(A,C)$ が可観測であることである。
+\end{theorem}
+
+この判定は、伝達関数の極零相殺を状態空間の内部モードへ対応づけたものである。可制御でない状態成分は、零初期状態の入力応答では励起されない。可観測でない状態成分は、動いていても出力へ現れない。どちらも伝達関数だけを扱うと相殺されたように扱われるが、状態空間には余分な内部モードとして残る。隠れたモードが安定なら、主な問題は次数が余分で数値計算が悪くなることである。隠れたモードが不安定なら、入力出力の伝達関数が安定な形になっていても、初期誤差、丸め誤差、飽和後のずれによって内部状態が増大する危険がある。
+
+小さな例として
+\begin{equation}
+  G(s)=\frac{s+3}{s^2+5s+6}
+      =\frac{s+3}{(s+2)(s+3)}
+      =\frac{1}{s+2}
+\end{equation}
+を考える。未約分の分母次数に合わせて可制御正準形を作ると
+\begin{equation}
+  A_c=\begin{bmatrix}0&1\\-6&-5\end{bmatrix},\qquad
+  b_c=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+  c_c=\begin{bmatrix}3&1\end{bmatrix}
+\end{equation}
+である。この実現は可制御だが、可観測行列は
+\begin{equation}
+  \mathcal{O}
+  =\begin{bmatrix}c_c\\ c_cA_c\end{bmatrix}
+  =\begin{bmatrix}3&1\\-6&-2\end{bmatrix}
+\end{equation}
+となり、第二行が第一行の $-2$ 倍なので $\rank\mathcal{O}=1$ である。したがって二次の実現は最小ではなく、相殺された極 $s=-3$ が出力から見えない内部モードとして隠れている。約分後の最小実現は
+\begin{equation}
+  \dot{x}_m=-2x_m+u,\qquad y=x_m
+\end{equation}
+でよい。この一次実現は可制御かつ可観測であり、同じ伝達関数 $1/(s+2)$ を持つ。
+
+\subsubsection{係数比較による極配置}
+
+正準形では、状態フィードバックを
+\begin{equation}
+  u=-K_cz+r_u,\qquad
+  K_c=\begin{bmatrix}k_0&k_1&\cdots&k_{n-1}\end{bmatrix}
+\end{equation}
+と書くと、閉ループ行列は
+\begin{equation}
+  A_c-b_cK_c=
+  \begin{bmatrix}
+    0&1&0&\cdots&0\\
+    0&0&1&\cdots&0\\
+    \vdots&\vdots&\vdots&\ddots&\vdots\\
+    0&0&0&\cdots&1\\
+    -(a_0+k_0)&-(a_1+k_1)&-(a_2+k_2)&\cdots&-(a_{n-1}+k_{n-1})
+  \end{bmatrix}
+\end{equation}
+となる。したがって閉ループ特性多項式は
+\begin{equation}
+  \det\{sI-(A_c-b_cK_c)\}
+  =s^n+(a_{n-1}+k_{n-1})s^{n-1}+\cdots+(a_1+k_1)s+(a_0+k_0)
+\end{equation}
+である。これを \weq{desired-poly} と係数比較すれば、
+\begin{equation}
+  k_i=\alpha_i-a_i,\qquad i=0,1,\ldots,n-1
+  \label{eq:canonical-pole-placement}
+\end{equation}
+が得られる。この計算により、極配置は正準形の最下行の係数を希望特性多項式の係数へ一致させる操作として表される。
+
+\subsubsection{Ackermann の公式}
+
+係数比較を毎回正準形へ明示的に変換して行う代わりに、元の座標のままゲインを一度に書く公式が Ackermann の公式である。$e_n$ を第 $n$ 成分だけが 1 の単位ベクトルとし、
+\begin{equation}
+  p_d(A)=A^n+\alpha_{n-1}A^{n-1}+\cdots+\alpha_1A+\alpha_0I
+\end{equation}
+と定義する。$(A,b)$ が可制御なら、
+\begin{equation}
+  K=e_n^\T \mathcal{C}^{-1}p_d(A),\qquad
+  \mathcal{C}=\begin{bmatrix}b&Ab&\cdots&A^{n-1}b\end{bmatrix}
+  \label{eq:ackermann}
+\end{equation}
+が $u=-Kx+r_u$ に対する極配置ゲインを与える。これを Ackermann の公式という。
+
+この公式は、Cayley--Hamilton の定理と可制御正準形における係数比較から得られる。正準形では \weq{canonical-pole-placement} により、希望係数と開ループ係数の差が $K_c$ になる。元の座標へ戻すと $K=K_cT^{-1}$ である。$p_d(A)$ は希望特性多項式を行列 $A$ に適用した行列であり、$\mathcal{C}^{-1}$ は可制御行列の基底に関する座標を与える。$e_n^\T$ は正準形で特性多項式係数に対応する行を抽出する。
+
+Ackermann の公式は SISO 系の極配置ゲインを閉形式で与える。一方、高次系や可制御行列の条件数が悪い系では数値誤差に敏感である。実装では、Schur 分解に基づく極配置アルゴリズムや最適制御を用いることがある。多入力系では同じ極集合を実現するゲインが一般に一意ではないため、入力の大きさ、ロバスト性、構造制約を含めて設計自由度を選ぶ。
+
+\subsubsection{二次系の数値例}
+
+質量ばねダンパ系を標準化した二次モデルとして
+\begin{equation}
+  A=\begin{bmatrix}0&1\\-2&-3\end{bmatrix},\qquad
+  b=\begin{bmatrix}0\\1\end{bmatrix}
+\end{equation}
+を考える。開ループの特性多項式は
+\begin{equation}
+  \det(sI-A)=s^2+3s+2
+\end{equation}
+であり、この系はすでに可制御正準形になっている。希望極を $-4,-5$ に置くと
+\begin{equation}
+  p_d(s)=(s+4)(s+5)=s^2+9s+20
+\end{equation}
+である。係数比較より
+\begin{equation}
+  K=\begin{bmatrix}20-2&9-3\end{bmatrix}
+   =\begin{bmatrix}18&6\end{bmatrix}
+\end{equation}
+となる。実際、
+\begin{align}
+  A-bK
+  &=\begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+    -\begin{bmatrix}0\\1\end{bmatrix}
+     \begin{bmatrix}18&6\end{bmatrix}\\
+  &=\begin{bmatrix}0&1\\-20&-9\end{bmatrix}
+\end{align}
+なので、
+\begin{equation}
+  \det\{sI-(A-bK)\}=s^2+9s+20=(s+4)(s+5)
+\end{equation}
+となる。
+
+同じ結果を Ackermann の公式でも確認できる。可制御行列は
+\begin{equation}
+  \mathcal{C}=\begin{bmatrix}b&Ab\end{bmatrix}
+  =\begin{bmatrix}0&1\\1&-3\end{bmatrix},\qquad
+  \mathcal{C}^{-1}=\begin{bmatrix}3&1\\1&0\end{bmatrix}
+\end{equation}
+である。また
+\begin{align}
+  p_d(A)&=A^2+9A+20I\\
+  &=\begin{bmatrix}18&6\\-12&0\end{bmatrix}
+\end{align}
+である。したがって
+\begin{equation}
+  K=\begin{bmatrix}0&1\end{bmatrix}
+    \begin{bmatrix}3&1\\1&0\end{bmatrix}
+    \begin{bmatrix}18&6\\-12&0\end{bmatrix}
+   =\begin{bmatrix}18&6\end{bmatrix}
+\end{equation}
+となり、係数比較と一致する。
+
+この例では極を $-1,-2$ から $-4,-5$ へ移動しているため、閉ループの指数減衰率は増加する。一方、$K$ の増加により、同じ状態偏差に対する入力振幅も増加する。入力制限およびモデル誤差が存在する場合、指定極のみで閉ループ性能を評価することはできない。

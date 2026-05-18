@@ -1,0 +1,263 @@
+\subsection{位相補償器の仕様設計}
+
+ボード線図による古典設計では、制御器 $C(s)$ を選んで開ループ
+\begin{equation}
+  L(s)=C(s)G(s)
+\end{equation}
+のゲイン交差周波数、位相余裕、低周波ゲインを同時に調整する。ここでは単一入出力の単位負帰還系を対象とし、閉ループ安定性は最終的にナイキスト判別または閉ループ極で確認するものとする。開ループが不安定極や非最小位相零点を持つ場合、以下の設計式は候補を作るための近似であり、余裕の値だけで安定性を保証しない。
+
+定常偏差仕様は、低周波における開ループの大きさを指定する。開ループが原点極を $q$ 個持つ型 $q$ の系で、目標入力が $q$ 次までの多項式信号であるとき、対応する誤差定数は
+\begin{equation}
+  K_e=\lim_{s\to0}s^q L(s)
+\end{equation}
+で表せる。$q=0$ では位置誤差定数 $K_p$、$q=1$ では速度誤差定数 $K_v$、$q=2$ では加速度誤差定数 $K_a$ である。たとえば型 1 の系に単位傾斜入力を加えると、定常偏差は
+\begin{equation}
+  e_{ss}=\frac{1}{K_v}
+\end{equation}
+である。したがって、低周波ゲインを大きくすると定常偏差は小さくなる。一方、交差周波数付近のゲインを不用意に上げると帯域幅が増え、位相余裕が減り、高周波ノイズや未モデル化ダイナミクスの影響を受けやすくなる。位相進み補償、位相遅れ補償、遅れ進み補償は、この低周波と交差周波数の要求を分けて調整するために用いられる。
+
+\subsubsection{位相進み補償器}
+
+位相進み補償器を
+\begin{equation}
+  C_{\mathrm{lead}}(s)
+  =K_c\frac{1+Ts}{1+\alpha Ts},
+  \qquad 0<\alpha<1,\quad T>0
+\end{equation}
+とおく。零点は $\omega_z=1/T$、極は $\omega_p=1/(\alpha T)$ にあり、$\omega_z<\omega_p$ である。周波数応答の位相寄与は
+\begin{equation}
+  \phi_{\mathrm{lead}}(\omega)
+  =\tan^{-1}(\omega T)-\tan^{-1}(\alpha\omega T)
+\end{equation}
+であり、零点と極の間で正になる。$x=\omega T$ とおいて $\phi_{\mathrm{lead}}$ を $\log \omega$ で微分すると、最大位相進みは
+\begin{equation}
+  \omega_m=\frac{1}{T\sqrt{\alpha}}
+\end{equation}
+で生じる。この周波数は零点と極の幾何平均である。最大位相進みを $\phi_{\max}$ と書くと
+\begin{align}
+  \sin\phi_{\max}
+  &=\frac{1-\alpha}{1+\alpha},\\
+  \alpha
+  &=\frac{1-\sin\phi_{\max}}{1+\sin\phi_{\max}}
+\end{align}
+である。また $\omega_m$ における大きさは
+\begin{equation}
+  \abs{\frac{1+j\omega_m T}{1+j\alpha\omega_m T}}
+  =\frac{1}{\sqrt{\alpha}}
+\end{equation}
+である。したがって位相進み補償器は、交差周波数付近で正の位相を与えると同時に、同じ周波数帯のゲインも上げる。これは位相余裕と速応性の改善に有利であるが、高周波側では
+\begin{equation}
+  \lim_{\omega\to\infty}
+  \abs{\frac{1+j\omega T}{1+j\alpha\omega T}}
+  =\frac{1}{\alpha}
+\end{equation}
+となるため、測定ノイズが制御入力へ伝わりやすくなる。必要な位相進みが大きすぎる場合には、交差周波数を下げる、複数段の位相進みへ分ける、または仕様そのものを見直す。
+
+目標ゲイン交差周波数を $\omega_c^\star$、目標位相余裕を $\phi_m^\star$ とする。まず対象だけの位相
+\begin{equation}
+  \phi_G=\angle G(j\omega_c^\star)
+\end{equation}
+を計算し、補償前にその周波数で得られる位相余裕を $\pi+\phi_G$ と読む。位相遅れ補償や未モデル化遅れに対する余裕を $\delta_\phi\ge0$ と見込むと、必要な位相進みは
+\begin{equation}
+  \phi_d
+  =\phi_m^\star-\{\pi+\phi_G\}+\delta_\phi
+\end{equation}
+である。角度を度で扱う場合は、同じ式の $\pi$ を $180^\circ$ に置き換える。$0<\phi_d<\pi/2$ の範囲で $\alpha$ を
+\begin{equation}
+  \alpha=\frac{1-\sin\phi_d}{1+\sin\phi_d}
+\end{equation}
+から決め、最大位相進みが目標交差周波数に来るように
+\begin{equation}
+  T=\frac{1}{\omega_c^\star\sqrt{\alpha}}
+\end{equation}
+を選ぶ。最後にゲイン条件
+\begin{equation}
+  \abs{K_c C_{\mathrm{lead},0}(j\omega_c^\star)G(j\omega_c^\star)}=1
+\end{equation}
+から $K_c$ を定める。ここで $C_{\mathrm{lead},0}$ は $K_c$ を除いた位相進み因子である。最大位相点を交差周波数に合わせた場合、
+\begin{equation}
+  K_c
+  =\frac{\sqrt{\alpha}}{\abs{G(j\omega_c^\star)}}
+\end{equation}
+である。
+
+\subsubsection{位相遅れ補償器}
+
+位相遅れ補償器は、交差周波数を大きく動かさずに低周波ゲインを増やすために用いる。交差周波数近傍の大きさがほぼ $K_c$ になるように正規化して
+\begin{equation}
+  C_{\mathrm{lag}}(s)
+  =K_c\beta\frac{1+T_\ell s}{1+\beta T_\ell s},
+  \qquad \beta>1,\quad T_\ell>0
+\end{equation}
+と書く。極は $\omega_p=1/(\beta T_\ell)$、零点は $\omega_z=1/T_\ell$ にあり、$\omega_p<\omega_z$ である。位相寄与は
+\begin{equation}
+  \phi_{\mathrm{lag}}(\omega)
+  =\tan^{-1}(\omega T_\ell)
+  -\tan^{-1}(\beta\omega T_\ell)
+\end{equation}
+であり、極と零点の間で負になる。一方、低周波と高周波の大きさは
+\begin{align}
+  \lim_{\omega\to0}\abs{C_{\mathrm{lag}}(j\omega)}
+    &=K_c\beta,\\
+  \lim_{\omega\to\infty}\abs{C_{\mathrm{lag}}(j\omega)}
+    &=K_c
+\end{align}
+である。したがって、低周波の誤差定数を $\beta$ 倍しながら、交差周波数が零点より十分高ければ交差周波数近傍のゲインをほぼ保てる。
+
+位相遅れ補償の設計では、まず位相余裕と交差周波数の仕様を満たす候補 $L_0(s)$ を作る。そこで得られる誤差定数を
+\begin{equation}
+  K_{e0}=\lim_{s\to0}s^q L_0(s)
+\end{equation}
+とし、要求値を $K_e^\star$ とすれば、低周波ゲイン倍率は
+\begin{equation}
+  \beta\ge\frac{K_e^\star}{K_{e0}}
+\end{equation}
+から決める。位相遅れを小さくするため、零点を目標交差周波数より十分低く置く。たとえば $n=5$ から $10$ 程度を選び、
+\begin{equation}
+  \omega_z=\frac{\omega_c^\star}{n},
+  \qquad
+  \omega_p=\frac{\omega_z}{\beta}
+\end{equation}
+とすると
+\begin{equation}
+  T_\ell=\frac{1}{\omega_z}
+  =\frac{n}{\omega_c^\star}
+\end{equation}
+である。$\omega_c^\star$ における位相遅れ
+\begin{equation}
+  \tan^{-1}n-\tan^{-1}(\beta n)
+\end{equation}
+が許容できるかを確認し、必要なら $n$ を大きくする。ただし $n$ を大きくしすぎると補償の折点が非常に低くなり、定常偏差の改善が現れるまでの時間が長くなる。
+
+\subsubsection{遅れ進み補償器の設計手順}
+
+遅れ進み補償器は
+\begin{equation}
+  C_{\mathrm{leadlag}}(s)
+  =K_c
+  \frac{1+T_ds}{1+\alpha T_ds}
+  \beta\frac{1+T_\ell s}{1+\beta T_\ell s},
+  \qquad 0<\alpha<1,\quad \beta>1
+\end{equation}
+のように、位相進み因子と位相遅れ因子を直列に置いたものである。位相進み因子は主に位相余裕と交差周波数を調整し、位相遅れ因子は主に低周波誤差定数を調整する。
+
+仕様から設計する基本手順は次の通りである。第一に、時間応答とロバスト性の要求から目標交差周波数 $\omega_c^\star$ と目標位相余裕 $\phi_m^\star$ を決める。$\omega_c^\star$ は閉ループ帯域幅と同じ程度の量であり、速い応答を求めるほど大きくなるが、むだ時間余裕、ノイズ、未モデル化高周波モードに対する余裕は小さくなる。第二に、$G(j\omega_c^\star)$ の位相から必要な位相進み $\phi_d$ を求め、$\alpha$ と $T_d$ を決める。第三に、$\omega_c^\star$ で
+\begin{equation}
+  \abs{L(j\omega_c^\star)}=1
+\end{equation}
+となるように $K_c$ を定める。第四に、得られた低周波誤差定数が不足するなら $\beta$ を選び、位相遅れ因子の零点と極を $\omega_c^\star$ より十分低い周波数に置く。最後に、位相遅れ因子の実際の大きさと位相を含めて $K_c$、$\omega_{gc}$、$\phi_m$、誤差定数を再計算する。
+
+この手順は一回の計算で終わるとは限らない。位相進みを強くすると交差周波数が高くなり、閉ループ帯域幅も増える。帯域幅の増加は目標値追従と外乱抑制を速くする一方で、測定ノイズを相補感度 $T(s)$ から出力や入力へ通しやすくする。位相遅れは低周波ゲインを増やして定常偏差を減らすが、折点を交差周波数に近づけると位相余裕を削る。したがって、ボード線図上では「低周波で大きいループゲイン、交差周波数で十分な位相余裕、高周波で小さい相補感度」という三つの要求を同時に満たすように折点を配置する。
+
+\begin{example}[遅れ進み補償器による周波数仕様設計]
+正規化された位置制御対象
+\begin{equation}
+  G(s)=\frac{1}{s(s+1)}
+\end{equation}
+を単位負帰還で制御する。仕様を、速度誤差定数
+\begin{equation}
+  K_v\ge 50\,\mathrm{s^{-1}},
+\end{equation}
+目標ゲイン交差周波数
+\begin{equation}
+  \omega_c^\star=5\,\mathrm{rad/s},
+\end{equation}
+位相余裕
+\begin{equation}
+  \phi_m\ge50^\circ
+\end{equation}
+とする。この対象は型 1 なので、単位傾斜入力に対する定常偏差は $e_{ss}=1/K_v$ で評価できる。
+
+まず $\omega=5$ における対象の周波数応答を求める。
+\begin{align}
+  \abs{G(j5)}
+  &=\frac{1}{5\sqrt{1+5^2}}
+    \simeq 0.0392,\\
+  \angle G(j5)
+  &=-90^\circ-\tan^{-1}5
+    \simeq -168.7^\circ
+\end{align}
+である。交差周波数を $5\,\mathrm{rad/s}$ に置いたとき、対象だけでは位相余裕が約 $11.3^\circ$ しかない。位相遅れ補償で数度の位相損失が生じることを見込み、位相進み補償器に
+\begin{equation}
+  \phi_d=45^\circ
+\end{equation}
+を割り当てる。すると
+\begin{align}
+  \alpha
+  &=\frac{1-\sin45^\circ}{1+\sin45^\circ}
+    \simeq 0.172,\\
+  T_d
+  &=\frac{1}{5\sqrt{0.172}}
+    \simeq 0.483\,\mathrm{s}
+\end{align}
+である。位相進み因子は
+\begin{equation}
+  C_{\mathrm{lead},0}(s)
+  =\frac{1+0.483s}{1+0.0828s}
+\end{equation}
+となり、$5\,\mathrm{rad/s}$ での大きさは $1/\sqrt{\alpha}\simeq2.41$、位相は $45^\circ$ である。
+
+次に定常偏差仕様を満たす。位相進み因子だけで交差周波数を合わせると、必要ゲインはおよそ
+\begin{equation}
+  K_c\simeq
+  \frac{1}{0.0392\cdot2.41}
+  \simeq 10.6
+\end{equation}
+である。この段階の速度誤差定数は、$\lim_{s\to0}sK_cC_{\mathrm{lead},0}(s)G(s)=K_c$ より約 $10.6\,\mathrm{s^{-1}}$ であり、要求値 $50\,\mathrm{s^{-1}}$ に届かない。したがって位相遅れ補償で低周波ゲインを約 5 倍にする。$\beta=5$ とし、零点を交差周波数の 1 decade 下に置いて
+\begin{equation}
+  \omega_z=0.5\,\mathrm{rad/s},
+  \qquad
+  \omega_p=0.1\,\mathrm{rad/s}
+\end{equation}
+とする。これは $T_\ell=2\,\mathrm{s}$ に対応し、
+\begin{equation}
+  C_{\mathrm{lag},0}(s)
+  =5\frac{1+2s}{1+10s}
+\end{equation}
+である。
+
+$5\,\mathrm{rad/s}$ における位相遅れ因子の大きさと位相は
+\begin{align}
+  \abs{C_{\mathrm{lag},0}(j5)}
+  &=5\frac{\sqrt{1+10^2}}{\sqrt{1+50^2}}
+    \simeq 1.005,\\
+  \angle C_{\mathrm{lag},0}(j5)
+  &=\tan^{-1}10-\tan^{-1}50
+    \simeq -4.6^\circ
+\end{align}
+である。したがって、両方の補償因子を含めたゲイン条件から
+\begin{equation}
+  K_c=
+  \frac{1}
+  {0.0392\cdot2.41\cdot1.005}
+  \simeq 10.5
+\end{equation}
+を得る。設計された制御器は
+\begin{equation}
+  C(s)=10.5
+  \frac{1+0.483s}{1+0.0828s}
+  \;5\frac{1+2s}{1+10s}
+\end{equation}
+である。
+
+この制御器に対して、$5\,\mathrm{rad/s}$ での開ループ位相は
+\begin{align}
+  \angle L(j5)
+  &\simeq -168.7^\circ+45.0^\circ-4.6^\circ\\
+  &\simeq -128.3^\circ
+\end{align}
+である。したがって位相余裕は
+\begin{equation}
+  \phi_m\simeq 180^\circ-128.3^\circ=51.7^\circ
+\end{equation}
+となり、仕様を満たす。速度誤差定数は
+\begin{align}
+  K_v
+  &=\lim_{s\to0}sC(s)G(s)\\
+  &=10.5\cdot5\\
+  &\simeq52.6\,\mathrm{s^{-1}}
+\end{align}
+であり、単位傾斜入力に対する定常偏差は $e_{ss}\simeq0.019$ である。
+
+ボード線図上では、位相進み因子が $5\,\mathrm{rad/s}$ 付近で位相余裕を増やし、位相遅れ因子が $0.1$ から $0.5\,\mathrm{rad/s}$ の低周波側でループゲインを持ち上げている。位相遅れ因子は交差周波数でほぼ $0\,\mathrm{dB}$ なので帯域幅を大きく変えない。一方、位相進み因子の高周波ゲインは $1/\alpha\simeq5.8$ 倍であるため、センサノイズが大きい系では入力の高周波成分を別途確認する必要がある。この例の設計値は、位相余裕、交差周波数、定常偏差を同時に満たす候補であり、最終的には閉ループ極、相補感度、入力振幅制限を合わせて評価する。
+\end{example}

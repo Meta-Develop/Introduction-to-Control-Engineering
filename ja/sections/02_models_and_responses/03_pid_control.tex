@@ -1,0 +1,31 @@
+\subsection{PID 制御}
+
+\begin{definition}[PID 制御]
+偏差 $e(t)=r(t)-y(t)$ に対して
+\begin{equation}
+  u(t)=K_P e(t)+K_I\int_0^t e(\tau)\,\dd\tau+K_D\dot{e}(t)
+  \label{eq:pid-time}
+\end{equation}
+で入力を作る制御を PID 制御という。
+\end{definition}
+
+ラプラス変換を使うと、初期値を 0 として
+\begin{align}
+  U(s)&=K_P E(s)+K_I\frac{1}{s}E(s)+K_DsE(s),\\
+  \frac{U(s)}{E(s)}&=K_P+\frac{K_I}{s}+K_Ds.
+\end{align}
+したがって PID 制御器の伝達関数は
+\begin{equation}
+  C(s)=K_P+\frac{K_I}{s}+K_Ds
+\end{equation}
+である。比例は今の偏差を見る。積分は偏差の累積を見る。微分は偏差の変化率を見る。
+
+実装では微分 $s$ をそのまま使うと高周波ノイズを増幅するため、公式としての理想微分ではなく
+\begin{equation}
+  K_D\frac{Ns}{s+N}
+\end{equation}
+のようなフィルタ付き微分を使う。入力に飽和がある場合、積分器が偏差をため続けるワインドアップが起こる。飽和前の計算入力を $u_c$、実入力を $u$ とし、積分状態を $z$ とすると、アンチワインドアップの一つは
+\begin{equation}
+  \dot{z}=e+k_{aw}(u-u_c)
+\end{equation}
+である。$u=u_c$ なら通常の積分 $\dot{z}=e$ に戻り、飽和中は差 $u-u_c$ によって積分状態を戻す。

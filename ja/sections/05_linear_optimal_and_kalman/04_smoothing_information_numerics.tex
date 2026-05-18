@@ -1,0 +1,275 @@
+\subsection{固定区間平滑化と RTS 平滑化}
+
+Kalman フィルタの推定値 $\hat{x}_{k|k}$ は、時刻 $k$ までの測定履歴 $\mathcal{Y}_k$ を使った推定である。実時間制御では未来の測定値を待てないため、この片方向の推定が自然である。一方、実験後のデータ解析、軌道再構成、パラメータ同定、センサログの補正では、区間全体の測定値
+\begin{equation}
+  \mathcal{Y}_N=\{y_0,y_1,\ldots,y_N\}
+\end{equation}
+がすでに手元にある。このとき、時刻 $k<N$ の状態を推定するために $y_{k+1},\ldots,y_N$ も使える。区間 $0,\ldots,N$ 全体の測定値を用いて $x_k$ を推定する処理を固定区間平滑化という。表記として
+\begin{equation}
+  \hat{x}_{k|N}=E[x_k\mid\mathcal{Y}_N],
+  \qquad
+  P_{k|N}=E[(x_k-\hat{x}_{k|N})(x_k-\hat{x}_{k|N})^\T\mid\mathcal{Y}_N]
+\end{equation}
+を用いる。
+
+平滑化はフィルタリングの否定ではなく、フィルタリングに未来側の情報を後から戻す操作である。熱系で例えれば、時刻 $k$ の温度推定は、その時刻までのセンサ値だけでなく、その後の温度の上がり方や下がり方からも制約を受ける。後で温度が急に上がったなら、時刻 $k$ の未モデル化熱流がすでに始まっていた可能性が高い。固定区間平滑化は、このような「後で分かった整合条件」をモデルの時間発展を通じて過去へ伝える。
+
+代表的な線形ガウス平滑化が Rauch--Tung--Striebel 平滑化、すなわち RTS 平滑化である。離散時間モデルを
+\begin{equation}
+  x_{k+1}=A_kx_k+B_ku_k+G_kw_k
+\end{equation}
+とし、前向きの Kalman フィルタで
+\begin{equation}
+  \hat{x}_{k|k},
+  \quad
+  P_{k|k},
+  \quad
+  \hat{x}_{k+1|k},
+  \quad
+  P_{k+1|k}
+\end{equation}
+を保存しておく。ここで
+\begin{align}
+  \hat{x}_{k+1|k}
+  &=A_k\hat{x}_{k|k}+B_ku_k,\\
+  P_{k+1|k}
+  &=A_kP_{k|k}A_k^\T+G_kQ_{w,k}G_k^\T
+\end{align}
+である。終端では、未来の測定値がもうないので
+\begin{equation}
+  \hat{x}_{N|N}
+  \quad\text{と}\quad
+  P_{N|N}
+\end{equation}
+をそのまま平滑化の初期値として用いる。すなわち
+\begin{equation}
+  \hat{x}_{N|N}^{\mathrm{s}}=\hat{x}_{N|N},
+  \qquad
+  P_{N|N}^{\mathrm{s}}=P_{N|N}
+\end{equation}
+と書く。ただし上付き $\mathrm{s}$ は平滑化後の量を表す記号であり、以下では
+\begin{equation}
+  \hat{x}_{k|N}=\hat{x}_{k|N}^{\mathrm{s}},
+  \qquad
+  P_{k|N}=P_{k|N}^{\mathrm{s}}
+\end{equation}
+と同じ意味で使う。
+
+RTS 平滑化では、$k=N-1,N-2,\ldots,0$ と時間を逆向きに進める。平滑化ゲインを
+\begin{equation}
+  J_k=P_{k|k}A_k^\T P_{k+1|k}^{-1}
+  \label{eq:rts-smoother-gain}
+\end{equation}
+と置くと、平均と共分散は
+\begin{align}
+  \hat{x}_{k|N}
+  &=
+  \hat{x}_{k|k}
+  +J_k(\hat{x}_{k+1|N}-\hat{x}_{k+1|k}),
+  \label{eq:rts-smoother-mean}\\
+  P_{k|N}
+  &=
+  P_{k|k}
+  +J_k(P_{k+1|N}-P_{k+1|k})J_k^\T
+  \label{eq:rts-smoother-covariance}
+\end{align}
+で更新される。\weq{rts-smoother-mean} の括弧
+\begin{equation}
+  \hat{x}_{k+1|N}-\hat{x}_{k+1|k}
+\end{equation}
+は、時刻 $k+1$ の状態について、未来の測定値を含めた推定が前向き予測からどれだけずれたかを表す。このずれを、$x_k$ と $x_{k+1}$ の相関を表す係数 $J_k$ で時刻 $k$ へ戻す。共分散式 \weq{rts-smoother-covariance} では、未来の測定値を使うことで $P_{k+1|N}$ が通常 $P_{k+1|k}$ より小さくなるため、その減少分が $J_k$ を通じて $P_{k|k}$ から差し引かれる。
+
+\weq{rts-smoother-gain} は逆行列を明示しているが、実装では $P_{k+1|k}^{-1}$ を直接作らない。線形方程式
+\begin{equation}
+  P_{k+1|k}X^\T=A_kP_{k|k}
+\end{equation}
+を Cholesky 分解や対称正定値用の解法で解き、$J_k=X$ とする。$P_{k+1|k}$ が特異に近い場合は、プロセスノイズの設定、モデルの可観測性、状態の単位スケーリングを見直す必要がある。平滑化は未来情報を使うため、実時間フィードバック制御器の中にはそのまま入れられない。固定遅れ平滑化のように数サンプルだけ遅らせる実装もあるが、遅れを許せない制御ループでは、平滑化は主にログ解析や推定器調整のための手段になる。
+
+\subsection{情報形式の Kalman フィルタ}
+
+共分散形式の Kalman フィルタは、推定誤差共分散 $P$ と推定平均 $\hat{x}$ を主変数にする。これに対して、情報形式の Kalman フィルタは
+\begin{equation}
+  Y=P^{-1},
+  \qquad
+  \eta=Y\hat{x}
+  \label{eq:information-state}
+\end{equation}
+を主変数にする。$Y$ を情報行列、$\eta$ を情報ベクトルという。$P$ が大きいことは不確かさが大きいことを意味するので、その逆行列 $Y$ は状態についてどれだけ情報を持っているかを表す。推定値そのものは
+\begin{equation}
+  \hat{x}=Y^{-1}\eta
+\end{equation}
+で戻せるが、数値実装ではこの逆行列も直接作らず、線形方程式
+\begin{equation}
+  Y\hat{x}=\eta
+\end{equation}
+を解く。
+
+情報形式の利点は、測定更新が加算で書けることである。時刻 $k$ の予測情報を $Y_{k|k-1}$、$\eta_{k|k-1}$ とし、測定モデルを
+\begin{equation}
+  y_k=C_kx_k+v_k,
+  \qquad
+  v_k\sim(0,R_{v,k})
+\end{equation}
+とする。測定を得た後の情報行列と情報ベクトルは
+\begin{align}
+  Y_{k|k}
+  &=
+  Y_{k|k-1}+C_k^\T R_{v,k}^{-1}C_k,
+  \label{eq:information-update-matrix}\\
+  \eta_{k|k}
+  &=
+  \eta_{k|k-1}+C_k^\T R_{v,k}^{-1}y_k.
+  \label{eq:information-update-vector}
+\end{align}
+この式は、ガウス分布の指数部を足し合わせるだけで導ける。予測分布が
+\begin{equation}
+  p(x_k\mid\mathcal{Y}_{k-1})
+  \propto
+  \exp\left[
+    -\frac{1}{2}x_k^\T Y_{k|k-1}x_k
+    +\eta_{k|k-1}^\T x_k
+  \right]
+\end{equation}
+であり、測定尤度が
+\begin{equation}
+  p(y_k\mid x_k)
+  \propto
+  \exp\left[
+    -\frac{1}{2}(y_k-C_kx_k)^\T R_{v,k}^{-1}(y_k-C_kx_k)
+  \right]
+\end{equation}
+であるとする。$x_k$ に依存する項だけを集めると
+\begin{align}
+  &-\frac{1}{2}x_k^\T Y_{k|k-1}x_k+\eta_{k|k-1}^\T x_k\\
+  &\quad
+  -\frac{1}{2}x_k^\T C_k^\T R_{v,k}^{-1}C_kx_k
+  +x_k^\T C_k^\T R_{v,k}^{-1}y_k
+\end{align}
+となる。二次項の係数と一次項の係数を読み取れば、\weq{information-update-matrix} と \weq{information-update-vector} が得られる。測定値だけに依存する定数項は正規化定数に吸収される。
+
+複数の独立なセンサが同じ時刻に入る場合、この加算性はさらに明確になる。センサ $i$ が
+\begin{equation}
+  y_k^{(i)}=C_k^{(i)}x_k+v_k^{(i)},
+  \qquad
+  E[v_k^{(i)}(v_k^{(j)})^\T]=0\quad(i\ne j)
+\end{equation}
+を満たすなら、
+\begin{align}
+  Y_{k|k}
+  &=
+  Y_{k|k-1}
+  +\sum_i (C_k^{(i)})^\T
+    (R_{v,k}^{(i)})^{-1}C_k^{(i)},\\
+  \eta_{k|k}
+  &=
+  \eta_{k|k-1}
+  +\sum_i (C_k^{(i)})^\T
+    (R_{v,k}^{(i)})^{-1}y_k^{(i)}
+\end{align}
+でよい。したがって、センサが非同期に届く場合でも、その測定に対応する情報だけを順に足せる。$C_k^{(i)}$ が状態ベクトルの一部だけを見る疎な行列であれば、各センサが加える情報行列も疎になる。大規模な温度場、電力網、移動体群、SLAM のように、全状態のうち局所的な組だけを各測定が結びつける問題では、共分散行列 $P$ が密になりやすい一方で、情報行列 $Y$ やその Cholesky 因子は疎構造を保てることがある。この性質により、疎行列用の順序付け、疎 Cholesky 分解、局所測定の逐次追加が使いやすくなる。
+
+時間予測は、測定更新ほど単純な加算にはならない。線形モデル
+\begin{equation}
+  x_k=A_{k-1}x_{k-1}+B_{k-1}u_{k-1}+q_{k-1},
+  \qquad
+  q_{k-1}\sim(0,Q_{k-1})
+\end{equation}
+を用いるなら、共分散形式では
+\begin{align}
+  \hat{x}_{k|k-1}
+  &=A_{k-1}\hat{x}_{k-1|k-1}+B_{k-1}u_{k-1},\\
+  P_{k|k-1}
+  &=A_{k-1}P_{k-1|k-1}A_{k-1}^\T+Q_{k-1}
+\end{align}
+を計算してから
+\begin{equation}
+  Y_{k|k-1}=P_{k|k-1}^{-1},
+  \qquad
+  \eta_{k|k-1}=Y_{k|k-1}\hat{x}_{k|k-1}
+  \label{eq:information-prediction-vector}
+\end{equation}
+とすればよい。ここでも $\hat{x}_{k|k-1}=Y_{k|k-1}^{-1}\eta_{k|k-1}$ を取り出す場面では逆行列を明示的に作らず、線形方程式 $Y_{k|k-1}\hat{x}_{k|k-1}=\eta_{k|k-1}$ を解く。情報形式だけで表す場合も Woodbury の公式により
+\begin{equation}
+  Y_{k|k-1}
+  =
+  Q_{k-1}^{-1}
+  -Q_{k-1}^{-1}A_{k-1}
+  (Y_{k-1|k-1}+A_{k-1}^\T Q_{k-1}^{-1}A_{k-1})^{-1}
+  A_{k-1}^\T Q_{k-1}^{-1}
+  \label{eq:information-prediction-matrix}
+\end{equation}
+と書ける。ただし、この式は $Q_{k-1}$ が正定値であることを仮定しており、数値的には内側の線形方程式を疎分解で解く形で実装する。入力 $B_{k-1}u_{k-1}$ は平均を平行移動する項なので、情報ベクトルの予測では予測平均を通じて反映される。実装上は、予測段階を共分散形式または平方根形式で行い、測定更新だけを情報形式で疎に処理する混合構成も多い。重要なのは、どの形式でも同じ条件付きガウス分布を表しており、問題の疎性、センサ数、必要な出力が平均なのか共分散なのかに応じて表現を選ぶことである。
+
+\subsection{数値安定性を保つ Kalman フィルタ実装}
+
+Kalman フィルタの式は短いが、有限精度計算では共分散行列の対称性、半正定値性、条件数を保つことが設計の一部になる。共分散 $P$ は本来
+\begin{equation}
+  P=P^\T,
+  \qquad
+  z^\T Pz\ge0\quad(\forall z)
+\end{equation}
+を満たす。しかし、簡略形
+\begin{equation}
+  P_{k|k}=(I-K_kC_k)P_{k|k-1}
+\end{equation}
+をそのまま浮動小数点で計算すると、丸め誤差により $P_{k|k}$ がわずかに非対称になったり、負の固有値を持ったりすることがある。負の分散は確率モデルとして意味を持たず、次の Cholesky 分解やゲイン計算を破綻させる。
+
+第一の実装原則は、共分散更新に Joseph 形式を使うことである。
+\begin{equation}
+  P_{k|k}
+  =(I-K_kC_k)P_{k|k-1}(I-K_kC_k)^\T+K_kR_{v,k}K_k^\T
+  \label{eq:stable-joseph-form}
+\end{equation}
+右辺は、半正定値行列を左右から掛けた項と、測定ノイズ共分散をゲインで写した項の和である。したがって、$P_{k|k-1}\ge0$、$R_{v,k}>0$ なら、数学的には $P_{k|k}\ge0$ が保たれる。簡略形と代数的には同じでも、Joseph 形式は丸め誤差に対して共分散の構造を壊しにくい。
+
+第二の原則は、逆行列を明示的に作らないことである。Kalman ゲインを
+\begin{equation}
+  K_k=P_{k|k-1}C_k^\T S_k^{-1},
+  \qquad
+  S_k=C_kP_{k|k-1}C_k^\T+R_{v,k}
+\end{equation}
+と書いても、実装では $S_k^{-1}$ を計算しない。$S_k$ が対称正定値なら Cholesky 分解
+\begin{equation}
+  S_k=L_kL_k^\T
+\end{equation}
+を行い、三角行列の連立一次方程式を二回解いて $K_k$ を得る。$S_k$ の Cholesky 分解が失敗する場合、測定ノイズ共分散 $R_{v,k}$ が正定値になっていない、$P_{k|k-1}$ の半正定値性が崩れている、または状態や測定のスケーリングが悪い可能性がある。
+
+第三の原則は、平方根形式を使って共分散そのものではなく因子を更新することである。たとえば
+\begin{equation}
+  P_{k|k}=S_{k|k}S_{k|k}^\T
+\end{equation}
+を保ちながら、$S_{k|k}$ を QR 分解や Cholesky 更新で計算する。予測段階では、行列
+\begin{equation}
+  \begin{bmatrix}
+    A_{k-1}S_{k-1|k-1} & G_{k-1}Q_{w,k-1}^{1/2}
+  \end{bmatrix}
+\end{equation}
+の積から $P_{k|k-1}$ を作る代わりに、この横長行列の転置に QR 分解を適用して $S_{k|k-1}$ を得る。測定更新でも、革新共分散や事後共分散の平方根を QR 分解で更新できる。平方根形式では、半正定値性が因子の積として表されるため、丸め誤差で小さな負の固有値が出る危険が減る。情報形式でも同様に
+\begin{equation}
+  Y_{k|k}=R_{k|k}^\T R_{k|k}
+\end{equation}
+のような平方根情報形式を使えば、疎 Cholesky 分解と相性がよい。
+
+第四の原則は、対称化と条件数の監視を明示的に行うことである。計算後の共分散は
+\begin{equation}
+  P\leftarrow\frac{1}{2}(P+P^\T)
+\end{equation}
+で対称化してから次のステップへ渡すと、丸めによる反対称成分を抑えられる。さらに、$Q_w$、$R_v$、$P_0$ は対称行列として入力し、必要なら
+\begin{equation}
+  Q_w\leftarrow\frac{1}{2}(Q_w+Q_w^\T),
+  \qquad
+  R_v\leftarrow\frac{1}{2}(R_v+R_v^\T)
+\end{equation}
+と確認する。$R_v$ は通常正定値であるべきなので、分散が 0 に近い測定を完全に信じる設定は避け、小さな正の下限を置く。$Q_w$ は半正定値でもよいが、モデルが実際より硬すぎると $P$ が過小になり、革新に対して不自然に鈍い推定器になる。共分散の固有値を無理に切り上げる処理は最後の保護としては使えるが、それを常用しなければ動かない場合は、ノイズ共分散、離散化、単位スケーリング、観測モデルのいずれかを見直すべきである。
+
+状態のスケーリングも数値安定性に直結する。位置をメートル、角度をラジアン、温度を摂氏、電流をアンペアで混在させること自体は自然だが、それらの典型値が $10^{-6}$ と $10^6$ のように大きく離れると、$P$ や $S_k$ の条件数が悪くなる。状態を無次元化する、代表値で割って同程度の大きさにする、重みや共分散をそのスケールに合わせて変換する、といった処理は、理論式を変えるのではなく、同じ推定問題を計算しやすい座標で解く操作である。
+
+最後に、数値的に安定な実装であっても、統計的に妥当な推定になっているとは限らない。革新
+\begin{equation}
+  \nu_k=y_k-C_k\hat{x}_{k|k-1}
+\end{equation}
+と革新共分散 $S_k$ を使い、正規化革新二乗
+\begin{equation}
+  \epsilon_k=\nu_k^\T S_k^{-1}\nu_k
+\end{equation}
+を監視すると、$Q_w$ と $R_v$ の設定が極端でないかを調べられる。$\epsilon_k$ が継続的に大きすぎるなら、モデルが外乱を過小評価している、測定ノイズを小さく見積もりすぎている、またはモデル構造がずれている可能性がある。逆に小さすぎる状態が続くなら、共分散を過大に見積もっている可能性がある。Joseph 形式、平方根形式、疎な情報形式は計算を壊れにくくするための方法であり、革新系列の確認は確率モデルそのものを検査するための方法である。

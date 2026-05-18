@@ -1,0 +1,439 @@
+\subsection{ブロック線図と閉ループ結合}
+
+伝達関数は、複数の要素を接続した制御系を代数的に整理するために用いる。ブロック線図では、矢印が信号を表し、四角で囲まれたブロックが信号に作用する伝達関数を表す。たとえば
+\[
+  U \longrightarrow [\,G\,] \longrightarrow Y
+\]
+という記法は、零初期条件のもとで
+\begin{equation}
+  Y(s)=G(s)U(s)
+  \label{eq:block-basic}
+\end{equation}
+を意味する。ここで $U(s)$ と $Y(s)$ はラプラス変換された信号であり、ブロックそのものは時間領域の畳み込み作用を $s$ 領域で掛け算として表したものである。
+
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{0.75mm}
+\begin{picture}(160,65)
+  \small
+  \thinlines
+  \put(4,36){\makebox(0,0)[r]{$R(s)$}}
+  \put(6,36){\vector(1,0){24}}
+  \put(34,36){\circle{8}}
+  \put(28,41){\makebox(0,0){$+$}}
+  \put(28,30){\makebox(0,0){$-$}}
+  \put(38,36){\vector(1,0){14}}
+  \put(44,40){\makebox(0,0)[b]{$E(s)$}}
+  \put(52,30){\framebox(22,12){$C(s)$}}
+  \put(74,36){\vector(1,0){12}}
+  \put(90,36){\circle{8}}
+  \put(86,41){\makebox(0,0){$+$}}
+  \put(92,42){\makebox(0,0){$+$}}
+  \put(90,56){\makebox(0,0)[b]{$D(s)$}}
+  \put(90,54){\vector(0,-1){14}}
+  \put(94,36){\vector(1,0){10}}
+  \put(104,30){\framebox(22,12){$G(s)$}}
+  \put(126,36){\vector(1,0){8}}
+  \put(138,36){\circle{8}}
+  \put(134,41){\makebox(0,0){$+$}}
+  \put(140,42){\makebox(0,0){$+$}}
+  \put(138,56){\makebox(0,0)[b]{$D_y(s)$}}
+  \put(138,54){\vector(0,-1){14}}
+  \put(142,36){\vector(1,0){12}}
+  \put(158,36){\makebox(0,0)[l]{$Y(s)$}}
+  \put(150,36){\line(0,-1){24}}
+  \put(150,12){\vector(-1,0){26}}
+  \put(120,12){\circle{8}}
+  \put(116,17){\makebox(0,0){$+$}}
+  \put(124,17){\makebox(0,0){$+$}}
+  \put(120,0){\makebox(0,0)[t]{$N(s)$}}
+  \put(120,2){\vector(0,1){6}}
+  \put(116,12){\line(-1,0){82}}
+  \put(34,12){\vector(0,1){20}}
+  \put(73,15){\makebox(0,0)[b]{$Y_m(s)=Y(s)+N(s)$}}
+\end{picture}
+\caption{目標値、制御器、対象、外乱、測定ノイズを含む負帰還ブロック線図}
+\label{fig:negative-feedback-block}
+\end{figure}
+
+図\ref{fig:negative-feedback-block} のように、信号名を付けてから和差点の式を書くと、閉ループでどの信号がどの経路を通るかを確認しやすい。目標値は偏差 $E$ を通って制御器へ入り、入力側外乱 $D$ は制御対象の前で加わり、出力側外乱 $D_y$ は対象出力の後で加わる。測定ノイズ $N$ は実出力そのものではなく、帰還される測定値 $Y_m$ に加わる。
+
+\subsubsection{和差点と符号規約}
+
+複数の信号を足し合わせる点を和差点という。和差点では、各入力に付いた符号を明示する。入力を $X_1,\ldots,X_m$、各入力の符号を $\sigma_i\in\{+1,-1\}$ と書けば、出力 $Z$ は
+\begin{equation}
+  Z(s)=\sum_{i=1}^{m}\sigma_i X_i(s)
+  \label{eq:summing-junction}
+\end{equation}
+である。負帰還でよく現れる和差点は
+\[
+  R \stackrel{+}{\longrightarrow} \oplus,\qquad
+  Y \stackrel{-}{\longrightarrow} \oplus,\qquad
+  \oplus \longrightarrow E
+\]
+のように書け、このとき
+\begin{equation}
+  E(s)=R(s)-Y(s)
+  \label{eq:unity-error}
+\end{equation}
+である。符号を省略すると、正帰還と負帰還を取り違え、閉ループ分母の符号まで変わる。したがって、ブロック線図を式へ変換するときは、まずすべての和差点で符号付き和を書く。
+
+\subsubsection{直列結合と並列結合}
+
+直列結合
+\[
+  U \longrightarrow [\,G_1\,] \longrightarrow V
+    \longrightarrow [\,G_2\,] \longrightarrow Y
+\]
+では
+\begin{align}
+  V(s)&=G_1(s)U(s),\\
+  Y(s)&=G_2(s)V(s)
+\end{align}
+だから
+\begin{equation}
+  \frac{Y(s)}{U(s)}=G_2(s)G_1(s)
+  \label{eq:series-interconnection}
+\end{equation}
+である。単一入力単一出力の伝達関数では掛け算が可換なので $G_1G_2$ と書いても同じ値になるが、信号の流れとしては $G_1$ の出力が $G_2$ の入力になる。多入力多出力系では伝達関数行列の積の順序と次元が意味を持つため、接続順序を入れ替えてはならない。
+
+並列結合では、同じ入力を複数の経路へ分岐し、最後に和差点で足し合わせる。たとえば
+\[
+  U \longrightarrow [\,G_1\,] \stackrel{+}{\longrightarrow} \oplus,
+  \qquad
+  U \longrightarrow [\,G_2\,] \stackrel{+}{\longrightarrow} \oplus,
+  \qquad
+  \oplus \longrightarrow Y
+\]
+なら
+\begin{equation}
+  Y(s)=G_1(s)U(s)+G_2(s)U(s)
+  =\{G_1(s)+G_2(s)\}U(s)
+  \label{eq:parallel-interconnection}
+\end{equation}
+である。一方、下側経路が負号で和差点へ入るなら
+\begin{equation}
+  \frac{Y(s)}{U(s)}=G_1(s)-G_2(s)
+\end{equation}
+となる。分岐点は、同じ信号を複数の式へ複写する点であり、信号の大きさを分割する点ではない。電気回路や油圧回路のように負荷が分岐元のダイナミクスを変える場合には、その負荷効果を含むモデルを作ってからブロック線図にする必要がある。
+
+\subsubsection{フィードバック結合と感度関数}
+
+前向き経路を $P(s)$、帰還経路を $H(s)$ とする負帰還
+\[
+  R \stackrel{+}{\longrightarrow}\oplus\longrightarrow E
+  \longrightarrow [\,P\,]\longrightarrow Y,\qquad
+  Y\longrightarrow [\,H\,]\stackrel{-}{\longrightarrow}\oplus
+\]
+を考える。和差点と前向き経路の式は
+\begin{equation}
+  E(s)=R(s)-H(s)Y(s),\qquad
+  Y(s)=P(s)E(s)
+\end{equation}
+である。これらを代入すると
+\begin{align}
+  Y(s)&=P(s)\{R(s)-H(s)Y(s)\},\\
+  Y(s)&=P(s)R(s)-P(s)H(s)Y(s),\\
+  \{1+P(s)H(s)\}Y(s)&=P(s)R(s)
+\end{align}
+だから、目標値から出力までの閉ループ伝達関数は
+\begin{equation}
+  \frac{Y(s)}{R(s)}
+  =
+  \frac{P(s)}{1+P(s)H(s)}
+  \label{eq:feedback-general}
+\end{equation}
+である。正帰還では $E=R+HY$ となるため、分母は $1-PH$ に変わる。負帰還か正帰還かは、この一箇所の符号で決まる。
+
+制御器 $C(s)$ と制御対象 $G(s)$ を直列に接続し、単位負帰還 $H=1$ をかける場合には、開ループ伝達関数を
+\begin{equation}
+  L(s)=C(s)G(s)
+\end{equation}
+とおく。このとき
+\begin{align}
+  T(s)&=\frac{Y(s)}{R(s)}
+  =\frac{L(s)}{1+L(s)},
+  \label{eq:closed-loop}\\
+  S(s)&=\frac{E(s)}{R(s)}
+  =\frac{1}{1+L(s)}
+  \label{eq:sensitivity-complementary}
+\end{align}
+である。$S(s)$ を感度関数、$T(s)$ を相補感度関数という。単位負帰還では
+\begin{equation}
+  S(s)+T(s)=1
+\end{equation}
+が成り立つ。感度関数は、出力側に加わる外乱やモデル誤差が閉ループへ残る割合を表す基本量であり、相補感度関数は、目標値追従と測定ノイズの伝達に現れる基本量である。
+
+出力に外乱 $D_y(s)$ が加わり、測定値にノイズ $N(s)$ が加わる単位負帰還では
+\begin{equation}
+  Y(s)=G(s)C(s)\{R(s)-Y(s)-N(s)\}+D_y(s)
+\end{equation}
+である。$L=CG$ とすれば
+\begin{equation}
+  Y(s)=T(s)R(s)+S(s)D_y(s)-T(s)N(s)
+  \label{eq:sensitivity-paths}
+\end{equation}
+となる。したがって、同じ閉ループでも、目標値、外乱、ノイズは異なる伝達関数を通って出力へ現れる。
+
+\subsubsection{和差点と分岐点の移動}
+
+ブロック線図の等価変換では、変換前後で外部端子に現れる信号関係が同じでなければならない。たとえば、ブロック $G$ の前で信号 $U$ と外部信号 $D$ を足してから $G$ に入れる構成は
+\begin{equation}
+  Y(s)=G(s)\{U(s)+D(s)\}
+  =G(s)U(s)+G(s)D(s)
+  \label{eq:move-sum-before}
+\end{equation}
+である。したがって、この和差点を $G$ の後へ移すなら、$D$ 側にも $G$ を挿入しなければならない。逆に、$G$ の後で外部信号 $D$ を足す構成
+\begin{equation}
+  Y(s)=G(s)U(s)+D(s)
+  \label{eq:move-sum-after}
+\end{equation}
+を $G$ の前の和差点へ移すには
+\begin{equation}
+  Y(s)=G(s)\{U(s)+G(s)^{-1}D(s)\}
+\end{equation}
+とする必要がある。ただし $G^{-1}$ が存在しても、それが因果的、プロパー、安定に実装できるとは限らない。右半平面零点を持つ系や相対次数が正の系では、逆系が不安定またはインプロパーになることがある。
+
+分岐点についても同じ考え方を用いる。$G$ の後で分岐した信号は $Y=GU$ である。この分岐点を $G$ の前へ移すなら、分岐先の経路に $G$ を挿入して同じ $Y$ を作る必要がある。反対に、$G$ の前で分岐していた $U$ を $G$ の後から取り出すには、分岐先に $G^{-1}$ が必要になる。分岐点と和差点の移動は式変形としては有効であるが、逆伝達関数を追加する変換は実装可能性と内部安定性を別途確認する。
+
+\begin{example}[比例制御による二次閉ループ]
+制御対象
+\begin{equation}
+  G(s)=\frac{1}{s(s+2)}
+\end{equation}
+に比例制御器 $C(s)=K$ を直列に接続し、単位負帰還をかける。開ループ伝達関数は
+\begin{equation}
+  L(s)=C(s)G(s)=\frac{K}{s(s+2)}
+\end{equation}
+である。したがって、目標値から出力までの相補感度関数は
+\begin{align}
+  T(s)
+  &=\frac{L(s)}{1+L(s)}\\
+  &=
+  \frac{K}{s(s+2)+K}\\
+  &=
+  \frac{K}{s^2+2s+K},
+  \label{eq:proportional-loop-example}
+\end{align}
+感度関数は
+\begin{equation}
+  S(s)=\frac{1}{1+L(s)}
+  =
+  \frac{s(s+2)}{s^2+2s+K}
+\end{equation}
+である。$K=4$ と選べば
+\begin{equation}
+  T(s)=\frac{4}{s^2+2s+4}
+\end{equation}
+となる。標準二次形
+\begin{equation}
+  \frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+と比較すると、$\omega_n=2\,\mathrm{rad/s}$、$2\zeta\omega_n=2$ より $\zeta=0.5$ である。単位ステップ目標に対する応答は不足減衰となり、前節の過渡仕様をそのまま適用できる。一方、出力外乱 $D_y$ は $S(s)$ を通って出力へ現れるため、目標追従の伝達関数 $T(s)$ だけでは外乱抑制を評価できない。
+\end{example}
+
+\subsubsection{定常偏差と系の型}
+
+単位負帰還系では、感度関数
+\begin{equation}
+  S(s)=\frac{1}{1+L(s)}
+\end{equation}
+が目標値から偏差までの伝達関数である。したがって、参照入力 $R(s)$ に対して
+\begin{equation}
+  E(s)=S(s)R(s)=\frac{R(s)}{1+L(s)}
+  \label{eq:steady-error-transfer}
+\end{equation}
+となる。閉ループが安定で、$sE(s)$ のすべての極が左半平面にあるなら、最終値の定理により
+\begin{equation}
+  e_\infty=\lim_{t\to\infty}e(t)
+  =
+  \lim_{s\to0}sE(s)
+  =
+  \lim_{s\to0}s\frac{R(s)}{1+L(s)}
+  \label{eq:steady-error-final-value}
+\end{equation}
+である。
+
+\weq{steady-error-final-value} は、時間極限が存在することを前提にした式である。閉ループ極が右半平面にある場合には偏差が発散し、虚軸上に極がある場合には持続振動が残るため、定常偏差は定義できない。また、$sE(s)$ が原点に極を持つ場合には、ランプ入力に追従できない 0 型系のように偏差が有限値へ収束しない。定常偏差の公式は、閉ループ安定性を確認した後に適用する代数計算であり、安定判定の代用ではない。
+
+$s=0$ にある開ループ極の個数を、単位負帰還系の系の型という。$s=0$ 近傍で
+\begin{equation}
+  L(s)=\frac{K_0}{s^\nu}\Phi(s),
+  \qquad
+  \Phi(0)=1,\quad K_0\neq0
+  \label{eq:loop-type-factor}
+\end{equation}
+と書けるとき、非負整数 $\nu$ が系の型である。$\nu=0$ を 0 型、$\nu=1$ を 1 型、$\nu=2$ を 2 型という。型は、開ループに理想積分器 $1/s$ が何個含まれるかを数えている。ただし、原点極が不安定な極零相殺で消されている場合や、入力飽和により積分器が線形モデル通りに働かない場合には、この数え方だけで定常偏差を判断してはならない。
+
+\begin{definition}[位置・速度・加速度誤差定数]
+単位負帰還系の開ループ伝達関数 $L(s)$ に対して
+\begin{align}
+  K_p&=\lim_{s\to0}L(s),\\
+  K_v&=\lim_{s\to0}sL(s),\\
+  K_a&=\lim_{s\to0}s^2L(s)
+  \label{eq:error-constants}
+\end{align}
+を、それぞれ位置誤差定数、速度誤差定数、加速度誤差定数という。ここで $p$、$v$、$a$ は、位置、速度、加速度に相当するステップ、ランプ、放物線状の目標値に対応する記号である。
+\end{definition}
+
+単位ステップ、単位ランプ、単位放物線入力を
+\begin{equation}
+  r(t)=1,\qquad r(t)=t,\qquad r(t)=\frac{t^2}{2}
+\end{equation}
+とすると、ラプラス変換はそれぞれ
+\begin{equation}
+  R(s)=\frac{1}{s},\qquad
+  R(s)=\frac{1}{s^2},\qquad
+  R(s)=\frac{1}{s^3}
+\end{equation}
+である。これらを \weq{steady-error-final-value} に代入すると、有限な定常偏差が存在する場合には
+\begin{align}
+  e_\infty^{\mathrm{step}}
+  &=
+  \lim_{s\to0}\frac{1}{1+L(s)}
+  =
+  \frac{1}{1+K_p},
+  \label{eq:step-error-constant}\\
+  e_\infty^{\mathrm{ramp}}
+  &=
+  \lim_{s\to0}\frac{1}{s\{1+L(s)\}}
+  =
+  \frac{1}{K_v},
+  \label{eq:ramp-error-constant}\\
+  e_\infty^{\mathrm{parabolic}}
+  &=
+  \lim_{s\to0}\frac{1}{s^2\{1+L(s)\}}
+  =
+  \frac{1}{K_a}.
+  \label{eq:parabolic-error-constant}
+\end{align}
+ここで $1/\infty=0$、$1/0$ は有限値へ収束しないことを表す記法である。たとえば 1 型系では $K_p=\infty$ なのでステップ定常偏差は 0 になるが、$K_v$ が有限ならランプ定常偏差は $1/K_v$ として残る。ランプの偏差は一定値へ収束し、出力そのものは目標値と同じ傾きで増え続ける。
+
+\begin{example}[型と標準入力に対する定常偏差]
+開ループ伝達関数
+\begin{equation}
+  L_0(s)=\frac{K}{\tau s+1},
+  \qquad K>0,\quad \tau>0
+\end{equation}
+は 0 型である。閉ループ分母は $\tau s+1+K$ であり、$K>0$ なら安定である。誤差定数は
+\begin{equation}
+  K_p=K,\qquad K_v=0,\qquad K_a=0
+\end{equation}
+だから、単位ステップに対して
+\begin{equation}
+  e_\infty=\frac{1}{1+K}
+\end{equation}
+が残る。単位ランプや単位放物線に対しては、偏差は有限値へ収束しない。比例ゲイン $K$ を大きくすればステップ偏差は小さくなるが、閉ループ極、飽和、ノイズ増幅を無視して無限大にできるわけではない。
+
+次に
+\begin{equation}
+  L_1(s)=\frac{K}{s(\tau s+1)}
+\end{equation}
+を考える。この系は 1 型であり、閉ループ分母は $\tau s^2+s+K$ である。$K>0$、$\tau>0$ なら二次の安定条件を満たす。誤差定数は
+\begin{equation}
+  K_p=\infty,\qquad K_v=K,\qquad K_a=0
+\end{equation}
+なので、単位ステップ偏差は 0、単位ランプ偏差は
+\begin{equation}
+  e_\infty=\frac{1}{K}
+\end{equation}
+である。単位放物線に対しては偏差が有限値へ収束しない。
+
+2 型の安定な例として
+\begin{equation}
+  L_2(s)=\frac{4(s+1)}{s^2(s+2)}
+\end{equation}
+を用いる。閉ループ特性多項式は
+\begin{equation}
+  s^2(s+2)+4(s+1)=s^3+2s^2+4s+4
+\end{equation}
+である。三次の Routh--Hurwitz 条件では、係数が正であり、さらに $2\cdot4>4$ が成り立つため安定である。このとき
+\begin{equation}
+  K_p=\infty,\qquad K_v=\infty,\qquad K_a=2
+\end{equation}
+なので、単位ステップと単位ランプの定常偏差は 0、単位放物線の定常偏差は
+\begin{equation}
+  e_\infty=\frac{1}{2}
+\end{equation}
+となる。
+\end{example}
+
+\subsubsection{負荷外乱に対する定常応答}
+
+外乱の加わる位置によって、外乱から出力までの伝達関数は変わる。ここでは、制御対象の入力側に負荷外乱 $d(t)$ が加わる構造を考える。このとき
+\begin{equation}
+  Y(s)=G(s)\{U(s)+D(s)\},
+  \qquad
+  U(s)=C(s)\{R(s)-Y(s)\}
+\end{equation}
+である。整理すると
+\begin{equation}
+  Y(s)=\frac{L(s)}{1+L(s)}R(s)
+       +\frac{G(s)}{1+L(s)}D(s)
+  \label{eq:load-disturbance-output}
+\end{equation}
+を得る。目標値を 0 とし、負荷外乱が大きさ $d_0$ のステップ
+\begin{equation}
+  D(s)=\frac{d_0}{s}
+\end{equation}
+で入る場合、出力の定常値は、最終値の定理を適用できるなら
+\begin{equation}
+  y_{\infty,d}
+  =
+  d_0\lim_{s\to0}\frac{G(s)}{1+C(s)G(s)}
+  \label{eq:load-disturbance-final}
+\end{equation}
+である。
+
+制御対象を
+\begin{equation}
+  G(s)=\frac{1}{\tau s+1}
+\end{equation}
+とする。比例制御 $C(s)=K_P$ では
+\begin{equation}
+  y_{\infty,d}
+  =
+  d_0\frac{1}{1+K_P}
+\end{equation}
+となり、負荷外乱の影響が残る。これに対して PI 制御
+\begin{equation}
+  C(s)=K_P+\frac{K_I}{s},
+  \qquad K_I>0
+\end{equation}
+を用いると
+\begin{align}
+  \lim_{s\to0}\frac{G(s)}{1+C(s)G(s)}
+  &=
+  \lim_{s\to0}
+  \frac{sG(s)}{s+\{K_Ps+K_I\}G(s)}
+  =
+  0
+\end{align}
+であり、閉ループが安定ならステップ負荷外乱に対する出力定常値は 0 になる。物理的には、積分器がわずかな偏差を累積し、定常状態で外乱を打ち消す一定入力を作る。$r=0$、$y_\infty=0$ であれば、制御対象の定常入力は $u_\infty+d_0=0$ を満たすので、制御器は $u_\infty=-d_0$ を生成している。
+
+積分動作は、低周波で $L(s)$ を大きくして目標値追従と定値外乱抑制を改善する。一方で、積分器を増やせば常に良くなるわけではない。型を上げると閉ループ極の配置が変わり、振動性や安定余裕が悪化することがある。右半平面零点を持つ非最小位相系では、定常偏差を 0 にできても、逆応答や大きな過渡偏差を避けにくい。アクチュエータ飽和が起きると、線形モデルで仮定した入力を実機が出せず、積分器は偏差を蓄積してワインドアップを起こす。したがって、定常偏差の計算結果は、閉ループ安定性、非最小位相零点、入力飽和、アンチワインドアップの有無と併せて評価する。
+
+\subsubsection{閉ループ極と安定性}
+
+閉ループ伝達関数の分母は、閉ループ極を決める。単位負帰還では $1+C(s)G(s)=0$、一般の負帰還では $1+P(s)H(s)=0$ が閉ループの特性方程式である。
+
+\begin{theorem}[線形連続時間系の極による安定判定]
+真にプロパーな線形時不変系で、すべての閉ループ極が左半平面 $\operatorname{Re}s<0$ にあれば、内部応答は指数的に減衰する。右半平面の極があれば応答は発散する。
+\end{theorem}
+
+\begin{formula}[Routh--Hurwitz 判別法の低次形]
+二次多項式 $s^2+a_1s+a_0$ が安定であるための必要十分条件は
+\begin{equation}
+  a_1>0,\qquad a_0>0
+\end{equation}
+である。三次多項式 $s^3+a_2s^2+a_1s+a_0$ が安定であるための必要十分条件は
+\begin{equation}
+  a_2>0,
+  \quad a_1>0,
+  \quad a_0>0,
+  \quad a_2a_1>a_0
+\end{equation}
+である。
+\end{formula}
+
+三次条件の最後の不等式は、係数が正なら安定という単純な話ではないことを示す。極を直接解けない高次系では、Routh 表を作って第一列の符号変化を数える。

@@ -1,0 +1,213 @@
+\subsection{リレー制御から PID 制御への設計動機}
+
+モータで軸の角度を目標位置へ合わせる場合、設計者が最初に見る量は目標値 $r(t)$ と測定値 $y(t)$ の差である。偏差を
+\begin{equation}
+  e(t)=r(t)-y(t)
+\end{equation}
+とおけば、もっとも単純な制御は、偏差の符号で入力を切り替えるリレー制御である。
+\begin{equation}
+  u(t)=
+  \begin{cases}
+    U_+, & e(t)>0,\\
+    U_-, & e(t)<0
+  \end{cases}
+\end{equation}
+この形は実装しやすいが、目標付近で測定ノイズや遅れがあると入力が細かく切り替わり、チャタリングや持続振動を生む。比例制御
+\begin{equation}
+  u(t)=K_Pe(t)
+\end{equation}
+にすれば補正量は偏差に比例して連続的に変わる。しかし摩擦や一定外乱があると定常偏差が残り、慣性やむだ時間を持つ対象では $K_P$ を大きくしたときに振動しやすい。
+
+急な変化を抑えるには、偏差の変化率を使う PD 制御
+\begin{equation}
+  u(t)=K_Pe(t)+K_D\dot{e}(t)
+\end{equation}
+を考える。微分項は速く動きすぎる応答を減衰させる一方、測定ノイズを増幅しやすい。一定外乱による残留偏差を消すには、偏差の累積を使う PI 制御または PID 制御
+\begin{equation}
+  u(t)=K_Pe(t)+K_I\int_0^t e(\tau)\,d\tau+K_D\dot{e}(t)
+\end{equation}
+へ進む。ただし積分項は、入力飽和中にも偏差を蓄積するとワインドアップを起こし、飽和が解けた後の大きな行き過ぎを招く。
+
+したがって、リレー、P、PD、PI、PID は経験的な調整手順の名前ではなく、時間応答、安定性、入力飽和、外乱抑制、ノイズ感度を同時に評価する必要を示す入口である。比例ゲインを上げると低周波の偏差は小さくなりやすいが、位相余裕や入力余裕は減ることがある。この相反関係を定量化するため、以後は時間領域の過渡応答、Routh-Hurwitz 判別、根軌跡、Bode 線図、感度関数を順に用いる。
+
+\begin{practice}[リレー制御から PID 制御への設計動機の確認]
+一定負荷を受けるモータ位置制御を想定し、リレー制御、比例制御、PD 制御、PI 制御がそれぞれ改善する現象と新たに生じ得る注意点を一つずつ対応させよ。
+\end{practice}
+
+\subsection{古典制御の設計基準と評価指標}
+
+周波数領域の指標を時間応答・安定判別・補償器設計へ接続し、古典制御を設計手順として整理する。
+
+ここまでで、一次遅れ、二次遅れ、ラプラス変換、伝達関数、周波数応答を導入した。古典制御は、仕様、安定判別、補償器構成、実装上の制約を結び付ける設計体系である。本節では、標準的な項目を時間応答、根軌跡、周波数応答、感度関数の順に整理する。
+
+古典制御で反復して評価する設計基準は四つである。第一に閉ループの漸近安定性、第二に目標値応答の速さと振動の小ささ、第三に外乱およびモデル誤差に対するロバスト性、第四にアクチュエータが要求入力を実現できることである。これらを時間応答、根軌跡、周波数応答、感度関数で相補的に評価する。
+
+\subsection{二次系のステップ応答を最後まで解く}
+
+二次標準形
+\begin{equation}
+  G(s)=\frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+に単位ステップ入力 $R(s)=1/s$ を入れる。出力は
+\begin{equation}
+  Y(s)=G(s)R(s)=
+  \frac{\omega_n^2}{s(s^2+2\zeta\omega_n s+\omega_n^2)}
+  \label{eq:second-order-step-laplace}
+\end{equation}
+である。$0<\zeta<1$ の不足減衰の場合をまず扱う。分母の二次式を平方完成する。
+\begin{align}
+  s^2+2\zeta\omega_n s+\omega_n^2
+  &=(s+\zeta\omega_n)^2+\omega_n^2-\zeta^2\omega_n^2\\
+  &=(s+\zeta\omega_n)^2+
+    \omega_n^2(1-
+    \zeta^2).
+\end{align}
+ここで
+\begin{equation}
+  \omega_d=\omega_n\sqrt{1-\zeta^2}
+\end{equation}
+を減衰固有角周波数という。
+
+\begin{derivation}
+\weq{second-order-step-laplace} を
+\begin{equation}
+  Y(s)=\frac{1}{s}-
+  \frac{s+2\zeta\omega_n}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+と分ける。右辺を通分すると
+\begin{align}
+  \frac{1}{s}-\frac{s+2\zeta\omega_n}{s^2+2\zeta\omega_n s+\omega_n^2}
+  &=\frac{s^2+2\zeta\omega_n s+\omega_n^2-s(s+2\zeta\omega_n)}{s(s^2+2\zeta\omega_n s+\omega_n^2)}\\
+  &=\frac{\omega_n^2}{s(s^2+2\zeta\omega_n s+\omega_n^2)}
+\end{align}
+となり、確かに元の $Y(s)$ と一致する。さらに
+\begin{equation}
+  s+2\zeta\omega_n=(s+\zeta\omega_n)+\zeta\omega_n
+\end{equation}
+なので
+\begin{align}
+  Y(s)
+  &=\frac{1}{s}-
+  \frac{s+\zeta\omega_n}{(s+\zeta\omega_n)^2+
+  \omega_d^2}
+  -\frac{\zeta\omega_n}{(s+\zeta\omega_n)^2+
+  \omega_d^2}.
+\end{align}
+ラプラス逆変換の公式
+\begin{align}
+  \mathcal{L}^{-1}\left\{\frac{s+a}{(s+a)^2+b^2}\right\}&=e^{-at}\cos bt,\\
+  \mathcal{L}^{-1}\left\{\frac{b}{(s+a)^2+b^2}\right\}&=e^{-at}\sin bt
+\end{align}
+より、
+\begin{equation}
+  y(t)=1-e^{-\zeta\omega_n t}\cos\omega_d t
+  -\frac{\zeta\omega_n}{\omega_d}e^{-\zeta\omega_n t}\sin\omega_d t.
+\end{equation}
+$\omega_d=\omega_n\sqrt{1-\zeta^2}$ を代入すると
+\begin{equation}
+  y(t)=1-e^{-\zeta\omega_n t}
+  \left(\cos\omega_d t+\frac{\zeta}{\sqrt{1-\zeta^2}}\sin\omega_d t\right)
+  \label{eq:underdamped-step-response}
+\end{equation}
+である。
+\end{derivation}
+
+\subsubsection{ピーク時刻とオーバーシュート}
+
+ピークは $\dot{y}(t)=0$ で決まる。ここでは、位相を無理にまとめず、\weq{underdamped-step-response} を直接微分して最初のピーク時刻と行き過ぎ量を求める。
+
+\begin{derivation}
+\weq{underdamped-step-response} の括弧内を
+\begin{equation}
+  q(t)=\cos\omega_d t+
+  \frac{\zeta}{\sqrt{1-\zeta^2}}\sin\omega_d t
+\end{equation}
+とおくと、$y(t)=1-e^{-\zeta\omega_n t}q(t)$ である。したがって
+\begin{align}
+  \dot{y}(t)
+  &=-\frac{d}{dt}\left\{e^{-\zeta\omega_n t}q(t)\right\}\\
+  &=e^{-\zeta\omega_n t}
+  \left\{\zeta\omega_n q(t)-\dot{q}(t)\right\}.
+\end{align}
+ここで
+\begin{equation}
+  \dot{q}(t)=
+  -\omega_d\sin\omega_d t+
+  \frac{\zeta\omega_d}{\sqrt{1-\zeta^2}}\cos\omega_d t
+\end{equation}
+なので、
+\begin{align}
+  \dot{y}(t)
+  &=e^{-\zeta\omega_n t}
+  \left[
+  \left(\zeta\omega_n-
+  \frac{\zeta\omega_d}{\sqrt{1-\zeta^2}}\right)\cos\omega_d t
+  +\left(
+  \frac{\zeta^2\omega_n}{\sqrt{1-\zeta^2}}+\omega_d
+  \right)\sin\omega_d t
+  \right].
+\end{align}
+$\omega_d=\omega_n\sqrt{1-\zeta^2}$ より、余弦の係数は
+\begin{equation}
+  \zeta\omega_n-
+  \frac{\zeta\omega_d}{\sqrt{1-\zeta^2}}
+  =\zeta\omega_n-\zeta\omega_n=0
+\end{equation}
+と消える。また、正弦の係数は
+\begin{align}
+  \frac{\zeta^2\omega_n}{\sqrt{1-\zeta^2}}+\omega_d
+  &=
+  \frac{\zeta^2\omega_n}{\sqrt{1-\zeta^2}}
+  +\omega_n\sqrt{1-\zeta^2}\\
+  &=\frac{\omega_n}{\sqrt{1-\zeta^2}}
+\end{align}
+である。したがって
+\begin{equation}
+  \dot{y}(t)=
+  \frac{\omega_n}{\sqrt{1-\zeta^2}}
+  e^{-\zeta\omega_n t}\sin\omega_d t
+\end{equation}
+となる。指数関数と係数は正なので、$\dot{y}(t)=0$ は
+\begin{equation}
+  \sin\omega_d t=0
+\end{equation}
+で決まる。$t>0$ で最初にこれを満たす時刻は
+\begin{equation}
+  t_p=\frac{\pi}{\omega_d}
+\end{equation}
+であり、$0<t<\pi/\omega_d$ では $\sin\omega_d t>0$、$\pi/\omega_d<t<2\pi/\omega_d$ では $\sin\omega_d t<0$ なので、これは最初のピークである。
+
+この時刻では
+\begin{equation}
+  \cos\omega_d t_p=\cos\pi=-1,
+  \qquad
+  \sin\omega_d t_p=\sin\pi=0
+\end{equation}
+だから、
+\begin{align}
+  y(t_p)
+  &=1-e^{-\zeta\omega_n t_p}(-1)\\
+  &=1+e^{-\zeta\omega_n t_p}.
+\end{align}
+最終値 1 からの行き過ぎ量は
+\begin{align}
+  M_p&=y(t_p)-1\\
+  &=\exp(-\zeta\omega_n t_p)\\
+  &=\exp\left(-\zeta\omega_n\frac{\pi}{\omega_d}\right)\\
+  &=\exp\left(-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}\right).
+\end{align}
+百分率で表すと $100M_p\%$ である。
+\end{derivation}
+
+整定時間の目安も式から出る。振動部分の包絡線は $e^{-\zeta\omega_n t}$ なので、2\% 整定なら
+\begin{align}
+  e^{-\zeta\omega_n t}&=0.02,\\
+  -\zeta\omega_n t&=\log 0.02,\\
+  t&=\frac{-\log 0.02}{\zeta\omega_n}\simeq
+  \frac{3.9}{\zeta\omega_n}.
+\end{align}
+このため実務上は
+\begin{equation}
+  T_s\simeq\frac{4}{\zeta\omega_n}
+\end{equation}
+を使う。これは丸暗記の経験則ではなく、指数包絡線が 2\% まで下がる時刻の近似である。

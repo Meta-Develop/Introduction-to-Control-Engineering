@@ -1,0 +1,223 @@
+\subsection{入出力微分方程式と状態空間実現の対応}
+
+物理法則から得たモデルは、内部の蓄積量を状態として残すと状態空間モデルになる。一方、外から加える入力 $u$ と外へ取り出す出力 $y$ だけに注目すると、内部状態を消去した入出力微分方程式としても書ける。両者は別の対象を表しているのではなく、同じ線形時不変モデルを異なる座標と情報量で表したものである。
+
+\subsubsection{入出力微分方程式の標準形}
+
+一入力一出力の線形時不変モデルでは、定数係数の入出力微分方程式を
+\begin{equation}
+  a_n y^{(n)}(t)+a_{n-1}y^{(n-1)}(t)+\cdots+a_1\dot{y}(t)+a_0y(t)
+  =
+  b_m u^{(m)}(t)+b_{m-1}u^{(m-1)}(t)+\cdots+b_1\dot{u}(t)+b_0u(t)
+  \label{eq:iomodel-differential-form}
+\end{equation}
+と書く。ここで $a_n\ne0$、$y^{(i)}=\dd^i y/\dd t^i$、$u^{(i)}=\dd^i u/\dd t^i$ である。通常の有限次元状態空間モデルから入力を微分せずに作られる伝達関数はプロパーなので、入力側の最高階数は $m\le n$ である。$m=n$ の項は入力が出力へ状態を経ずに同時に現れる直達項に対応し、$m<n$ なら直達項をもたない。
+
+\weq{iomodel-differential-form} は、入力と出力の関係を直接表すため、実験データからモデル次数や係数を同定するときに扱いやすい。しかし、初期温度、コンデンサ電圧、速度のような内部に蓄えられた情報は、出力とその微分の初期値として間接的にしか現れない。状態空間モデルは、この内部情報を状態ベクトルとして明示する表現である。
+
+\begin{definition}[実現]
+伝達関数または入出力微分方程式と同じ零初期状態の入出力関係をもつ状態空間モデル
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t),\\
+  y(t)&=Cx(t)+Du(t)
+\end{align}
+を、その入出力モデルの実現という。
+\end{definition}
+
+分母をモニックに正規化したプロパーな伝達関数を
+\begin{equation}
+  G(s)=D+\frac{\bar{b}_{n-1}s^{n-1}+\bar{b}_{n-2}s^{n-2}+\cdots+\bar{b}_1s+\bar{b}_0}
+  {s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0}
+  \label{eq:proper-transfer-realization-source}
+\end{equation}
+と書く。このとき一つの実現は
+\begin{align}
+  \dot{x}(t)
+  &=
+  \begin{bmatrix}
+    0&1&0&\cdots&0\\
+    0&0&1&\cdots&0\\
+    \vdots&\vdots&\vdots&\ddots&\vdots\\
+    0&0&0&\cdots&1\\
+    -a_0&-a_1&-a_2&\cdots&-a_{n-1}
+  \end{bmatrix}x(t)
+  +\begin{bmatrix}
+    0\\
+    0\\
+    \vdots\\
+    0\\
+    1
+  \end{bmatrix}u(t),\label{eq:controllable-canonical-realization}\\
+  y(t)&=
+  \begin{bmatrix}
+    \bar{b}_0&\bar{b}_1&\bar{b}_2&\cdots&\bar{b}_{n-1}
+  \end{bmatrix}x(t)+Du(t)
+\end{align}
+である。この形を可制御正準形という。状態の成分は、必ずしも温度、電圧、位置のような物理量そのものではない。入出力関係を再現するために作った内部座標であり、物理法則から選んだ状態とは異なる単位や意味をもつことがある。
+
+\subsubsection{状態方程式から伝達関数への導出}
+
+連続時間の線形時不変状態方程式
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t),\label{eq:ss-to-tf-state}\\
+  y(t)&=Cx(t)+Du(t)\label{eq:ss-to-tf-output}
+\end{align}
+を考える。$x\in\R^n$、$u\in\R^m$、$y\in\R^p$ とし、$A,B,C,D$ は定数行列である。$D$ は直達行列であり、入力が状態の積分を待たずに出力へ現れる成分を表す。
+
+\begin{derivation}
+\weq{ss-to-tf-state} をラプラス変換する。$X(s)$、$U(s)$、$Y(s)$ をそれぞれ $x(t)$、$u(t)$、$y(t)$ のラプラス変換とすると、微分公式より
+\begin{equation}
+  sX(s)-x(0)=AX(s)+BU(s)
+\end{equation}
+である。これを $X(s)$ について解くと
+\begin{align}
+  (sI-A)X(s)&=x(0)+BU(s),\\
+  X(s)&=(sI-A)^{-1}x(0)+(sI-A)^{-1}BU(s)
+\end{align}
+を得る。ただし、$sI-A$ が正則な $s$ を考える。出力方程式のラプラス変換は
+\begin{equation}
+  Y(s)=CX(s)+DU(s)
+\end{equation}
+であるから、
+\begin{equation}
+  Y(s)=C(sI-A)^{-1}x(0)+\{C(sI-A)^{-1}B+D\}U(s)
+  \label{eq:ss-laplace-with-initial}
+\end{equation}
+となる。零初期状態 $x(0)=0$ では、入力から出力への伝達関数行列は
+\begin{equation}
+  G(s)=C(sI-A)^{-1}B+D
+  \label{eq:ss-transfer-function}
+\end{equation}
+である。
+\end{derivation}
+
+\weq{ss-laplace-with-initial} の第一項は、入力とは独立に初期状態から生じる自然応答である。したがって伝達関数 $G(s)$ は「初期状態を 0 にそろえたとき、入力が出力へどう伝わるか」を表す。初期状態が 0 でなければ、同じ入力を加えても出力は変わる。実験で伝達関数を測るときに、対象を十分静止させる、コンデンサを放電する、温度を基準値へ戻す、といった操作を行うのは、初期状態による応答を入力応答から分けるためである。
+
+\subsubsection{最小実現と非最小実現}
+
+同じ伝達関数を表す状態空間モデルは一つではない。正則行列 $T$ を用いて座標変換 $x=Tz$ を行うと
+\begin{align}
+  \dot{z}(t)&=T^{-1}ATz(t)+T^{-1}Bu(t),\\
+  y(t)&=CTz(t)+Du(t)
+\end{align}
+となるが、伝達関数は
+\begin{equation}
+  CT\{sI-T^{-1}AT\}^{-1}T^{-1}B+D
+  =
+  C(sI-A)^{-1}B+D
+\end{equation}
+のまま変わらない。これは、状態座標の選び方が変わっても零初期状態の入出力関係は同じであることを示している。
+
+さらに、入出力に全く現れない余分な状態を追加しても、伝達関数は変わらない。たとえば
+\begin{align}
+  \dot{x}_1&=-x_1+u,\\
+  \dot{x}_2&=-5x_2,\\
+  y&=x_1
+\end{align}
+では、$x_2$ は入力からも出力からも切り離されている。零初期状態の伝達関数は
+\begin{equation}
+  G(s)=\frac{1}{s+1}
+\end{equation}
+であり、$x_2$ に対応する固有値 $-5$ は伝達関数の極として現れない。このように余分な状態を含む実現を非最小実現という。これに対して、入力から動かせる状態だけをもち、かつ出力から区別できる状態だけをもつ実現を最小実現という。最小実現の次数は、極零相殺を除いた伝達関数の分母次数と一致する。可制御性と可観測性を用いた厳密な判定は、後の状態空間制御の章で扱う。
+
+\subsubsection{極と零点の初等的解釈}
+
+一入力一出力のプロパーな伝達関数を
+\begin{equation}
+  G(s)=\frac{N(s)}{P(s)}
+\end{equation}
+と書く。共通因子を約分した後の分母 $P(s)$ の根を極、分子 $N(s)$ の根を零点という。極は、零入力でも残る自然応答の指数関数 $e^{pt}$ の指数 $p$ に対応する。実部が負ならそのモードは減衰し、実部が正なら増大する。状態行列 $A$ の固有値は内部モードの候補であるが、非最小実現では入力から動かせない、または出力に現れない固有値が伝達関数の極から消えることがある。
+
+零点は、入力によって作られる複数の経路が出力で打ち消し合う複素数である。$s=z$ で $N(z)=0$ なら、形式的には $e^{zt}$ 型の入力成分に対する零初期状態の出力が打ち消される。零点は応答の立ち上がり、逆応答、制御器で無理に打ち消してよいかどうかに関わる。極が主に自然な時間スケールを表すのに対し、零点は入力から出力へ至る経路の符号と相対的な速さを表す量として解釈できる。
+
+\subsubsection{質量ばねダンパ系の双方向変換例}
+
+質量ばねダンパ系
+\begin{equation}
+  M\ddot{q}(t)+c\dot{q}(t)+kq(t)=u(t),
+  \qquad y(t)=q(t)
+  \label{eq:msd-io-for-realization}
+\end{equation}
+を考える。$M>0$、$c\ge0$、$k>0$ とし、入力 $u$ の単位は N、出力 $y$ の単位は m である。物理状態を
+\begin{equation}
+  x(t)=\begin{bmatrix}q(t)\\ \dot{q}(t)\end{bmatrix}
+\end{equation}
+と選ぶと
+\begin{align}
+  \dot{x}(t)&=
+  \begin{bmatrix}
+    0&1\\
+    -k/M&-c/M
+  \end{bmatrix}x(t)
+  +\begin{bmatrix}
+    0\\
+    1/M
+  \end{bmatrix}u(t),\\
+  y(t)&=\begin{bmatrix}1&0\end{bmatrix}x(t)
+  \label{eq:msd-physical-realization}
+\end{align}
+となる。この状態空間モデルから伝達関数を計算する。ここでは
+\begin{equation}
+  sI-A=
+  \begin{bmatrix}
+    s&-1\\
+    k/M&s+c/M
+  \end{bmatrix}
+\end{equation}
+であり、行列式は
+\begin{equation}
+  \det(sI-A)=s^2+\frac{c}{M}s+\frac{k}{M}
+\end{equation}
+である。したがって
+\begin{align}
+  (sI-A)^{-1}B
+  &=
+  \frac{1}{s^2+(c/M)s+k/M}
+  \begin{bmatrix}
+    s+c/M&1\\
+    -k/M&s
+  \end{bmatrix}
+  \begin{bmatrix}
+    0\\
+    1/M
+  \end{bmatrix}\\
+  &=
+  \frac{1}{s^2+(c/M)s+k/M}
+  \begin{bmatrix}
+    1/M\\
+    s/M
+  \end{bmatrix}.
+\end{align}
+$C=\begin{bmatrix}1&0\end{bmatrix}$、$D=0$ なので
+\begin{equation}
+  G(s)=C(sI-A)^{-1}B
+  =
+  \frac{1/M}{s^2+(c/M)s+k/M}
+  =
+  \frac{1}{Ms^2+cs+k}
+  \label{eq:msd-transfer-from-state}
+\end{equation}
+を得る。
+
+逆に、伝達関数 \weq{msd-transfer-from-state} から入出力微分方程式へ戻す。零初期状態では
+\begin{equation}
+  (Ms^2+cs+k)Y(s)=U(s)
+\end{equation}
+である。ラプラス変換の微分公式を時間領域へ戻すと
+\begin{equation}
+  M\ddot{y}(t)+c\dot{y}(t)+ky(t)=u(t)
+\end{equation}
+であり、$y=q$ と置けば \weq{msd-io-for-realization} と一致する。同じ伝達関数を可制御正準形で実現するなら
+\begin{align}
+  \dot{z}(t)&=
+  \begin{bmatrix}
+    0&1\\
+    -k/M&-c/M
+  \end{bmatrix}z(t)
+  +\begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}u(t),\\
+  y(t)&=\begin{bmatrix}1/M&0\end{bmatrix}z(t)
+\end{align}
+としてもよい。この $z$ は物理状態 $[q,\dot{q}]^\T$ ではないが、零初期状態の入力 $u$ から出力 $y$ への関係は同じである。物理的解釈を重視するときは $x=[q,\dot{q}]^\T$ が自然であり、係数比較や設計計算を整理したいときは正準形が便利である。

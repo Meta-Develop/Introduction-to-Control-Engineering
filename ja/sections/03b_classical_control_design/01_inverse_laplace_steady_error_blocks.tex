@@ -1,0 +1,140 @@
+\subsection{逆ラプラス変換と極零点の解釈}
+
+古典制御では、$s$ 領域の式を時間応答へ戻す計算を何度も行う。基本は部分分数分解である。
+
+\begin{formula}[単純極の部分分数分解]
+相異なる極 $p_1,\ldots,p_n$ を持つ真にプロパーな伝達関数
+\begin{equation}
+  F(s)=\frac{N(s)}{(s-p_1)(s-p_2)\cdots(s-p_n)}
+\end{equation}
+は
+\begin{equation}
+  F(s)=\sum_{i=1}^{n}\frac{r_i}{s-p_i}
+\end{equation}
+と書ける。係数 $r_i$ を留数と呼び、
+\begin{equation}
+  r_i=\lim_{s\to p_i}(s-p_i)F(s)
+\end{equation}
+で求まる。
+\end{formula}
+
+\begin{derivation}
+例として
+\begin{equation}
+  F(s)=\frac{3s+5}{(s+1)(s+4)}
+\end{equation}
+を考える。部分分数分解を
+\begin{equation}
+  F(s)=\frac{A}{s+1}+\frac{B}{s+4}
+\end{equation}
+と置く。通分すると
+\begin{equation}
+  3s+5=A(s+4)+B(s+1)
+\end{equation}
+である。$s=-1$ を代入すると
+\begin{equation}
+  -3+5=A(3)+B(0)
+\end{equation}
+なので $A=2/3$。$s=-4$ を代入すると
+\begin{equation}
+  -12+5=A(0)+B(-3)
+\end{equation}
+なので $B=7/3$。したがって
+\begin{equation}
+  F(s)=\frac{2/3}{s+1}+\frac{7/3}{s+4}
+\end{equation}
+であり、逆ラプラス変換は
+\begin{equation}
+  f(t)=\frac{2}{3}e^{-t}+\frac{7}{3}e^{-4t}
+\end{equation}
+である。
+\end{derivation}
+
+複素共役極 $-\sigma\pm j\omega$ は、時間領域では
+\begin{equation}
+  e^{-\sigma t}\cos\omega t,
+  \qquad
+  e^{-\sigma t}\sin\omega t
+\end{equation}
+の組として現れる。したがって、実部は減衰、虚部は振動を決める。零点は指数成分そのものを新しく作るのではなく、それぞれの指数成分の重みを変える。右半平面零点があると、最終的に正へ動く応答が初めに逆向きへ動くことがある。
+
+\subsection{定常偏差と最終値の定理}
+
+速く安定に動いても、最後に目標値からずれていれば制御として困る。そこで定常偏差を調べる。
+
+\begin{theorem}[最終値の定理]
+$sF(s)$ のすべての極が左半平面にあるとき、
+\begin{equation}
+  \lim_{t\to\infty}f(t)=\lim_{s\to0}sF(s)
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+負帰還で開ループ $L(s)=C(s)G(s)$ とすると、偏差は
+\begin{align}
+  E(s)&=R(s)-Y(s),\\
+  Y(s)&=L(s)E(s).
+\end{align}
+よって
+\begin{align}
+  E(s)&=R(s)-L(s)E(s),\\
+  \{1+L(s)\}E(s)&=R(s),\\
+  E(s)&=\frac{1}{1+L(s)}R(s)=S(s)R(s).
+\end{align}
+単位ステップ $R(s)=1/s$ に対する定常偏差は、最終値の定理より
+\begin{align}
+  e_\infty&=\lim_{s\to0}sE(s)\\
+  &=\lim_{s\to0}s\frac{1}{1+L(s)}\frac{1}{s}\\
+  &=\frac{1}{1+L(0)}.
+\end{align}
+
+\begin{definition}[型と誤差定数]
+開ループ $L(s)$ が原点に持つ極の個数を系の型という。位置、速度、加速度誤差定数を
+\begin{align}
+  K_p&=\lim_{s\to0}L(s),\\
+  K_v&=\lim_{s\to0}sL(s),\\
+  K_a&=\lim_{s\to0}s^2L(s)
+\end{align}
+と定義する。
+\end{definition}
+
+ステップ、ランプ、放物線入力に対する定常偏差は、閉ループが安定であるという前提のもとで
+\begin{align}
+  e_{step}&=\frac{1}{1+K_p},\\
+  e_{ramp}&=\frac{1}{K_v},\\
+  e_{parabolic}&=\frac{1}{K_a}
+\end{align}
+となる。積分器 $1/s$ を制御器に入れると原点極が一つ増えるため、ステップ偏差を 0 にできる。ただし位相遅れも増えるため、安定余裕は悪くなりやすい。
+
+\subsection{ブロック線図の全経路}
+
+閉ループ評価は目標値応答だけでは不十分である。入力外乱、出力外乱、測定ノイズ、制御入力も同時に評価する必要がある。開ループ $L=CG$、感度 $S=1/(1+L)$、相補感度 $T=L/(1+L)$ とする。
+
+入力外乱 $d_i$ が対象入力に加わると
+\begin{align}
+  y&=G(u+d_i),\\
+  u&=C(r-y).
+\end{align}
+代入して
+\begin{align}
+  y&=G\{C(r-y)+d_i\},\\
+  y+GCy&=GCr+Gd_i,\\
+  (1+L)y&=Lr+Gd_i.
+\end{align}
+したがって
+\begin{equation}
+  y=Tr+GSd_i.
+\end{equation}
+出力外乱 $d_o$ が出力に直接足される場合は
+\begin{equation}
+  y=Tr+Sd_o
+\end{equation}
+となる。測定ノイズ $n$ がセンサに入ると、制御器に入る偏差は $r-(y+n)$ なので
+\begin{equation}
+  y=Tr-Tn
+\end{equation}
+となる。制御入力は
+\begin{equation}
+  u=CSr-CSd_o-CSn
+\end{equation}
+の形で現れる。つまり、出力だけでなく $u$ も確認しなければ、アクチュエータ飽和やノイズ増幅を検出できない。

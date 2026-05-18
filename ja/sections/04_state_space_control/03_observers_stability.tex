@@ -1,0 +1,247 @@
+\subsection{オブザーバと分離定理}
+
+すべての状態が測れるとは限らない。位置だけを測る質量ばねダンパ系では、速度は差分で粗く作れるが、ノイズが増幅されやすい。そこでモデルと出力のずれを使って状態を推定する。直達項 $D$ がある場合は既知入力から $y-Du$ を作っておけばよいので、ここでは簡単のため $D=0$ として
+\begin{equation}
+  y=Cx
+\end{equation}
+を使う。
+
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{0.70mm}
+\begin{picture}(174,84)
+  \scriptsize
+  \thinlines
+  \put(5,60){\makebox(0,0)[r]{$r_u$}}
+  \put(8,60){\vector(1,0){20}}
+  \put(32,60){\circle{8}}
+  \put(27,65){\makebox(0,0){$+$}}
+  \put(27,53){\makebox(0,0){$-$}}
+  \put(36,60){\vector(1,0){18}}
+  \put(45,64){\makebox(0,0)[b]{$u$}}
+  \put(54,53){\framebox(34,14){対象}}
+  \put(88,60){\vector(1,0){20}}
+  \put(112,60){\circle{8}}
+  \put(108,65){\makebox(0,0){$+$}}
+  \put(108,53){\makebox(0,0){$-$}}
+  \put(108,67){\makebox(0,0)[b]{$y$}}
+  \put(116,60){\vector(1,0){20}}
+  \put(127,64){\makebox(0,0)[b]{$e_y=y-\hat{y}$}}
+  \put(136,52){\line(0,-1){20}}
+  \put(136,32){\vector(-1,0){12}}
+  \put(74,20){\framebox(50,18){\shortstack{オブザーバ\\$A\hat{x}+Bu+Le_y$}}}
+  \put(45,60){\line(0,-1){31}}
+  \put(45,29){\vector(1,0){29}}
+  \put(57,32){\makebox(0,0)[b]{$u$}}
+  \put(124,29){\vector(1,0){18}}
+  \put(144,29){\makebox(0,0)[l]{$\hat{x}$}}
+  \put(142,29){\line(0,1){17}}
+  \put(142,46){\vector(-1,0){18}}
+  \put(124,41){\framebox(18,10){$C$}}
+  \put(124,46){\vector(-1,0){8}}
+  \put(116,46){\line(0,1){10}}
+  \put(116,56){\line(-1,0){4}}
+  \put(112,56){\vector(0,1){4}}
+  \put(121,48){\makebox(0,0)[r]{$\hat{y}$}}
+  \put(142,29){\line(0,-1){14}}
+  \put(142,15){\vector(-1,0){22}}
+  \put(98,9){\framebox(22,12){$K$}}
+  \put(98,15){\vector(-1,0){66}}
+  \put(32,15){\vector(0,1){41}}
+  \put(70,18){\makebox(0,0)[b]{$K\hat{x}$}}
+\end{picture}
+\caption{推定状態を用いる状態フィードバックと Luenberger オブザーバの信号経路。対象とオブザーバには同じ制御入力 $u$ が入り、測定値 $y$ と推定出力 $\hat{y}=C\hat{x}$ の差 $e_y$ が推定誤差を修正する。}
+\label{fig:observer-separation-block}
+\end{figure}
+
+図\ref{fig:observer-separation-block} では、制御器が真の状態 $x$ ではなく推定状態 $\hat{x}$ を使うため、入力は $u=-K\hat{x}+r_u$ になる。測定値 $y$ は対象から得られる信号であり、推定出力 $\hat{y}=C\hat{x}$ はオブザーバ内部のモデルから作る信号である。両者の差 $e_y=y-\hat{y}$ が、観測された誤差を状態推定へ戻す経路である。
+
+Luenberger オブザーバは
+\begin{equation}
+  \dot{\hat{x}}=A\hat{x}+Bu+L(y-C\hat{x})
+  \label{eq:luenberger-observer}
+\end{equation}
+で定義される。$\hat{x}$ は推定状態、$L\in\R^{n\times p}$ はオブザーバゲインである。項 $y-C\hat{x}$ は、実測出力と推定出力の差であり、イノベーションまたは出力誤差と呼ばれる。
+
+推定誤差を
+\begin{equation}
+  e_x=x-\hat{x}
+\end{equation}
+とおくと、
+\begin{align}
+  \dot{e}_x
+  &=\dot{x}-\dot{\hat{x}}\\
+  &=(Ax+Bu)-\{A\hat{x}+Bu+L(Cx-C\hat{x})\}\\
+  &=(A-LC)(x-\hat{x})\\
+  &=(A-LC)e_x
+  \label{eq:observer-error-dynamics}
+\end{align}
+である。したがって、推定誤差の減衰速度は $A-LC$ の固有値で決まる。$(A,C)$ が可観測なら、双対性により $(A^\T,C^\T)$ は可制御なので、状態フィードバックの極配置と同じ計算を転置系へ適用して $L$ を設計できる。
+
+\subsubsection{二次系のオブザーバゲイン例}
+
+状態フィードバックの例と同じ
+\begin{equation}
+  A=\begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+\end{equation}
+に対し、位置だけを測る
+\begin{equation}
+  C=\begin{bmatrix}1&0\end{bmatrix}
+\end{equation}
+を考える。可観測行列は
+\begin{equation}
+  \mathcal{O}=\begin{bmatrix}C\\ CA\end{bmatrix}
+  =\begin{bmatrix}1&0\\0&1\end{bmatrix}
+\end{equation}
+であり、$\rank\mathcal{O}=2$ だから可観測である。オブザーバゲインを
+\begin{equation}
+  L=\begin{bmatrix}l_1\\l_2\end{bmatrix}
+\end{equation}
+とおくと、
+\begin{equation}
+  A-LC
+  =\begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+   -\begin{bmatrix}l_1\\l_2\end{bmatrix}
+    \begin{bmatrix}1&0\end{bmatrix}
+  =\begin{bmatrix}-l_1&1\\-2-l_2&-3\end{bmatrix}
+\end{equation}
+である。特性多項式は
+\begin{align}
+  \det\{sI-(A-LC)\}
+  &=\det\begin{bmatrix}s+l_1&-1\\2+l_2&s+3\end{bmatrix}\\
+  &=(s+l_1)(s+3)+(2+l_2)\\
+  &=s^2+(l_1+3)s+(3l_1+2+l_2).
+\end{align}
+推定誤差を制御応答より少し速く消したいとして、オブザーバ極を $-6,-7$ に置くと
+\begin{equation}
+  p_o(s)=(s+6)(s+7)=s^2+13s+42
+\end{equation}
+である。係数比較から
+\begin{equation}
+  l_1+3=13,\qquad 3l_1+2+l_2=42
+\end{equation}
+となり、
+\begin{equation}
+  L=\begin{bmatrix}10\\10\end{bmatrix}
+\end{equation}
+を得る。実際、
+\begin{equation}
+  A-LC=\begin{bmatrix}-10&1\\-12&-3\end{bmatrix}
+\end{equation}
+であり、その特性多項式は $s^2+13s+42$ である。
+
+オブザーバ極を左へ大きく動かすほど、初期推定誤差は速く消える。しかし、イノベーション $y-C\hat{x}$ には測定ノイズも含まれるので、$L$ を大きくしすぎると推定状態がノイズに敏感になる。可観測性と極配置は代数的な可能性を与えるが、実装ではセンサ帯域、サンプリング周期、量子化、モデル誤差を合わせて確認する。
+
+推定状態を使って $u=-K\hat{x}$ とする。$e_x=x-\hat{x}$ なので $\hat{x}=x-e_x$ であり、
+\begin{align}
+  \dot{x}
+  &=Ax+B(-K\hat{x})\\
+  &=(A-BK)x+BK e_x,\\
+  \dot{e}_x&=(A-LC)e_x.
+\end{align}
+したがって
+\begin{equation}
+  \frac{\dd}{\dd t}
+  \begin{bmatrix}x\\e_x\end{bmatrix}
+  =
+  \begin{bmatrix}
+    A-BK&BK\\
+    0&A-LC
+  \end{bmatrix}
+  \begin{bmatrix}x\\e_x\end{bmatrix}
+\end{equation}
+となる。この行列はブロック上三角なので、閉ループ全体の固有値は $A-BK$ の固有値と $A-LC$ の固有値を合わせたものになる。これを分離定理という。ただし、分離定理は線形モデル、既知入力、同じモデルを使う制御器とオブザーバ、飽和を無視した理想条件のもとでの極の分離である。ノイズが強い場合や入力飽和が起こる場合、設計を分けた後に閉ループ全体のシミュレーションで相互作用を確認する。
+
+\subsection{内部安定性、BIBO 安定性、Lyapunov 安定性}
+
+安定性という語は、何を入力とし、何を出力として観察し、初期状態をどのように扱うかによって意味が変わる。状態空間モデル
+\begin{align}
+  \dot{x}&=Ax+Bu,\\
+  y&=Cx+Du
+  \label{eq:stability-ss-model}
+\end{align}
+では、内部状態 $x$ の自然応答を評価する内部安定性と、零初期状態で入力 $u$ から出力 $y$ への写像だけを評価する BIBO 安定性を区別する必要がある。さらに、平衡点の近くにとどまるか、平衡点へ収束するか、指数関数的に収束するかを述べるために、Lyapunov 安定性、漸近安定性、指数安定性を分けて定義する。
+
+\begin{definition}[Lyapunov 安定性、漸近安定性、指数安定性]
+自律系 $\dot{x}=f(x)$ が平衡点 $x=0$、すなわち $f(0)=0$ を持つとする。任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し、$\norm{x(0)}<\delta$ ならすべての $t\ge0$ で $\norm{x(t)}<\varepsilon$ となるとき、原点は Lyapunov 安定であるという。さらに、十分小さい初期値について
+\begin{equation}
+  \lim_{t\to\infty}x(t)=0
+\end{equation}
+も成り立つとき、原点は漸近安定であるという。ある定数 $M\ge1$、$\alpha>0$、$\rho>0$ が存在し、$\norm{x(0)}<\rho$ なら
+\begin{equation}
+  \norm{x(t)}\le M e^{-\alpha t}\norm{x(0)}
+  \qquad (t\ge0)
+  \label{eq:exponential-stability}
+\end{equation}
+が成り立つとき、原点は指数安定であるという。線形時不変系ではこれらは局所的ではなく大域的な性質として判定できる。
+\end{definition}
+
+Lyapunov 安定性は「初期値を十分小さく選べば、その後も十分小さい範囲に残る」ことだけを要求し、収束を要求しない。例えば $\dot{x}=0$ は、初期値がそのまま保たれるため Lyapunov 安定だが、$x(0)\ne0$ なら原点へ収束しないので漸近安定ではない。漸近安定性は Lyapunov 安定性に収束を加えた性質であり、指数安定性は収束の速さを \weq{exponential-stability} の形で下から保証する性質である。
+
+連続時間線形時不変系 $\dot{x}=Ax$ では、固有値によってこれらを完全に判定できる。$A$ のすべての固有値の実部が負であるとき、$A$ を Hurwitz 行列といい、
+\begin{equation}
+  \Re\lambda_i(A)<0\qquad(i=1,\ldots,n)
+\end{equation}
+が成り立つ。このとき、ある $M\ge1$、$\alpha>0$ が存在して
+\begin{equation}
+  \norm{e^{At}}\le M e^{-\alpha t}
+\end{equation}
+となるので、原点は指数安定であり、したがって漸近安定でも Lyapunov 安定でもある。有限次元の連続時間線形時不変系では、漸近安定性と指数安定性は同値であり、どちらも $A$ が Hurwitz であることと同値である。一方、Lyapunov 安定性だけなら、固有値の実部がすべて非正で、虚軸上の固有値に対応する Jordan ブロックがすべて一次であることが必要十分条件になる。虚軸上の重複固有値に大きな Jordan ブロックがあると、$te^{j\omega t}$ のような項が現れ、振幅が時間とともに増えるため Lyapunov 安定ではない。
+
+\begin{definition}[内部安定性]
+有限次元線形時不変系 \weq{stability-ss-model} の内部安定性とは、零入力 $u=0$ のもとで任意の初期状態から内部状態が原点へ収束する性質である。連続時間では、これは $A$ が Hurwitz であることと同値である。状態フィードバック後の閉ループであれば、$A$ の代わりに $A-BK$ が Hurwitz かどうかを判定する。
+\end{definition}
+
+内部安定性は、出力に現れない状態も含めて評価する。したがって、センサで測っていない状態、入力で励起されにくい状態、伝達関数で相殺されて見えない状態も判定対象である。内部安定な系では、$B$、$C$、$D$ が有限行列である限り、任意の有界入力に対して状態と出力は有界に保たれる。実際、$u$ が $\norm{u(t)}\le \bar{u}$ を満たし、$\norm{e^{At}}\le M e^{-\alpha t}$ なら、解公式より
+\begin{align}
+  \norm{x(t)}
+  &\le M e^{-\alpha t}\norm{x(0)}
+     +\int_0^t M e^{-\alpha(t-\tau)}\norm{B}\bar{u}\,\dd\tau\\
+  &\le M\norm{x(0)}+\frac{M\norm{B}}{\alpha}\bar{u}
+  \label{eq:bounded-state-from-hurwitz}
+\end{align}
+となる。$y=Cx+Du$ も同じく有界である。
+
+\begin{definition}[BIBO 安定性]
+零初期状態 $x(0)=0$ とし、任意の有界入力 $u$ に対して出力 $y$ が有界になるとき、入出力写像は BIBO 安定であるという。すなわち、任意の $\bar{u}<\infty$ について $\sup_{t\ge0}\norm{u(t)}\le\bar{u}$ なら、ある有限な $\bar{y}$ が存在して $\sup_{t\ge0}\norm{y(t)}\le\bar{y}$ となる性質である。
+\end{definition}
+
+BIBO 安定性は、初期状態を 0 に固定し、入力から出力への関係だけを見る。零初期状態で \weq{stability-ss-model} をラプラス変換すると
+\begin{equation}
+  Y(s)=G(s)U(s),\qquad
+  G(s)=C(sI-A)^{-1}B+D
+  \label{eq:bibo-transfer}
+\end{equation}
+である。有限次元のプロパーな連続時間有理伝達関数では、BIBO 安定性の判定は、約分後の伝達関数 $G(s)$ のすべての極が開左半平面にあることである。SISO であれば、分母多項式の根がすべて $\Re s<0$ にあることを Routh--Hurwitz 判別法で調べられる。MIMO では伝達関数行列の各成分、または共通分母や Smith--McMillan 形で現れる極を調べる。
+
+内部安定性と BIBO 安定性は、実現が最小であるときに一致する。実現 $(A,B,C,D)$ が可制御かつ可観測なら、$A$ の固有値は伝達関数の極として現れるため、$A$ が Hurwitz であることと、$G(s)$ のすべての極が開左半平面にあることは同値である。ところが非最小実現では、可制御でないモードや可観測でないモードが伝達関数から消える。したがって、$G(s)$ だけを見た BIBO 安定性は、隠れた内部モードの安定性を保証しない。
+
+不安定な相殺を含む例として
+\begin{equation}
+  G(s)=\frac{s-1}{s^2-1}=\frac{1}{s+1}
+\end{equation}
+を考える。約分後の伝達関数の極は $s=-1$ だけなので、入出力写像は BIBO 安定である。一方、未約分の分母に合わせた実現
+\begin{equation}
+  A=\begin{bmatrix}0&1\\1&0\end{bmatrix},\qquad
+  b=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+  c=\begin{bmatrix}-1&1\end{bmatrix},\qquad D=0
+  \label{eq:hidden-unstable-realization}
+\end{equation}
+は
+\begin{equation}
+  c(sI-A)^{-1}b
+  =\frac{s-1}{s^2-1}
+  =\frac{1}{s+1}
+\end{equation}
+を与える。行列 $A$ の固有値は $1$ と $-1$ であり、$A$ は Hurwitz ではない。特に $v=\begin{bmatrix}1&1\end{bmatrix}^\T$ は $Av=v$ を満たし、かつ
+\begin{equation}
+  cv=\begin{bmatrix}-1&1\end{bmatrix}
+    \begin{bmatrix}1\\1\end{bmatrix}=0
+\end{equation}
+なので、$s=1$ の不安定モードは出力から見えない。初期状態が $x(0)=v$、入力が $u=0$ なら
+\begin{equation}
+  x(t)=e^t v,\qquad y(t)=ce^t v=0
+\end{equation}
+となる。出力は常に 0 で有界だが、内部状態は指数的に発散する。この例は、BIBO 安定な伝達関数が必ずしも内部安定な状態空間実現を意味しないことを示している。
+
+実用上は、伝達関数だけで閉ループの安定性を述べるときには、相殺後の入出力極を見ているのか、状態空間実現の内部モードまで含めて見ているのかを明記する必要がある。物理モデルから得た状態空間表現、オブザーバを含む拡大系、制御器の内部状態を持つ動的補償器では、伝達関数上の極零相殺だけに依存せず、閉ループ全体の実現が最小でない可能性も含めて内部安定性を確認する。

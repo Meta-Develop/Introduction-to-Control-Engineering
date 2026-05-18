@@ -1,0 +1,792 @@
+\subsection{ラプラス変換と伝達関数}
+
+時間領域の微分方程式には、指数関数、正弦波、初期値、入力の積分が現れる。ラプラス変換は、これらを複素変数 $s$ の関数へ写し、微分を $s$ 倍と初期値項に、積分を $1/s$ 倍に変換する。
+
+\begin{definition}[ラプラス変換]
+時刻 $t\ge0$ の関数 $f(t)$ に対して
+\begin{equation}
+  F(s)=\mathcal{L}\{f(t)\}
+  =\int_0^\infty f(t)e^{-st}\,\dd t
+  \label{eq:laplace-definition}
+\end{equation}
+をラプラス変換という。
+\end{definition}
+
+ここで $s$ は複素数である。以下では、任意の有限区間で区分的に連続で、ある定数 $M>0$、$\alpha$、$T$ に対して
+\begin{equation}
+  \abs{f(t)}\le M e^{\alpha t}\qquad (t\ge T)
+\end{equation}
+を満たす関数を扱う。この仮定は指数位数の仮定であり、線形時不変系の応答で生じる指数関数および減衰振動を含む。このとき少なくとも $\operatorname{Re}s>\alpha$ では積分が収束する。初期値 $f(0)$ は、時刻 $0$ の右極限 $f(0+)$ を表すものとして書く。
+
+\begin{theorem}[ラプラス変換の線形性]
+$F(s)=\mathcal{L}\{f(t)\}$、$G(s)=\mathcal{L}\{g(t)\}$ が同じ領域で存在するとする。定数 $a,b$ に対して
+\begin{equation}
+  \mathcal{L}\{a f(t)+b g(t)\}=aF(s)+bG(s)
+  \label{eq:laplace-linearity}
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+定義へそのまま代入すると
+\begin{align}
+  \mathcal{L}\{a f+b g\}
+  &=\int_0^\infty \{a f(t)+b g(t)\}e^{-st}\,\dd t\\
+  &=a\int_0^\infty f(t)e^{-st}\,\dd t
+    +b\int_0^\infty g(t)e^{-st}\,\dd t\\
+  &=aF(s)+bG(s)
+\end{align}
+となる。
+\end{derivation}
+
+線形性により、入力または応答を複数の成分に分解した場合でも、各成分の変換を加算することで全体の変換が得られる。
+
+\begin{formula}[ラプラス変換の微分公式]
+$f$ が区分的に連続微分可能で、$f$ と $\dot{f}$ のラプラス変換が存在するとする。また、考えている $s$ について $f(t)e^{-st}\to0$ $(t\to\infty)$ とする。このとき
+\begin{equation}
+  \mathcal{L}\{\dot{f}(t)\}=sF(s)-f(0)
+  \label{eq:laplace-derivative}
+\end{equation}
+である。また
+\begin{equation}
+  \mathcal{L}\{\ddot{f}(t)\}=s^2F(s)-sf(0)-\dot{f}(0)
+  \label{eq:laplace-second-derivative}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+定義より
+\begin{equation}
+  \mathcal{L}\{\dot{f}\}=\int_0^\infty \dot{f}(t)e^{-st}\,\dd t
+\end{equation}
+である。部分積分の公式
+\begin{equation}
+  \int_a^b u'(t)v(t)\,\dd t=[u(t)v(t)]_a^b-\int_a^b u(t)v'(t)\,\dd t
+\end{equation}
+を、$u(t)=f(t)$、$v(t)=e^{-st}$ として、まず上限を有限の $T$ にして使う。すると
+\begin{align}
+  \int_0^T \dot{f}(t)e^{-st}\,\dd t
+  &=\left[f(t)e^{-st}\right]_0^T
+    -\int_0^T f(t)(-s)e^{-st}\,\dd t\\
+  &=f(T)e^{-sT}-f(0)+s\int_0^T f(t)e^{-st}\,\dd t
+\end{align}
+である。$T\to\infty$ とすると、仮定より境界項 $f(T)e^{-sT}$ は 0 へ行く。したがって
+\begin{align}
+  \int_0^\infty \dot{f}(t)e^{-st}\,\dd t
+  &=-f(0)+s\int_0^\infty f(t)e^{-st}\,\dd t\\
+  &=sF(s)-f(0).
+\end{align}
+二階微分はこの公式を $\dot{f}$ にもう一度使う。$\mathcal{L}\{\dot{f}\}=sF(s)-f(0)$ だから
+\begin{align}
+  \mathcal{L}\{\ddot{f}\}
+  &=s\mathcal{L}\{\dot{f}\}-\dot{f}(0)\\
+  &=s\{sF(s)-f(0)\}-\dot{f}(0)\\
+  &=s^2F(s)-sf(0)-\dot{f}(0).
+\end{align}
+\end{derivation}
+
+微分公式では、微分に対応する $s$ 倍の項に加えて初期値項が現れる。初期値が 0 でない場合、この項は零入力応答を構成する。
+
+\begin{formula}[ラプラス変換の積分公式]
+$f$ のラプラス変換を $F(s)$ とし、
+\begin{equation}
+  h(t)=\int_0^t f(\tau)\,\dd\tau
+\end{equation}
+とおく。積分と順序交換が許される収束領域で
+\begin{equation}
+  \mathcal{L}\{h(t)\}=\frac{F(s)}{s}
+  \label{eq:laplace-integral}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+定義から始めると
+\begin{equation}
+  \mathcal{L}\{h(t)\}
+  =\int_0^\infty \left(\int_0^t f(\tau)\,\dd\tau\right)e^{-st}\,\dd t
+\end{equation}
+である。積分領域は $0\le\tau\le t<\infty$ である。順序を入れ替えると、$\tau$ を固定したとき $t$ は $\tau$ から $\infty$ まで動くので
+\begin{align}
+  \mathcal{L}\{h(t)\}
+  &=\int_0^\infty f(\tau)
+    \left(\int_\tau^\infty e^{-st}\,\dd t\right)\dd\tau\\
+  &=\int_0^\infty f(\tau)
+    \left[-\frac{1}{s}e^{-st}\right]_{t=\tau}^{\infty}\dd\tau\\
+  &=\int_0^\infty f(\tau)\frac{e^{-s\tau}}{s}\,\dd\tau\\
+  &=\frac{1}{s}F(s).
+\end{align}
+したがって時間領域の累積は、$s$ 領域では $1/s$ 倍に対応する。
+\end{derivation}
+
+特に、時刻 $0$ から一定値 $u_0$ を加えるステップ状の信号では
+\begin{align}
+  \mathcal{L}\{u_0\}
+  &=\int_0^\infty u_0e^{-st}\,\dd t\\
+  &=u_0\left[-\frac{1}{s}e^{-st}\right]_0^\infty\\
+  &=\frac{u_0}{s}
+  \label{eq:constant-laplace}
+\end{align}
+である。この式は、ステップ応答および定常偏差の計算で用いる。
+
+\subsubsection{時間移動と指数移動の公式}
+
+入力が時刻 $0$ ではなく時刻 $a>0$ から加わる場合には、単に標準ステップ応答を計算するだけでは開始時刻を表せない。ここでは単位ステップ関数
+\begin{equation}
+  H(t-a)=
+  \begin{cases}
+    0, & 0\le t<a,\\
+    1, & t\ge a
+  \end{cases}
+  \label{eq:unit-step-delayed}
+\end{equation}
+を用いる。$H(t-a)$ は時刻 $a$ で信号を有効にする関数であり、値 $H(0)$ の取り方は通常のラプラス変換の積分値に影響しない。以下では一側ラプラス変換を用い、信号は $t<0$ で 0 とみなす因果信号であるとする。また、$f$ は区分的に連続で指数位数 $\alpha$ を持ち、$F(s)=\mathcal{L}\{f(t)\}$ が $\operatorname{Re}s>\alpha$ で存在するとする。
+
+\begin{formula}[時間移動の公式]
+$a\ge0$ とする。このとき
+\begin{equation}
+  \mathcal{L}\{H(t-a)f(t-a)\}=e^{-as}F(s)
+  \label{eq:laplace-time-shift}
+\end{equation}
+である。特に $f(t)=1$ とすれば
+\begin{equation}
+  \mathcal{L}\{H(t-a)\}=\frac{e^{-as}}{s},
+  \qquad \operatorname{Re}s>0
+  \label{eq:delayed-step-laplace}
+\end{equation}
+を得る。
+\end{formula}
+
+\begin{derivation}
+定義に代入し、$\tau=t-a$ と置換する。
+\begin{align}
+  \mathcal{L}\{H(t-a)f(t-a)\}
+  &=\int_0^\infty H(t-a)f(t-a)e^{-st}\,\dd t\\
+  &=\int_a^\infty f(t-a)e^{-st}\,\dd t\\
+  &=\int_0^\infty f(\tau)e^{-s(\tau+a)}\,\dd\tau\\
+  &=e^{-as}\int_0^\infty f(\tau)e^{-s\tau}\,\dd\tau\\
+  &=e^{-as}F(s).
+\end{align}
+したがって、時間領域で $a$ 秒だけ遅らせる操作は、$s$ 領域では因子 $e^{-as}$ を掛ける操作に対応する。
+\end{derivation}
+
+時間移動の公式では、$H(t-a)$ を含めることが本質的である。$f(t-a)$ だけを書くと、$0\le t<a$ で $f$ の負時刻側を参照する形になり、一側ラプラス変換で扱う因果信号の仮定と合わない。制御の伝達関数で遅れた入力を扱うときは、遅れた信号を $H(t-a)u_0(t-a)$ と書き、遅れる前の信号 $u_0$ が時刻 0 から定義された因果信号であることを明示する。
+
+\begin{formula}[指数移動と周波数移動の公式]
+$\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存在するなら
+\begin{equation}
+  \mathcal{L}\{e^{\beta t}f(t)\}=F(s-\beta),
+  \qquad \operatorname{Re}(s-\beta)>\alpha
+  \label{eq:laplace-exponential-shift}
+\end{equation}
+である。$\beta=-\lambda$、$\lambda>0$ なら減衰因子 $e^{-\lambda t}$ により $F(s+\lambda)$ が現れる。$\beta=j\omega_0$ なら
+\begin{equation}
+  \mathcal{L}\{e^{j\omega_0t}f(t)\}=F(s-j\omega_0)
+\end{equation}
+となり、複素平面では周波数方向の移動として解釈できる。
+\end{formula}
+
+\begin{derivation}
+定義から
+\begin{align}
+  \mathcal{L}\{e^{\beta t}f(t)\}
+  &=\int_0^\infty e^{\beta t}f(t)e^{-st}\,\dd t\\
+  &=\int_0^\infty f(t)e^{-(s-\beta)t}\,\dd t\\
+  &=F(s-\beta)
+\end{align}
+である。収束条件は、元の変換で複素変数を $s-\beta$ に置き換えた条件 $\operatorname{Re}(s-\beta)>\alpha$ になる。
+\end{derivation}
+
+\begin{example}[遅れたステップ入力に対する一次遅れ応答]
+一次遅れ系
+\begin{equation}
+  G(s)=\frac{K}{\tau s+1},
+  \qquad K\in\mathbb{R},\quad \tau>0
+\end{equation}
+を零初期条件で考える。入力が時刻 $a\ge0$ で大きさ $u_0$ へ変わる遅れたステップ
+\begin{equation}
+  u(t)=u_0H(t-a)
+\end{equation}
+なら、\weq{delayed-step-laplace} より
+\begin{equation}
+  U(s)=\frac{u_0e^{-as}}{s}
+\end{equation}
+である。したがって
+\begin{align}
+  Y(s)
+  &=G(s)U(s)\\
+  &=e^{-as}\frac{K u_0}{s(\tau s+1)}.
+  \label{eq:first-order-delayed-step-laplace}
+\end{align}
+遅れを持たない時刻 $0$ 開始の応答を
+\begin{equation}
+  y_0(t)=K u_0\left(1-e^{-t/\tau}\right)
+\end{equation}
+とおけば、\weq{first-order-delayed-step-laplace} と時間移動の公式から
+\begin{equation}
+  y(t)=H(t-a)y_0(t-a)
+  =
+  K u_0 H(t-a)
+  \left(1-e^{-(t-a)/\tau}\right)
+  \label{eq:first-order-delayed-step}
+\end{equation}
+を得る。すなわち
+\begin{equation}
+  y(t)=
+  \begin{cases}
+    0, & 0\le t<a,\\
+    K u_0\left(1-e^{-(t-a)/\tau}\right), & t\ge a
+  \end{cases}
+\end{equation}
+である。零初期条件の線形時不変系では、入力を $a$ 秒遅らせると、零状態応答も同じだけ遅れる。初期値が 0 でない場合には、初期値に由来する自然応答が時刻 $0$ から存在するため、遅れるのは入力による零状態応答だけである。
+\end{example}
+
+\begin{theorem}[初期値の定理]
+$f(t)$ が $t=0$ で右連続で、ラプラス変換が十分大きな実数 $s$ で存在し、原点にインパルス状の成分を持たないとする。このとき
+\begin{equation}
+  f(0)=\lim_{s\to\infty}sF(s)
+  \label{eq:initial-value-theorem}
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+\begin{derivation}
+正の実数 $s$ について
+\begin{equation}
+  sF(s)=\int_0^\infty s f(t)e^{-st}\,\dd t
+\end{equation}
+である。ここで $\xi=st$ と置けば、$t=\xi/s$、$\dd t=\dd\xi/s$ なので
+\begin{align}
+  sF(s)
+  &=\int_0^\infty s f\left(\frac{\xi}{s}\right)e^{-\xi}\frac{\dd\xi}{s}\\
+  &=\int_0^\infty f\left(\frac{\xi}{s}\right)e^{-\xi}\,\dd\xi.
+\end{align}
+$s\to\infty$ とすると、固定した $\xi$ に対して $\xi/s\to0$ である。右連続性より
+\begin{equation}
+  f\left(\frac{\xi}{s}\right)\to f(0)
+\end{equation}
+となる。重み $e^{-\xi}$ の積分は
+\begin{equation}
+  \int_0^\infty e^{-\xi}\,\dd\xi=1
+\end{equation}
+だから、極限を積分の中へ移せる条件のもとで
+\begin{equation}
+  \lim_{s\to\infty}sF(s)=f(0)\int_0^\infty e^{-\xi}\,\dd\xi=f(0)
+\end{equation}
+を得る。
+\end{derivation}
+
+初期値の定理では、$s\to\infty$ において重み $e^{-st}$ が時刻 $0$ 近傍へ集中することを用いている。
+
+\begin{theorem}[最終値の定理]
+$f$ が区分的に連続微分可能で、$f(t)$ が有限の極限 $f_\infty$ へ収束し、$\dot{f}$ の積分が収束するとする。線形時不変系の有理関数として用いる場合には、$sF(s)$ のすべての極が左半平面 $\operatorname{Re}s<0$ にあることを仮定する。このとき
+\begin{equation}
+  \lim_{t\to\infty}f(t)=\lim_{s\to0}sF(s)
+  \label{eq:final-value-theorem}
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+\begin{derivation}
+微分公式より
+\begin{equation}
+  \mathcal{L}\{\dot{f}(t)\}=sF(s)-f(0)
+\end{equation}
+である。$s\to0$ とすると、左辺は
+\begin{align}
+  \lim_{s\to0}\mathcal{L}\{\dot{f}\}
+  &=\lim_{s\to0}\int_0^\infty \dot{f}(t)e^{-st}\,\dd t\\
+  &=\int_0^\infty \dot{f}(t)\,\dd t\\
+  &=f_\infty-f(0)
+\end{align}
+となる。したがって右辺の極限も同じ値を持ち、
+\begin{equation}
+  \lim_{s\to0}\{sF(s)-f(0)\}=f_\infty-f(0)
+\end{equation}
+である。両辺に $f(0)$ を足して
+\begin{equation}
+  \lim_{s\to0}sF(s)=f_\infty
+\end{equation}
+を得る。
+\end{derivation}
+
+最終値の定理には極の条件が必要である。$sF(s)$ が虚軸上に極を持つ場合には持続振動により時間極限が存在しない。$sF(s)$ が原点に極を持つ場合には出力が有界な最終値へ収束しない。
+
+\subsubsection{逆ラプラス変換と部分分数分解}
+
+$s$ 領域で求めた $Y(s)$ は、最終的には時間応答 $y(t)$ として再構成する必要がある。逆ラプラス変換は、表に載っている基本形へ $Y(s)$ を分解し、各項を時間領域へ戻す作業である。線形時不変系の伝達関数と、ステップ、インパルス、ランプのような標準入力を掛けた $Y(s)$ は、多くの場合、有理関数になる。このとき中心になる計算が部分分数分解である。
+
+\begin{definition}[逆ラプラス変換]
+ラプラス変換が $F(s)$ である時間関数 $f(t)$ を求める操作を、逆ラプラス変換といい、
+\begin{equation}
+  f(t)=\mathcal{L}^{-1}\{F(s)\}
+\end{equation}
+と書く。制御で扱う通常の応答では、時刻 $t\ge0$ の右側の関数として扱う。
+\end{definition}
+
+以下の基本変換を表として使う。ただし $a$ と $\omega$ は実数、$\omega>0$、$k=1,2,\ldots$ とする。
+\begin{center}
+\begin{tabular}{c|c}
+$s$ 領域の項 & 時間領域の項\\ \hline
+$\dfrac{1}{s}$ & $1$\\[1ex]
+$\dfrac{1}{s+a}$ & $e^{-at}$\\[1ex]
+$\dfrac{1}{(s+a)^k}$ & $\dfrac{t^{k-1}}{(k-1)!}e^{-at}$\\[1ex]
+$\dfrac{s+a}{(s+a)^2+\omega^2}$ & $e^{-at}\cos\omega t$\\[1ex]
+$\dfrac{\omega}{(s+a)^2+\omega^2}$ & $e^{-at}\sin\omega t$
+\end{tabular}
+\end{center}
+
+表を使う前に、対象の有理関数を表の形に直す。分子次数が分母次数以上なら先に多項式除算を行い、残りを真にプロパーな有理関数にする。分母を因数分解し、単純な実極、重極、複素共役極に分けて部分分数分解する。最後に線形性を使って、各項の逆変換を足し合わせる。
+
+\begin{formula}[単純極に対する Heaviside の展開公式]
+$F(s)=N(s)/D(s)$ が真にプロパーで、分母が互いに異なる一次因子
+\begin{equation}
+  D(s)=\prod_{i=1}^n(s-p_i)
+\end{equation}
+に分解できるとする。このとき
+\begin{equation}
+  F(s)=\sum_{i=1}^n\frac{A_i}{s-p_i},
+  \qquad
+  A_i=\lim_{s\to p_i}(s-p_i)F(s)
+  \label{eq:heaviside-simple-poles}
+\end{equation}
+である。対応する時間応答は
+\begin{equation}
+  f(t)=\sum_{i=1}^n A_i e^{p_i t}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+$F(s)$ を
+\begin{equation}
+  F(s)=\frac{A_i}{s-p_i}+\sum_{\ell\neq i}\frac{A_\ell}{s-p_\ell}
+\end{equation}
+と書けると仮定し、両辺に $(s-p_i)$ を掛ける。すると
+\begin{equation}
+  (s-p_i)F(s)=A_i+\sum_{\ell\neq i}A_\ell\frac{s-p_i}{s-p_\ell}
+\end{equation}
+である。$s\to p_i$ とすると、右辺の和の各項は分子が 0 になるため消え、$A_i$ だけが残る。これが \weq{heaviside-simple-poles} である。
+\end{derivation}
+
+\begin{example}[単純な実極]
+\begin{equation}
+  F(s)=\frac{3s+7}{(s+1)(s+3)}
+\end{equation}
+を逆変換する。部分分数分解を
+\begin{equation}
+  \frac{3s+7}{(s+1)(s+3)}
+  =
+  \frac{A}{s+1}+\frac{B}{s+3}
+\end{equation}
+とおく。両辺に $(s+1)(s+3)$ を掛けると
+\begin{align}
+  3s+7&=A(s+3)+B(s+1)\\
+      &=(A+B)s+(3A+B)
+\end{align}
+である。係数を比較して
+\begin{align}
+  A+B&=3,\\
+  3A+B&=7
+\end{align}
+を得る。差を取ると $2A=4$ なので $A=2$、したがって $B=1$ である。よって
+\begin{equation}
+  F(s)=\frac{2}{s+1}+\frac{1}{s+3}
+\end{equation}
+であり、表から
+\begin{equation}
+  f(t)=2e^{-t}+e^{-3t}
+\end{equation}
+となる。極 $-1$ に対応する $e^{-t}$ は、極 $-3$ に対応する $e^{-3t}$ よりゆっくり減衰する。そのため長い時間では $e^{-t}$ の項が支配的に残る。
+\end{example}
+
+\begin{example}[重根を持つ極]
+\begin{equation}
+  F(s)=\frac{2s+5}{(s+1)^2(s+4)}
+\end{equation}
+を考える。$s=-1$ は二重の極であるから、
+\begin{equation}
+  F(s)=\frac{A}{s+1}+\frac{B}{(s+1)^2}+\frac{C}{s+4}
+\end{equation}
+とおく。分母を払うと
+\begin{align}
+  2s+5
+  &=A(s+1)(s+4)+B(s+4)+C(s+1)^2\\
+  &=(A+C)s^2+(5A+B+2C)s+(4A+4B+C)
+\end{align}
+である。係数比較により
+\begin{align}
+  A+C&=0,\\
+  5A+B+2C&=2,\\
+  4A+4B+C&=5
+\end{align}
+を得る。第一式から $C=-A$ であり、第二式は $3A+B=2$ となる。これを第三式へ入れると
+\begin{equation}
+  4A+4(2-3A)-A=5
+\end{equation}
+だから $A=1/3$、$B=1$、$C=-1/3$ である。したがって
+\begin{equation}
+  F(s)=\frac{1}{3}\frac{1}{s+1}
+       +\frac{1}{(s+1)^2}
+       -\frac{1}{3}\frac{1}{s+4}
+\end{equation}
+となり、
+\begin{equation}
+  f(t)=\frac{1}{3}e^{-t}+t e^{-t}-\frac{1}{3}e^{-4t}
+\end{equation}
+を得る。重極では、同じ指数 $e^{-t}$ に $t$ のような多項式因子が掛かる。$t e^{-t}$ は最終的には 0 へ減衰するが、単なる $e^{-t}$ より途中で大きく膨らむため、同じ実部の単純極だけで評価した場合より応答の変化が緩やかになることがある。
+\end{example}
+
+\begin{example}[複素共役極]
+実係数の伝達関数では、複素数の極は共役な組として現れる。
+\begin{equation}
+  F(s)=\frac{s+3}{s^2+2s+5}
+\end{equation}
+を考える。分母を平方完成すると
+\begin{equation}
+  s^2+2s+5=(s+1)^2+4
+\end{equation}
+であり、分子は
+\begin{equation}
+  s+3=(s+1)+2
+\end{equation}
+と書ける。したがって
+\begin{align}
+  F(s)
+  &=\frac{s+1}{(s+1)^2+2^2}
+    +\frac{2}{(s+1)^2+2^2}.
+\end{align}
+表の余弦項と正弦項を使えば
+\begin{equation}
+  f(t)=e^{-t}\cos 2t+e^{-t}\sin 2t
+\end{equation}
+である。極は $s=-1\pm 2j$ であり、実部 $-1$ が包絡線 $e^{-t}$ の減衰を、虚部の大きさ $2$ が振動角周波数を決める。
+\end{example}
+
+複素共役極の一般形も同じ表から読める。$\sigma>0$、$\omega>0$ とし、
+\begin{equation}
+  F(s)=
+  \frac{B(s+\sigma)+C\omega}{(s+\sigma)^2+\omega^2}
+\end{equation}
+なら
+\begin{equation}
+  f(t)=e^{-\sigma t}\{B\cos\omega t+C\sin\omega t\}
+  \label{eq:complex-mode-time}
+\end{equation}
+である。したがって、複素共役極 $-\sigma\pm j\omega$ は、減衰包絡 $e^{-\sigma t}$ と振動 $\cos\omega t,\sin\omega t$ を一組にした時間応答を作る。
+
+一次遅れ系のステップ応答も、同じ逆変換で確認できる。\weq{first-order-laplace-step} を用いると
+\begin{align}
+  Y(s)
+  &=\frac{K u_0}{s(\tau s+1)}
+    +\frac{\tau y_0}{\tau s+1}\\
+  &=\frac{K u_0}{s}
+    -\frac{K u_0\tau}{\tau s+1}
+    +\frac{\tau y_0}{\tau s+1}\\
+  &=\frac{K u_0}{s}
+    +\frac{\tau(y_0-Ku_0)}{\tau s+1}\\
+  &=\frac{K u_0}{s}
+    +\frac{y_0-Ku_0}{s+1/\tau}.
+\end{align}
+表から
+\begin{equation}
+  y(t)=K u_0+(y_0-Ku_0)e^{-t/\tau}
+\end{equation}
+となり、時間領域で直接解いた \weq{first-order-step} と一致する。つまり一次遅れの極 $-1/\tau$ は、初期値と定常値との差を指数的に消すモードである。
+
+二次遅れの不足減衰応答では、複素共役極の読み替えがそのまま現れる。$0<\zeta<1$ とし、
+\begin{equation}
+  \sigma=\zeta\omega_n,\qquad
+  \omega_d=\omega_n\sqrt{1-\zeta^2}
+\end{equation}
+とおくと、
+\begin{equation}
+  s^2+2\zeta\omega_n s+\omega_n^2
+  =(s+\sigma)^2+\omega_d^2
+\end{equation}
+である。ゲイン $K$ の二次遅れ
+\begin{equation}
+  G(s)=
+  \frac{K\omega_n^2}
+       {s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+のインパルス応答は
+\begin{align}
+  h(t)
+  &=\mathcal{L}^{-1}\left\{
+    \frac{K\omega_n^2}{(s+\sigma)^2+\omega_d^2}
+    \right\}\\
+  &=\frac{K\omega_n^2}{\omega_d}e^{-\sigma t}\sin\omega_d t
+\end{align}
+である。単位ステップ入力に対しては
+\begin{align}
+  Y(s)
+  &=\frac{K\omega_n^2}
+    {s(s^2+2\sigma s+\omega_n^2)}\\
+  &=\frac{K}{s}
+    -K\frac{s+2\sigma}{s^2+2\sigma s+\omega_n^2}\\
+  &=\frac{K}{s}
+    -K\frac{s+\sigma}{(s+\sigma)^2+\omega_d^2}
+    -K\frac{\sigma}{\omega_d}
+      \frac{\omega_d}{(s+\sigma)^2+\omega_d^2}.
+\end{align}
+したがって
+\begin{equation}
+  y(t)
+  =
+  K\left[
+    1-e^{-\sigma t}\left\{
+      \cos\omega_d t+\frac{\sigma}{\omega_d}\sin\omega_d t
+    \right\}
+  \right]
+  \label{eq:second-order-step-underdamped}
+\end{equation}
+である。最終値は $K$、減衰の速さは $\sigma=\zeta\omega_n$、振動の速さは $\omega_d$ で決まる。逆ラプラス変換は、伝達関数の極を単なる代数的な根ではなく、時間応答のモードとして対応付ける操作である。
+
+\begin{definition}[伝達関数]
+線形時不変系で初期値を 0 としたとき、入力のラプラス変換 $U(s)$ と出力のラプラス変換 $Y(s)$ の比
+\begin{equation}
+  G(s)=\frac{Y(s)}{U(s)}
+\end{equation}
+を伝達関数という。
+\end{definition}
+
+伝達関数では、初期状態に起因する零入力応答と、入力に起因する零状態応答を分離するために初期値を 0 とする。
+
+\subsubsection{一次遅れ系のラプラス変換}
+
+熱容量を持つ物体の温度、RC 回路のコンデンサ電圧、粘性抵抗を受ける速度は、一次遅れで近似される。一次遅れ系を
+\begin{equation}
+  \tau\dot{y}(t)+y(t)=K u(t),
+  \qquad \tau>0
+\end{equation}
+とし、初期値を $y(0)=y_0$ とする。微分公式と線形性より
+\begin{align}
+  \tau\mathcal{L}\{\dot{y}\}+\mathcal{L}\{y\}&=K\mathcal{L}\{u\},\\
+  \tau\{sY(s)-y_0\}+Y(s)&=KU(s),\\
+  (\tau s+1)Y(s)-\tau y_0&=KU(s),\\
+  Y(s)&=\frac{K}{\tau s+1}U(s)+\frac{\tau y_0}{\tau s+1}.
+  \label{eq:first-order-laplace-general}
+\end{align}
+右辺の第一項は入力による応答、第二項は初期値による応答である。初期値を 0 とした伝達関数は
+\begin{equation}
+  G(s)=\frac{K}{\tau s+1}
+\end{equation}
+である。
+
+時刻 $0$ から一定入力 $u(t)=u_0$ を加えると、\weq{constant-laplace} より $U(s)=u_0/s$ である。したがって
+\begin{equation}
+  Y(s)=\frac{K u_0}{s(\tau s+1)}+
+  \frac{\tau y_0}{\tau s+1}
+  \label{eq:first-order-laplace-step}
+\end{equation}
+となる。この式から、逆変換を行わずに初期値と最終値を計算できる。まず初期値の定理より
+\begin{align}
+  \lim_{s\to\infty}sY(s)
+  &=\lim_{s\to\infty}\left\{
+    \frac{K u_0}{\tau s+1}
+    +\frac{\tau y_0 s}{\tau s+1}\right\}\\
+  &=0+y_0.
+\end{align}
+これは初期条件と一致する。次に $\tau>0$ なら $\tau s+1=0$ の極は $s=-1/\tau$ で左半平面にあるので、最終値の定理を適用できる。よって
+\begin{align}
+  \lim_{t\to\infty}y(t)
+  &=\lim_{s\to0}sY(s)\\
+  &=\lim_{s\to0}\left\{
+    \frac{K u_0}{\tau s+1}
+    +\frac{\tau y_0 s}{\tau s+1}\right\}\\
+  &=K u_0.
+\end{align}
+初期値に起因する項は $s=-1/\tau$ の極に対応し、時間領域では指数的に減衰する。定常値は静的ゲイン $K$ と一定入力 $u_0$ の積である。
+
+\begin{definition}[極と零点]
+伝達関数 $G(s)=N(s)/D(s)$ に対して、分母 $D(s)=0$ の解を極、分子 $N(s)=0$ の解を零点という。
+\end{definition}
+
+極は自然応答を決める。たとえば
+\begin{equation}
+  G(s)=\frac{1}{(s+1)(s+5)}
+\end{equation}
+なら極は $-1$ と $-5$ である。部分分数分解の形から、時間応答には $e^{-t}$ と $e^{-5t}$ が含まれる。$e^{-5t}$ は早く消え、$e^{-t}$ が長く残るので、$-1$ の極が支配的である。
+
+\subsubsection{プロパー性と相対次数}
+
+定数係数の線形微分方程式
+\begin{equation}
+  a_n y^{(n)}+a_{n-1}y^{(n-1)}+\cdots+a_1\dot{y}+a_0y
+  =
+  b_m u^{(m)}+b_{m-1}u^{(m-1)}+\cdots+b_1\dot{u}+b_0u
+  \label{eq:input-output-ode}
+\end{equation}
+を考える。ただし $a_n\neq0$、$b_m\neq0$ とし、初期値は 0 とする。ラプラス変換の微分公式を使うと
+\begin{align}
+  &(a_ns^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0)Y(s)\\
+  &\qquad
+  =(b_ms^m+b_{m-1}s^{m-1}+\cdots+b_1s+b_0)U(s)
+\end{align}
+である。したがって伝達関数は
+\begin{equation}
+  G(s)=\frac{Y(s)}{U(s)}
+  =
+  \frac{b_ms^m+b_{m-1}s^{m-1}+\cdots+b_1s+b_0}
+       {a_ns^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0}
+  =
+  \frac{N(s)}{D(s)}
+  \label{eq:rational-transfer}
+\end{equation}
+となる。ここで $D(s)$ は自然応答を決める特性多項式であり、$N(s)$ は入力が各モードへどのように現れるかを表す多項式である。
+
+\begin{definition}[プロパー性と相対次数]
+共通因子を約分した有理伝達関数 $G(s)=N(s)/D(s)$ に対して、$n=\deg D$、$m=\deg N$ とおく。
+\begin{itemize}
+  \item $m\le n$ のとき、$G(s)$ はプロパーである。
+  \item $m<n$ のとき、$G(s)$ は真にプロパーである。
+  \item $m=n$ のとき、$G(s)$ は同次数プロパー、またはバイプロパーである。
+  \item $m>n$ のとき、$G(s)$ はインプロパーである。
+\end{itemize}
+整数
+\begin{equation}
+  r=n-m
+\end{equation}
+を相対次数という。プロパーな伝達関数では $r\ge0$、真にプロパーな伝達関数では $r\ge1$ である。
+\end{definition}
+
+相対次数は、高周波で入力が出力へどれだけ直接現れるかを測る数である。最高次係数を取り出すと、$\abs{s}$ が十分大きい範囲で
+\begin{equation}
+  G(s)
+  =
+  \frac{b_ms^m(1+\mathcal{O}(s^{-1}))}
+       {a_ns^n(1+\mathcal{O}(s^{-1}))}
+  \simeq
+  \frac{b_m}{a_n}s^{-r}
+  \label{eq:relative-degree-asymptote}
+\end{equation}
+である。$r=0$ なら高周波ゲインは有限値 $b_m/a_n$ へ近づく。$r\ge1$ なら高周波ゲインは 0 へ近づき、入力の急な変化は出力で弱められる。$r<0$ なら高周波ゲインは無限大へ増え、入力の微分を理想的に要求する形になる。
+
+いくつかの標準例を並べる。一次遅れ
+\begin{equation}
+  G_1(s)=\frac{K}{\tau s+1}
+\end{equation}
+は $n=1$、$m=0$ なので真にプロパーで、相対次数は $1$ である。質量ばねダンパ系の力入力から変位出力までの伝達関数
+\begin{equation}
+  G_2(s)=\frac{1}{Ms^2+Cs+K_s}
+\end{equation}
+は $n=2$、$m=0$ なので相対次数は $2$ である。物体に力を加えても変位が瞬時に跳ばない、という慣性の性質が式にも現れている。純粋なゲイン $G_3(s)=K$ は $n=m=0$ の同次数プロパーであり、状態を介さない直接の入出力経路を表す。理想微分器 $G_4(s)=s$ は $m=1$、$n=0$ なのでインプロパーであり、入力 $u(t)$ から出力 $y(t)=\dot{u}(t)$ を直接作ることを要求する。
+
+物理的な実現可能性の観点では、有限次元の因果的な状態空間実現
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t),\\
+  y(t)&=Cx(t)+Du(t)
+\end{align}
+から得られる伝達関数
+\begin{equation}
+  G(s)=C(sI-A)^{-1}B+D
+\end{equation}
+はプロパーである。$D=0$ なら真にプロパーであり、入力はまず状態を変え、その後に出力へ現れる。$D\neq0$ なら同次数プロパーの成分を持ち、入力が出力へ瞬時に通る直接フィードスルーがある。インプロパーな伝達関数をそのまま実装しようとすると、理想微分器のように高周波ノイズを無限に増幅する要素が必要になるため、実際には低域通過フィルタを付けた近似として扱う。
+
+状態空間実現との対応を、相対次数 $1$ の例で確かめる。
+\begin{align}
+  \dot{x}(t)
+  &=
+  \begin{bmatrix}
+    0 & 1\\
+    -5 & -4
+  \end{bmatrix}x(t)
+  +
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}u(t),\\
+  y(t)
+  &=
+  \begin{bmatrix}
+    3 & 2
+  \end{bmatrix}x(t)
+\end{align}
+とする。初期値を 0 とすれば
+\begin{align}
+  G(s)
+  &=C(sI-A)^{-1}B\\
+  &=
+  \begin{bmatrix}3 & 2\end{bmatrix}
+  \frac{1}{s^2+4s+5}
+  \begin{bmatrix}
+    s+4 & 1\\
+    -5 & s
+  \end{bmatrix}
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}\\
+  &=
+  \frac{1}{s^2+4s+5}
+  \begin{bmatrix}3 & 2\end{bmatrix}
+  \begin{bmatrix}
+    1\\
+    s
+  \end{bmatrix}
+  =
+  \frac{2s+3}{s^2+4s+5}.
+\end{align}
+分母次数は $2$、分子次数は $1$ なので、この実現は真にプロパーで相対次数 $1$ の伝達関数を与える。
+
+\subsubsection{極零相殺と最小性への注意}
+
+分子と分母に共通因子があるとき、代数的にはその因子を約分できる。たとえば
+\begin{equation}
+  G(s)=\frac{s+2}{(s+1)(s+2)}
+  =
+  \frac{1}{s+1}
+\end{equation}
+であり、入出力関係だけを見れば $s=-2$ の極は消える。このように伝達関数の分子の零点と分母の極が同じ位置にあるとき、極零相殺が起こるという。安定な極の相殺でも、実機ではパラメータ誤差により完全には消えないため、設計上は消えたものとして過信しない。
+
+より危険なのは不安定極の相殺である。状態空間系
+\begin{align}
+  \dot{x}(t)
+  &=
+  \begin{bmatrix}
+    1 & 0\\
+    0 & -2
+  \end{bmatrix}x(t)
+  +
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}u(t),\\
+  y(t)
+  &=
+  \begin{bmatrix}
+    0 & 1
+  \end{bmatrix}x(t)
+\end{align}
+を考える。初期値を 0 とした入出力伝達関数は
+\begin{align}
+  G(s)
+  &=C(sI-A)^{-1}B\\
+  &=
+  \begin{bmatrix}0 & 1\end{bmatrix}
+  \frac{1}{(s-1)(s+2)}
+  \begin{bmatrix}
+    s+2 & 0\\
+    0 & s-1
+  \end{bmatrix}
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}\\
+  &=
+  \frac{s-1}{(s-1)(s+2)}
+  =
+  \frac{1}{s+2}.
+  \label{eq:unstable-cancellation}
+\end{align}
+約分後の伝達関数だけで判定すると極は $-2$ であり、入力から出力への応答は安定である。しかし内部状態 $x_1$ は
+\begin{equation}
+  \dot{x}_1=x_1,\qquad x_1(t)=x_1(0)e^t
+\end{equation}
+を満たす。$x_1$ は入力から動かせず、出力からも見えないため、初期値が少しでもずれると内部では発散する。このような発散は、零初期条件の伝達関数には現れない。
+
+\begin{remark}[最小実現と安定性の判定]
+共通因子をすべて約分した伝達関数は、入力から出力までの最小な入出力関係を表す。けれども、与えられた状態空間実現が最小であるとは限らない。連続時間の線形状態空間系では、すべての状態が入力で動かせる可制御性と、すべての状態が出力から再構成できる可観測性を満たすとき、その実現を最小実現という。最小実現でない場合、伝達関数の極と内部モードは一致しないことがある。したがって、極零相殺を含むモデルや制御器で安定性を主張するときは、約分後の入出力伝達関数だけでなく、相殺されたモードが安定か、または状態空間実現が最小かを必ず確認する。
+\end{remark}

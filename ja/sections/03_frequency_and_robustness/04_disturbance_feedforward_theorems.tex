@@ -1,0 +1,118 @@
+\subsection{外乱抑制とフィードフォワード}
+
+外乱または目標値の変化が測定可能である場合、フィードフォワードを加えることで偏差伝達を低減できる。対象が $Y=G U+G_dD$ と書け、外乱 $D$ が測定可能であるなら
+\begin{equation}
+  U=C(R-Y)+F_dD
+\end{equation}
+とし、理想的には
+\begin{equation}
+  F_d(s)=-G(s)^{-1}G_d(s)
+\end{equation}
+を選ぶ。ただし $G^{-1}$ が不安定、非プロパー、または不確かな場合は直接実装できない。その場合には、低周波成分のみを補償する近似や入力制限を含む定式化を用いる。
+
+目標値フィードフォワードも同じ考え方である。位置制御で目標軌道 $r(t)$ の速度や加速度が分かっていれば、必要な力を
+\begin{equation}
+  u_{ff}=m\ddot{r}+c\dot{r}+kr
+\end{equation}
+として与え、フィードバックでモデル誤差と外乱に起因する偏差を補償する。
+
+\subsection{周波数領域を支える定理}
+
+以下では、正弦波定常応答において伝達関数へ $s=j\omega$ を代入する根拠を示す。
+
+\begin{theorem}[正弦波定常応答の定理]
+安定な線形時不変系の伝達関数を $G(s)$ とする。入力 $u(t)=\operatorname{Re}\{Ue^{j\omega t}\}$ を加えると、過渡応答が消えた後の出力は
+\begin{equation}
+  y_{ss}(t)=\operatorname{Re}\{G(j\omega)Ue^{j\omega t}\}
+\end{equation}
+となる。
+\end{theorem}
+
+\begin{derivation}
+複素指数入力 $u_c(t)=Ue^{j\omega t}$ を考える。線形時不変系では微分作用素 $\dd/\dd t$ に対して
+\begin{equation}
+  \frac{\dd}{\dd t}e^{j\omega t}=j\omega e^{j\omega t}
+\end{equation}
+である。たとえば微分方程式
+\begin{equation}
+  a_n y^{(n)}+\cdots+a_1\dot{y}+a_0y
+  =b_m u^{(m)}+\cdots+b_0u
+\end{equation}
+に $y_c(t)=Ye^{j\omega t}$、$u_c(t)=Ue^{j\omega t}$ を代入する。$k$ 階微分は $(j\omega)^k$ 倍になるので
+\begin{equation}
+  \{a_n(j\omega)^n+\cdots+a_0\}Ye^{j\omega t}
+  =\{b_m(j\omega)^m+
+  \cdots+b_0\}Ue^{j\omega t}
+\end{equation}
+である。両辺を $e^{j\omega t}$ で割ると
+\begin{equation}
+  \frac{Y}{U}=\frac{b_m(j\omega)^m+\cdots+b_0}{a_n(j\omega)^n+\cdots+a_0}=G(j\omega)
+\end{equation}
+となる。したがって $Y=G(j\omega)U$ であり、実際の正弦波応答はその実部である。
+\end{derivation}
+
+\begin{formula}[ボード線図の積和変換]
+複数の因子の積 $G(s)=G_1(s)G_2(s)$ に対して
+\begin{equation}
+  20\log_{10}\abs{G(j\omega)}
+  =20\log_{10}\abs{G_1(j\omega)}+20\log_{10}\abs{G_2(j\omega)}
+\end{equation}
+である。また位相は
+\begin{equation}
+  \angle G(j\omega)=\angle G_1(j\omega)+\angle G_2(j\omega)
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+絶対値の性質 $\abs{ab}=\abs{a}\abs{b}$ と対数の性質 $\log(ab)=\log a+\log b$ より
+\begin{align}
+  20\log_{10}\abs{G_1G_2}
+  &=20\log_{10}\{\abs{G_1}\abs{G_2}\}\\
+  &=20\log_{10}\abs{G_1}+20\log_{10}\abs{G_2}.
+\end{align}
+複素数を $G_i=\abs{G_i}e^{j\phi_i}$ と書けば
+\begin{equation}
+  G_1G_2=\abs{G_1}\abs{G_2}e^{j(\phi_1+\phi_2)}
+\end{equation}
+なので、位相も和になる。
+\end{derivation}
+
+\begin{theorem}[ナイキスト安定判別]
+単位負帰還系の開ループ $L(s)$ が虚軸上に極を持たず、$1+L(j\omega)\ne0$ であるとする。右半平面を時計回りに囲むナイキスト経路を用い、開ループ $L(s)$ の右半平面極の数を $P$、ナイキスト線図が点 $-1$ を時計回りに囲む回数を $N$ と数える。このとき閉ループ特性方程式 $1+L(s)=0$ の右半平面根の数 $Z$ は
+\begin{equation}
+  Z=N+P
+\end{equation}
+である。閉ループ安定性には $Z=0$ が必要十分である。
+\end{theorem}
+
+この定理は複素解析の偏角原理に基づく。反時計回りの囲みを正に数える流儀では符号が変わるため、ナイキスト判別を使うときは $N$ の符号規約を必ず明示する。ナイキスト線図は、閉ループ極の個数を周波数応答から決定するために用いられる。
+
+\begin{formula}[根軌跡の角度条件と大きさ条件]
+閉ループ特性方程式を $1+KG(s)=0$ とする。$K>0$ の根軌跡上の点 $s$ は
+\begin{align}
+  \angle G(s)&=(2\ell+1)\pi,\qquad \ell\in\mathbb{Z},\\
+  K&=\frac{1}{\abs{G(s)}}
+\end{align}
+を満たす。
+\end{formula}
+
+\begin{derivation}
+$1+KG(s)=0$ より
+\begin{equation}
+  KG(s)=-1
+\end{equation}
+である。右辺 $-1$ は大きさが 1、偏角が $(2\ell+1)\pi$ の複素数である。$K$ は正の実数なので偏角を変えない。したがって
+\begin{equation}
+  \angle G(s)=(2\ell+1)\pi
+\end{equation}
+でなければならない。また大きさを比べると
+\begin{equation}
+  K\abs{G(s)}=1
+\end{equation}
+だから
+\begin{equation}
+  K=1/\abs{G(s)}
+\end{equation}
+を得る。
+\end{derivation}

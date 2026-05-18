@@ -1,0 +1,292 @@
+\subsection{線形最適制御}
+
+状態フィードバックでは、極をどこに置くかを設計者が選んだ。しかし、台車を「速く止める」だけなら極を左へ動かせばよいとしても、同時に「入力をどれだけ節約するか」は極の位置だけでは直接指定しにくい。ここでは状態偏差を $x(t)\in\R^n$、入力偏差を $u(t)\in\R^m$ とし、たとえば $x$ の成分には位置偏差や速度偏差、$u$ にはモータ電流や推力の偏差が入ると考える。対象は動作点まわりで線形化され、行列 $A$ と $B$ は時不変、初期状態は既知、入力飽和はこの段階では扱わないと仮定する。この条件で、線形系
+\begin{equation}
+  \dot{x}=Ax+Bu
+\end{equation}
+に対する評価関数
+\begin{equation}
+  J=\int_0^\infty \{x(t)^\T Qx(t)+u(t)^\T Ru(t)\}\,\dd t
+\end{equation}
+を置く。$Q=Q^\T\ge0$ は状態のずれへの重み、$R=R^\T>0$ は入力への重みである。積分の中の $x^\T Qx$ と $u^\T Ru$ は同じ評価率の単位を持つように選ぶ。したがって、位置をメートル、速度をメートル毎秒、入力をニュートンで表すなら、$Q$ と $R$ の各成分はそれぞれの二乗単位を評価率へ換算する係数である。$Q$ を大きくすればずれを強く嫌い、$R$ を大きくすれば入力を節約する。
+
+入力を $u=-Kx$ と置くと、閉ループは $\dot{x}=(A-BK)x$ になる。LQR は、すべての安定化ゲインの中から $J$ を最小にする $K$ を選ぶ。最適ゲインは
+\begin{equation}
+  K=R^{-1}B^\T P
+\end{equation}
+であり、$P$ は代数リカッチ方程式
+\begin{equation}
+  A^\T P+PA-PBR^{-1}B^\T P+Q=0
+  \label{eq:care}
+\end{equation}
+を満たす半正定値の安定化解である。$Q>0$ のように状態全体が十分に罰せられる場合には $P>0$ になる。最適コストは
+\begin{equation}
+  V(x)=x^\T P x
+\end{equation}
+となる。前節のリアプノフ関数が安定性を評価する関数だったのに対し、ここでの $V$ は「これから必要になる最小コスト」を表す関数でもある。
+
+有限時間を対象にする場合は、終端時刻 $T$ までの評価
+\begin{equation}
+  J=x(T)^\T S x(T)+\int_0^T(x^\T Qx+u^\T Ru)\,\dd t
+\end{equation}
+を最小にする。ここで $S\ge0$ は終端時刻で残った状態偏差をどの程度重く評価するかを表す終端重みである。リカッチ方程式は終端条件 $P(T)=S$ から時間を逆向きに解く微分方程式になる。この有限ホライズンの考え方は後で MPC へ進むための前提だが、ここではまだ制約のない連続時間最適制御として理解しておく。
+
+\subsection{変分法と最適性条件}
+
+最適制御では、時刻ごとの入力値を一つずつ選ぶのではなく、区間全体の入力関数 $u(\cdot)$ を選ぶ。したがって評価関数は、数 $u$ の関数ではなく、関数 $u(\cdot)$ を受け取って数を返す汎関数である。典型的な有限時間問題は
+\begin{align}
+  J[u]
+  &=
+  \phi(x(T))
+  +\int_0^T \ell(x(t),u(t),t)\,\dd t,\\
+  \dot{x}(t)&=f(x(t),u(t),t),
+  \qquad x(0)=x_0
+  \label{eq:oc-general-problem}
+\end{align}
+で表される。$\ell$ は途中で支払うランニングコスト、$\phi$ は終端コストである。状態 $x(t)\in\R^n$ と入力 $u(t)\in\R^m$ は時刻に依存する関数であり、制御入力を少し変えると、状態軌道全体も変わる。この「関数を少し変えたときの評価関数の一次の変化」を調べる操作を変分という。
+
+許される小さな入力変化を $\eta(t)$ とし、
+\begin{equation}
+  u_\varepsilon(t)=u(t)+\varepsilon \eta(t)
+\end{equation}
+と置く。対応する状態を $x_\varepsilon(t)$ と書くと、第一変分は
+\begin{equation}
+  \delta J
+  =
+  \left.\frac{\dd}{\dd\varepsilon}J[u_\varepsilon]\right|_{\varepsilon=0}
+  \label{eq:first-variation}
+\end{equation}
+で定義される。通常の一変数関数で最小値の候補が $F'(z)=0$ を満たすように、制約のない十分滑らかな最適入力では、すべての許される $\eta$ に対して $\delta J=0$ が必要条件になる。この条件は必要条件であって、凸性や正定性がなければ大域最小性までは保証しない。
+
+変分の基本形は、入力制御を含まない曲線最適化で確認できる。軌道 $x(t)$ そのものを選び、
+\begin{equation}
+  J[x]=\int_0^T L(x(t),\dot{x}(t),t)\,\dd t
+\end{equation}
+を最小にする問題を考える。端点 $x(0)$、$x(T)$ を固定し、$x_\varepsilon=x+\varepsilon \xi$、$\xi(0)=\xi(T)=0$ と置くと
+\begin{align}
+  \delta J
+  &=
+  \int_0^T
+  \left(
+    \frac{\partial L}{\partial x}\xi
+    +\frac{\partial L}{\partial \dot{x}}\dot{\xi}
+  \right)\,\dd t\\
+  &=
+  \int_0^T
+  \left(
+    \frac{\partial L}{\partial x}
+    -\frac{\dd}{\dd t}\frac{\partial L}{\partial \dot{x}}
+  \right)\xi\,\dd t
+  +
+  \left[
+    \frac{\partial L}{\partial \dot{x}}\xi
+  \right]_0^T.
+\end{align}
+端点固定により境界項は 0 である。任意の $\xi$ に対して $\delta J=0$ となるには、括弧内が各時刻で 0 でなければならない。よって Euler--Lagrange 方程式
+\begin{equation}
+  \frac{\partial L}{\partial x}
+  -\frac{\dd}{\dd t}
+  \frac{\partial L}{\partial \dot{x}}
+  =0
+  \label{eq:euler-lagrange-entry}
+\end{equation}
+を得る。これは「最適な曲線では、許される微小な曲線変化に対して評価関数の一次変化が消える」という条件である。力学で Euler--Lagrange 方程式が現れるのも同じ変分の構造による。
+
+制御問題では、軌道 $x$ は自由に選べず、状態方程式 $\dot{x}=f(x,u,t)$ に従う。この動的制約を扱うため、随伴変数 $\lambda(t)\in\R^n$ を導入し、拡張された汎関数
+\begin{equation}
+  \bar{J}
+  =
+  \phi(x(T))
+  +\int_0^T
+  \left\{
+    \ell(x,u,t)
+    +\lambda^\T\bigl(f(x,u,t)-\dot{x}\bigr)
+  \right\}\,\dd t
+\end{equation}
+を考える。最適軌道では $f-\dot{x}=0$ なので、$\bar{J}$ と $J$ の値は一致する。$x$ と $u$ の変分を取り、$\lambda^\T\dot{x}$ の項を部分積分して一次の項を集めると、Pontryagin の Hamiltonian
+\begin{equation}
+  \mathcal{H}(x,u,\lambda,t)
+  =
+  \ell(x,u,t)+\lambda^\T f(x,u,t)
+  \label{eq:pontryagin-hamiltonian}
+\end{equation}
+により、内部点の必要条件は
+\begin{align}
+  \dot{x}&=\frac{\partial \mathcal{H}}{\partial \lambda}
+  =f(x,u,t),
+  \label{eq:pmp-state}\\
+  -\dot{\lambda}&=\frac{\partial \mathcal{H}}{\partial x},
+  \label{eq:pmp-costate}\\
+  0&=\frac{\partial \mathcal{H}}{\partial u},
+  \label{eq:pmp-stationarity}\\
+  \lambda(T)&=\frac{\partial \phi}{\partial x}(x(T)).
+  \label{eq:pmp-terminal}
+\end{align}
+となる。$\lambda$ は状態を少し変えたときに将来の最小コストがどれだけ変わるかを表す感度であり、随伴変数または共状態と呼ばれる。状態方程式は初期条件 $x(0)=x_0$ から前向きに進み、随伴方程式は終端条件 \weq{pmp-terminal} から後ろ向きに決まる。したがって、最適制御問題は一般に二点境界値問題になる。入力制約がない滑らかな場合は \weq{pmp-stationarity} を使うが、入力に上下限や不等式制約がある場合は、Hamiltonian を許容集合上で最小にする条件や KKT 条件へ置き換わる。
+
+同じ問題の別表現が動的計画法である。時刻 $t$、状態 $x$ から終端までに達成できる最小残りコストを値関数
+\begin{equation}
+  V(t,x)=
+  \min_{u(\cdot)}
+  \left\{
+    \phi(x(T))
+    +\int_t^T \ell(x(\tau),u(\tau),\tau)\,\dd \tau
+  \right\}
+  \label{eq:value-function-entry}
+\end{equation}
+と定義する。短い時間幅 $h>0$ だけ先へ進めると、最適性の原理より
+\begin{equation}
+  V(t,x)=
+  \min_{u(\cdot)}
+  \left\{
+    \int_t^{t+h}\ell(x(\tau),u(\tau),\tau)\,\dd \tau
+    +V(t+h,x(t+h))
+  \right\}
+  \label{eq:dynamic-programming-principle}
+\end{equation}
+が成り立つ。右辺は、最初の短い区間で支払うコストと、その後の最小残りコストの和である。$h$ を十分小さくし、$x(t+h)=x+h f(x,u,t)+o(h)$ を代入して Taylor 展開すると
+\begin{align}
+  0=
+  \min_u
+  \left\{
+    \ell(x,u,t)
+    +\frac{\partial V}{\partial t}(t,x)
+    +\frac{\partial V}{\partial x}(t,x)^\T f(x,u,t)
+  \right\}
+  \label{eq:hjb-entry}
+\end{align}
+を得る。これが Hamilton--Jacobi--Bellman 方程式であり、終端条件は $V(T,x)=\phi(x)$ である。Pontryagin の条件が一つの最適軌道に沿った必要条件を与えるのに対し、HJB 方程式は全状態に対する値関数を求める方程式である。滑らかな値関数が得られる場合、両者は
+\begin{equation}
+  \lambda(t)=
+  \frac{\partial V}{\partial x}(t,x(t))
+  \label{eq:costate-value-gradient}
+\end{equation}
+で結びつく。
+
+LQR では、この一般形が閉じた行列方程式に落ちる。線形系 $f=Ax+Bu$、二次コスト
+\begin{equation}
+  \ell=x^\T Qx+u^\T Ru,
+  \qquad
+  \phi=x^\T Sx
+\end{equation}
+を用いると、Hamiltonian は
+\begin{equation}
+  \mathcal{H}
+  =
+  x^\T Qx+u^\T Ru+\lambda^\T(Ax+Bu)
+\end{equation}
+であり、停留条件から
+\begin{equation}
+  0=2Ru+B^\T\lambda,
+  \qquad
+  u=-\frac{1}{2}R^{-1}B^\T\lambda
+\end{equation}
+を得る。一方、HJB で値関数を $V(t,x)=x^\T P(t)x$ と置けば
+\begin{equation}
+  \lambda=\partial_x V=2P(t)x
+\end{equation}
+なので、最適入力は
+\begin{equation}
+  u=-R^{-1}B^\T P(t)x
+\end{equation}
+となる。さらに HJB 方程式の二次形式の係数を 0 と置くことでリカッチ微分方程式が得られ、無限ホライズンではその定常解が代数リカッチ方程式になる。したがって、変分、Pontryagin の条件、動的計画法、HJB は別々の公式ではなく、LQR のリカッチ方程式へ至る同じ最適性の構造を異なる表現で見ている。
+
+最後に、一次元の積分器でこの接続を確認する。対象を
+\begin{equation}
+  \dot{x}=u,
+  \qquad x(0)=x_0
+\end{equation}
+とし、評価関数を
+\begin{equation}
+  J=sx(T)^2+\int_0^T r u(t)^2\,\dd t,
+  \qquad s\ge0,\quad r>0
+  \label{eq:scalar-integrator-cost}
+\end{equation}
+とする。Hamiltonian は
+\begin{equation}
+  \mathcal{H}=r u^2+\lambda u
+\end{equation}
+である。最適性条件は
+\begin{align}
+  \dot{x}&=u,\\
+  -\dot{\lambda}&=0,\\
+  0&=2ru+\lambda,\\
+  \lambda(T)&=2s x(T)
+\end{align}
+である。したがって $\lambda$ は定数で、$u=-\lambda/(2r)$ も定数になる。終端条件に $x(T)=x_0+Tu$ を代入すると
+\begin{align}
+  \lambda
+  &=2s\left(x_0-\frac{T}{2r}\lambda\right),\\
+  \lambda\left(1+\frac{sT}{r}\right)&=2s x_0,\\
+  u^*&=-\frac{s}{r+sT}x_0
+\end{align}
+を得る。同じ結果を HJB から導く。$V(t,x)=P(t)x^2$ と置いたとき
+\begin{equation}
+  0=\min_u\{r u^2+\dot{P}x^2+2P xu\}
+\end{equation}
+であり、$u^*=-(P/r)x$、さらに
+\begin{equation}
+  \dot{P}=\frac{P^2}{r},
+  \qquad
+  P(T)=s
+\end{equation}
+となる。このスカラーのリカッチ方程式を解くと
+\begin{equation}
+  P(t)=\frac{sr}{r+s(T-t)}
+  \label{eq:scalar-riccati-solution}
+\end{equation}
+である。したがって $t=0$ では
+\begin{equation}
+  u^*(0)=-\frac{P(0)}{r}x_0
+  =-\frac{s}{r+sT}x_0
+\end{equation}
+となり、Pontryagin の条件から得た入力と一致する。この小さな例では、随伴変数、値関数の勾配、リカッチ方程式が同じ最適性条件の別表現であることが直接確認できる。
+
+\subsection{確率とノイズ}
+
+ここまでの制御では、状態 $x$ が分かっているか、少なくともオブザーバで滑らかに推定できると考えた。台車の例では、位置センサから位置は読めても、速度は測れないことが多い。さらに、センサの分解能や電気的な揺らぎにより、測定値をそのまま真値とみなすと入力が細かく振れる。測定値 $y$ を
+\begin{equation}
+  y=Cx+v
+\end{equation}
+と書くと、$v$ は測定ノイズである。$y$ の単位は測定量の単位であり、位置センサならメートル、角度センサならラジアンである。平均が 0、分散が $\sigma^2$ のノイズなら
+\begin{equation}
+  E[v]=0,
+  \qquad
+  E[v^2]=\sigma^2
+\end{equation}
+である。多次元では共分散行列
+\begin{equation}
+  R=E[vv^\T]
+\end{equation}
+がノイズの大きさと相関を表す。$R$ の $(i,j)$ 成分は、測定 $y_i$ と $y_j$ の単位の積を持つ。
+
+モデルにも不確かさがある。摩擦、坂道、外乱、離散化誤差をすべて正確には書けないため、離散時間モデルを
+\begin{align}
+  x_{k+1}&=A x_k+B u_k+w_k,\\
+  y_k&=C x_k+v_k
+\end{align}
+と書き、$w_k$ の共分散を $Q$、$v_k$ の共分散を $R$ とする。この導入では記号を簡潔に $Q,R$ と書くが、後の詳細な導出では LQR の重みと区別するためにプロセスノイズ共分散を $Q_w$、測定ノイズ共分散を $R_v$ と書く。$Q$ の成分は状態成分の単位の積、$R$ の成分は測定成分の単位の積を持つ。$Q$ が大きいほどモデルを疑い、$R$ が大きいほどセンサを疑う。推定とは、この二つの信頼度を使って状態を更新することである。
+
+\subsection{カルマンフィルタ}
+
+まず1次元で、予測値と測定値の混ぜ方を確認する。事前推定値を $\hat{x}^-$、その分散を $P^-$、測定値を $y$、測定ノイズ分散を $R$ とする。$x$ が位置なら $P^-$ と $R$ は平方メートルの単位を持ち、値が大きいほどその情報を信じにくいことを表す。更新後の推定値を
+\begin{equation}
+  \hat{x}=\hat{x}^-+K(y-\hat{x}^-)
+\end{equation}
+と置くと、$K$ は測定をどれだけ信じるかを表す。誤差分散を最小にするゲインは
+\begin{equation}
+  K=\frac{P^-}{P^-+R}
+\end{equation}
+である。事前分散が大きいほど測定を信じ、測定ノイズが大きいほど事前値を信じる。
+
+多次元のカルマンフィルタは、線形モデルに対する予測と更新で書ける。
+\begin{align}
+  \hat{x}_{k|k-1}&=A\hat{x}_{k-1|k-1}+Bu_{k-1},\\
+  P_{k|k-1}&=AP_{k-1|k-1}A^\T+Q,\\
+  K_k&=P_{k|k-1}C^\T(CP_{k|k-1}C^\T+R)^{-1},\\
+  \hat{x}_{k|k}&=\hat{x}_{k|k-1}+K_k(y_k-C\hat{x}_{k|k-1}),\\
+  P_{k|k}&=(I-K_kC)P_{k|k-1}.
+\end{align}
+ここで $P$ は推定誤差の共分散である。カルマンフィルタは、線形ガウス系では平均二乗誤差を最小にする推定器である。
+
+LQR は状態が利用可能である場合の最適状態フィードバックであり、Kalman フィルタは線形確率モデルにおける状態推定器である。線形ガウス仮定のもとでは、Kalman フィルタで得た $\hat{x}$ を LQR の状態フィードバックへ入力する構成が LQG 制御を与える。本節では、対象および推定器を線形として扱う。

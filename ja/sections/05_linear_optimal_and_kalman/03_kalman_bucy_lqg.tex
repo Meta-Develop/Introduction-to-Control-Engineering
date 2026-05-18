@@ -1,0 +1,359 @@
+\subsection{連続時間 Kalman--Bucy フィルタ}
+
+離散時間 Kalman フィルタでは、時刻 $k-1$ から $k$ へ進める予測と、時刻 $k$ の測定値による更新を分けて書いた。連続時間で測定が絶えず入ってくると考えると、この二段構造は微小時間ごとに連続して繰り返される極限になる。この極限で得られる線形ガウス推定器を Kalman--Bucy フィルタという。
+
+状態を $x(t)\in\R^n$、入力を $u(t)\in\R^m$、測定を $y(t)\in\R^p$ とする。連続時間の線形確率モデルを、白色ノイズを形式的に用いて
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t)+Gw(t),\\
+  y(t)&=Cx(t)+v(t)
+  \label{eq:kb-formal-model}
+\end{align}
+と書くことが多い。ここで $A\in\R^{n\times n}$、$B\in\R^{n\times m}$、$G\in\R^{n\times r}$、$C\in\R^{p\times n}$ である。$w(t)\in\R^r$ はプロセスノイズ、$v(t)\in\R^p$ は測定ノイズであり、
+\begin{align}
+  E[w(t)]&=0,
+  &E[v(t)]&=0,\\
+  E[w(t)w(\tau)^\T]&=Q_w\delta(t-\tau),
+  &E[v(t)v(\tau)^\T]&=R_v\delta(t-\tau),\\
+  E[w(t)v(\tau)^\T]&=0
+\end{align}
+を仮定する。$Q_w=Q_w^\T\ge0$ は $r\times r$ のプロセスノイズ強度、$R_v=R_v^\T>0$ は $p\times p$ の測定ノイズ強度である。$\delta(t-\tau)$ は Dirac のデルタであり、連続時間の白色ノイズが普通の関数ではなく、積分したときに有限の分散を持つ理想化であることを表す。
+
+この理想化を少し丁寧に扱うには、独立な Wiener 過程 $\beta(t)\in\R^r$、$\eta(t)\in\R^p$ を用いて
+\begin{align}
+  \dd x(t)&=(Ax(t)+Bu(t))\,\dd t+G\,\dd\beta(t),\\
+  \dd z(t)&=Cx(t)\,\dd t+\dd\eta(t)
+  \label{eq:kb-stochastic-model}
+\end{align}
+と書く。$z(t)$ は測定信号を時間積分した量であり、形式的には $y(t)=\dd z(t)/\dd t$ と見れば \weq{kb-formal-model} に対応する。増分の共分散は
+\begin{align}
+  E[\dd\beta(t)\dd\beta(t)^\T]&=Q_w\,\dd t,\\
+  E[\dd\eta(t)\dd\eta(t)^\T]&=R_v\,\dd t,\\
+  E[\dd\beta(t)\dd\eta(t)^\T]&=0
+\end{align}
+である。以下では、初期推定誤差 $x(0)-\hat{x}(0)$ がこれらのノイズと無相関で、共分散
+\begin{equation}
+  P(0)=E[(x(0)-\hat{x}(0))(x(0)-\hat{x}(0))^\T]
+\end{equation}
+を持つとする。
+
+Kalman--Bucy フィルタは、測定の予測誤差を連続時間で注入するオブザーバである。測定微分を用いると
+\begin{equation}
+  \dd\hat{x}(t)
+  =(A\hat{x}(t)+Bu(t))\,\dd t
+  +L(t)\{\dd z(t)-C\hat{x}(t)\,\dd t\}
+  \label{eq:kb-filter-differential}
+\end{equation}
+であり、形式的な測定 $y(t)$ を用いれば
+\begin{equation}
+  \dot{\hat{x}}(t)
+  =A\hat{x}(t)+Bu(t)+L(t)\{y(t)-C\hat{x}(t)\}
+  \label{eq:kb-filter-formal}
+\end{equation}
+と書ける。$L(t)\in\R^{n\times p}$ は連続時間の Kalman ゲインである。$y-C\hat{x}$ は離散時間の場合の革新 $\nu_k=y_k-C_k\hat{x}_{k|k-1}$ に対応し、測定が予測より大きい方向へ状態推定を修正する信号である。
+
+\begin{derivation}
+推定誤差を
+\begin{equation}
+  e(t)=x(t)-\hat{x}(t)
+\end{equation}
+と置く。\weq{kb-stochastic-model} と \weq{kb-filter-differential} の差を取ると
+\begin{align}
+  \dd e
+  &=\dd x-\dd\hat{x}\\
+  &=(Ax+Bu)\,\dd t+G\,\dd\beta
+    -(A\hat{x}+Bu)\,\dd t
+    -L\{C(x-\hat{x})\,\dd t+\dd\eta\}\\
+  &=(A-LC)e\,\dd t+G\,\dd\beta-L\,\dd\eta
+  \label{eq:kb-error-dynamics}
+\end{align}
+を得る。入力 $u$ は既知として推定器にも入っているため、誤差方程式から消える。
+
+誤差共分散を
+\begin{equation}
+  P(t)=E[e(t)e(t)^\T]\in\R^{n\times n}
+\end{equation}
+と定義する。微小変化では積の微分に二次のノイズ増分が残るので、Itô の積公式
+\begin{equation}
+  \dd(ee^\T)=(\dd e)e^\T+e(\dd e)^\T+(\dd e)(\dd e)^\T
+\end{equation}
+を使う。\weq{kb-error-dynamics} を代入して期待値を取ると、$e$ と新しいノイズ増分の交差項、および $\dd\beta$ と $\dd\eta$ の交差項は仮定により消える。残る項は
+\begin{align}
+  \dot{P}
+  &=(A-LC)P+P(A-LC)^\T
+    +GQ_wG^\T+LR_vL^\T\\
+  &=AP+PA^\T+GQ_wG^\T
+    -LCP-PC^\T L^\T+LR_vL^\T.
+  \label{eq:kb-covariance-for-gain}
+\end{align}
+ここで $GQ_wG^\T$ はプロセスノイズが状態共分散を増やす項、$LR_vL^\T$ は測定ノイズをゲインで状態空間へ戻した項である。一方で $-LCP-PC^\T L^\T$ は、測定から得た情報が推定誤差を減らす効果を表す。
+
+離散時間の場合と同じく、瞬間的な共分散の増え方を小さくする $L$ を選ぶ。記号を軽くするため $R=R_v$ と書くと、$L$ に依存する部分は
+\begin{equation}
+  -LCP-PC^\T L^\T+LRL^\T
+\end{equation}
+である。これを平方完成すると
+\begin{align}
+  -LCP-PC^\T L^\T+LRL^\T
+  &=
+  (L-PC^\T R^{-1})R(L-PC^\T R^{-1})^\T\\
+  &\quad -PC^\T R^{-1}CP.
+\end{align}
+$R_v>0$ なので第一項は半正定値であり、最小にするゲインは
+\begin{equation}
+  L(t)=P(t)C^\T R_v^{-1}
+  \label{eq:kb-gain}
+\end{equation}
+である。これを \weq{kb-covariance-for-gain} に代入すると、連続時間 Kalman--Bucy フィルタの共分散リカッチ方程式
+\begin{equation}
+  \dot{P}
+  =AP+PA^\T+GQ_wG^\T
+  -PC^\T R_v^{-1}CP,
+  \qquad P(0)=P_0
+  \label{eq:kb-riccati}
+\end{equation}
+を得る。
+\end{derivation}
+
+\weq{kb-riccati} は LQR のリカッチ方程式とよく似ている。LQR では入力を使って状態の増大を抑えるために $-PBR^{-1}B^\T P$ が現れた。Kalman--Bucy フィルタでは測定を使って推定誤差を抑えるために $-PC^\T R_v^{-1}CP$ が現れる。$GQ_wG^\T$ はモデルをどれだけ疑うか、$R_v$ は測定をどれだけ疑うかを表す。$Q_w$ を大きくすれば $P$ が大きくなりやすく、ゲイン $L=PC^\T R_v^{-1}$ は測定へ強く反応する。$R_v$ を大きくすれば、測定の信頼度が下がり、ゲインは小さくなる。
+
+時不変で長時間運転する場合、条件がよければ $P(t)$ は定常値 $P_\infty$ に収束する。このとき
+\begin{equation}
+  0=AP_\infty+P_\infty A^\T+GQ_wG^\T
+  -P_\infty C^\T R_v^{-1}CP_\infty
+\end{equation}
+を満たし、定常ゲインは
+\begin{equation}
+  L_\infty=P_\infty C^\T R_v^{-1}
+\end{equation}
+である。代表的な十分条件は、測定から不安定なモードを観測できるという可検出性と、プロセスノイズで励起される不確かさが安定化可能な範囲にあることである。すなわち、推定すべき不安定な動きが測定にまったく現れなければ、どれだけゲインを調整しても誤差を抑えられない。
+
+離散時間 Kalman フィルタとの対応は、微小時間幅 $h$ で見ると分かりやすい。測定を無視してモデルだけで進めれば
+\begin{align}
+  \hat{x}(t+h)&=\hat{x}(t)+h(A\hat{x}(t)+Bu(t))+O(h^2),\\
+  P(t+h)&=P(t)+h\{AP(t)+P(t)A^\T+GQ_wG^\T\}+O(h^2)
+\end{align}
+となり、これは離散時間の予測ステップに対応する。一方、同じ微小時間内に入る連続測定は、共分散を
+\begin{equation}
+  -h\,P(t)C^\T R_v^{-1}CP(t)
+\end{equation}
+だけ減らす方向に働く。したがって、離散時間の「予測してから更新する」という二段階は、連続時間では一つの微分方程式の中で同時に進む。数値実装では、\weq{kb-filter-differential} と \weq{kb-riccati} を時間刻みで積分するか、サンプリング周期 $h$ ごとに
+\begin{align}
+  A_d&=e^{Ah},\\
+  B_d&=\int_0^h e^{A\sigma}B\,\dd\sigma,\\
+  Q_d&=\int_0^h e^{A\sigma}GQ_wG^\T e^{A^\T\sigma}\,\dd\sigma
+\end{align}
+を用いて離散時間モデルへ変換し、前節の離散時間 Kalman フィルタを使う。
+
+実用上は、連続時間の白色ノイズをそのまま物理信号と見なしてはいけない。白色ノイズは全周波数に同じ強度を持つ理想化であり、実際の外乱やセンサノイズには帯域、遅れ、量子化、フィルタ処理がある。また、サンプルされたセンサ値の分散 $R_s$ と、連続時間モデルの強度 $R_v$ は同じ量ではない。測定が区間平均なのか、瞬時値をサンプルしたものなのか、前段のアナログフィルタを通っているのかによって対応が変わる。連続モデルから実装へ移すときは、サンプリング周期、ノイズ強度の単位、離散化した $Q_d$ と測定共分散の意味をそろえる必要がある。熱系の温度推定のような低速の対象でも、モデル化していない熱流を $Q_w$ で表すのか、センサ読み取りのばらつきを $R_v$ または離散時間の $R_s$ で表すのかを分けて調整することが、フィルタの応答を評価する第一条件になる。
+
+\subsection{LQG 制御と分離原理}
+
+LQR は状態 $x$ が利用できるときの二次評価最適な入力を与え、Kalman フィルタは測定 $y$ から状態の条件付き平均を推定する。多くの制御対象では、速度、内部温度、ばねの伸び、電流の一部などが直接測れないため、状態フィードバック $u=-Kx$ はそのまま実装できない。そこで、測れる出力から $\hat{x}$ を作り、状態フィードバックの $x$ を $\hat{x}$ で置き換える。この構成を、線形二次ガウス制御、すなわち LQG 制御という。名称の Linear はモデルが線形であること、Quadratic は評価関数が二次形式であること、Gaussian はノイズと初期状態の確率モデルを正規分布で扱うことを表している。
+
+連続時間の標準的な LQG 問題を
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t)+Gw(t),\\
+  y(t)&=Cx(t)+v(t)
+  \label{eq:lqg-plant}
+\end{align}
+と置く。状態は $x\in\R^n$、入力は $u\in\R^m$、測定は $y\in\R^p$ である。$w$ はモデル化しない外乱や入力されない揺らぎを表すプロセスノイズ、$v$ は測定ノイズである。ここでは
+\begin{align}
+  E[w(t)]&=0,
+  &E[v(t)]&=0,\\
+  E[w(t)w(\tau)^\T]&=Q_w\delta(t-\tau),
+  &E[v(t)v(\tau)^\T]&=R_v\delta(t-\tau),\\
+  E[w(t)v(\tau)^\T]&=0
+\end{align}
+を仮定し、$Q_w=Q_w^\T\ge0$、$R_v=R_v^\T>0$ とする。初期状態の推定誤差も、これらのノイズと無相関であると仮定する。制御性能は、有限ホライズンなら
+\begin{equation}
+  J_T
+  =E\left[
+    x(T)^\T S x(T)
+    +\int_0^T
+      \{x(t)^\T Q_x x(t)+u(t)^\T R_u u(t)\}\,\dd t
+  \right]
+  \label{eq:lqg-finite-cost}
+\end{equation}
+で評価する。ここで $Q_x=Q_x^\T\ge0$、$R_u=R_u^\T>0$、$S=S^\T\ge0$ であり、$Q_x$ は状態偏差への重み、$R_u$ は入力への重みである。プロセスノイズが持続的に入る無限ホライズンでは、単純な積分型の期待コストは一般に時間とともに増え続けるため、定常運転の評価には
+\begin{equation}
+  \bar{J}
+  =
+  \limsup_{T\to\infty}
+  \frac{1}{T}
+  E\int_0^T
+    \{x(t)^\T Q_x x(t)+u(t)^\T R_u u(t)\}\,\dd t
+  \label{eq:lqg-average-cost}
+\end{equation}
+のような平均コストを用いる。初期値だけを減衰させる決定論的 LQR と、持続的なノイズを受ける LQG では、この点で評価の意味が異なる。
+
+LQG の制御器は、制御用リカッチ方程式と推定用リカッチ方程式を別々に解いて作る。有限ホライズンの制御側では
+\begin{equation}
+  -\dot{P}_c
+  =
+  A^\T P_c+P_cA-P_cBR_u^{-1}B^\T P_c+Q_x,
+  \qquad
+  P_c(T)=S
+  \label{eq:lqg-control-rde}
+\end{equation}
+を解き、
+\begin{equation}
+  K(t)=R_u^{-1}B^\T P_c(t)
+  \label{eq:lqg-control-gain}
+\end{equation}
+とする。無限ホライズンで定常ゲインを使う場合は、対応する代数リカッチ方程式
+\begin{equation}
+  A^\T P_c+P_cA-P_cBR_u^{-1}B^\T P_c+Q_x=0
+  \label{eq:lqg-control-care}
+\end{equation}
+の安定化解から $K=R_u^{-1}B^\T P_c$ を得る。一方、推定側では Kalman--Bucy フィルタの共分散リカッチ方程式
+\begin{equation}
+  \dot{P}_e
+  =
+  AP_e+P_eA^\T+GQ_wG^\T
+  -P_eC^\T R_v^{-1}CP_e
+  \label{eq:lqg-estimator-rde}
+\end{equation}
+を用い、
+\begin{equation}
+  L(t)=P_e(t)C^\T R_v^{-1}
+  \label{eq:lqg-estimator-gain}
+\end{equation}
+とする。定常推定器では
+\begin{equation}
+  0=
+  AP_e+P_eA^\T+GQ_wG^\T
+  -P_eC^\T R_v^{-1}CP_e
+  \label{eq:lqg-estimator-care}
+\end{equation}
+の安定化解を使う。制御側の $P_c$ は将来の制御コストを表し、推定側の $P_e$ は推定誤差の共分散を表す。同じリカッチ方程式という名前で呼ばれても、二つの行列が表す量は異なる。
+
+得られた LQG 制御器は
+\begin{align}
+  \dot{\hat{x}}&=A\hat{x}+Bu+L(y-C\hat{x}),\\
+  u&=-K\hat{x}
+  \label{eq:lqg-controller}
+\end{align}
+である。$y-C\hat{x}$ は測定の革新であり、推定器はこの革新を用いて $\hat{x}$ を修正する。制御入力は、推定値 $\hat{x}$ を真の状態であるかのように扱って LQR ゲインを掛ける。この性質を確定性等価性という。確定性等価性は、「不確かさを無視してよい」という意味ではない。ノイズ共分散は推定器の $L$ を決め、推定誤差は閉ループの入力変動や状態変動として現れる。ただし、最適な制御則の形は、完全状態が測れる LQR の $x$ を条件付き平均 $\hat{x}$ に置き換えたものになる。
+
+図\ref{fig:lqg-signal-path}は、この式を信号経路として並べたものである。制御器が計算する信号を入力指令 $u_c=-K\hat{x}$、アクチュエータを通って対象へ実際に入る信号を $u_a$ と区別している。線形 LQG の導出では $u_a=u_c$ を仮定するが、飽和やレート制限が入る実装では $u_a$ が推定器にも渡される既知入力でなければならない。推定器が $u_c$ を使い続けると、対象に入った入力との不一致が推定誤差として蓄積し、分離原理の前提から外れる。
+
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{1mm}
+\begin{picture}(136,68)
+\small
+\put(16,44){\framebox(34,12){\shortstack{制御器\\$u_c=-K\hat{x}$}}}
+\put(58,44){\framebox(30,12){\shortstack{飽和・駆動\\$u_a$}}}
+\put(98,44){\framebox(28,12){\shortstack{対象\\$x$}}}
+\put(98,14){\framebox(28,12){\shortstack{測定\\$y=Cx+v$}}}
+\put(16,14){\framebox(34,12){\shortstack{推定器\\$\hat{x}$}}}
+\put(50,50){\vector(1,0){8}}
+\put(51,53){$u_c$}
+\put(88,50){\vector(1,0){10}}
+\put(90,53){$u_a$}
+\put(112,65){\vector(0,-1){9}}
+\put(114,60){$w$}
+\put(112,44){\vector(0,-1){18}}
+\put(115,35){$x$}
+\put(132,20){\vector(-1,0){6}}
+\put(129,22){$v$}
+\put(98,20){\vector(-1,0){48}}
+\put(74,22){$y$}
+\put(33,26){\vector(0,1){18}}
+\put(35,34){$\hat{x}$}
+\put(73,44){\line(0,-1){12}}
+\put(73,32){\vector(-1,0){28}}
+\put(45,32){\vector(0,-1){6}}
+\put(50,34){既知入力 $u_a$}
+\end{picture}
+\caption{LQG 制御の信号経路。測定 $y$ から推定器が $\hat{x}$ を作り、制御器が入力指令 $u_c$ を計算し、飽和や駆動系を通った実入力 $u_a$ が対象へ入る。線形導出では $u_a=u_c$ とみなすが、飽和がある場合は実入力を推定器の既知入力として扱う。}
+\label{fig:lqg-signal-path}
+\end{figure}
+
+この置き換えが成立する理由は、条件付き平均と推定誤差の直交性にある。時刻 $t$ までの測定履歴を $\mathcal{Y}_t$ とし、
+\begin{equation}
+  \hat{x}(t)=E[x(t)\mid\mathcal{Y}_t],
+  \qquad
+  e(t)=x(t)-\hat{x}(t)
+\end{equation}
+と置く。条件付き平均の定義より
+\begin{equation}
+  E[e(t)\mid\mathcal{Y}_t]=0
+\end{equation}
+である。したがって、状態重みの条件付き期待値は
+\begin{align}
+  E[x^\T Q_x x\mid\mathcal{Y}_t]
+  &=
+  E[(\hat{x}+e)^\T Q_x(\hat{x}+e)\mid\mathcal{Y}_t]\\
+  &=
+  \hat{x}^\T Q_x\hat{x}
+  +2\hat{x}^\T Q_x E[e\mid\mathcal{Y}_t]
+  +E[e^\T Q_x e\mid\mathcal{Y}_t]\\
+  &=
+  \hat{x}^\T Q_x\hat{x}
+  +\tr(Q_xP_e(t)).
+  \label{eq:lqg-cost-decomposition}
+\end{align}
+最後の等号では $P_e(t)=E[ee^\T\mid\mathcal{Y}_t]$ と、$E[e^\T Q_x e]=\tr(Q_x E[ee^\T])$ を使った。右辺の第一項だけが、現在の推定値を状態として見た LQR の状態コストである。第二項は推定誤差から避けられずに生じるコストであり、線形ガウスモデルと既知入力の仮定のもとでは、推定誤差共分散の時間発展は制御入力の選び方に依存しない。入力コスト $u^\T R_u u$ はそのまま制御側に残るので、制御の最適化は $\hat{x}$ を状態とする LQR と同じ形になる。これが LQG における分離原理の中身である。
+
+\begin{theorem}[LQG の分離原理]
+線形モデル \weq{lqg-plant}、二次評価 \weq{lqg-finite-cost}、ゼロ平均の独立なガウスノイズ、既知入力、および初期推定誤差とノイズの独立性を仮定する。制御側リカッチ方程式と推定側リカッチ方程式がそれぞれ適切な解を持つなら、最適な出力フィードバック制御器は Kalman フィルタと LQR 状態フィードバックを
+\begin{equation}
+  u(t)=-K(t)\hat{x}(t)
+\end{equation}
+で直列に接続した形で与えられる。定常無限ホライズンでは、$(A,B)$ の可安定性、$(A,Q_x^{1/2})$ の可検出性、$(A,C)$ の可検出性、および $W=GQ_wG^\T$ に対する $(A,W^{1/2})$ の可安定性が代表的な十分条件である。
+\end{theorem}
+
+分離原理という名前は、閉ループの状態方程式にも直接現れる。推定誤差を
+\begin{equation}
+  e=x-\hat{x}
+\end{equation}
+と置き、定常ゲイン $K,L$ を用いると
+\begin{align}
+  \dot{x}
+  &=Ax+B(-K\hat{x})+Gw\\
+  &=(A-BK)x+BKe+Gw,
+\end{align}
+であり、推定誤差は
+\begin{align}
+  \dot{e}
+  &=\dot{x}-\dot{\hat{x}}\\
+  &=(A-LC)e+Gw-Lv
+\end{align}
+を満たす。したがって、拡大状態 $(x,e)$ に対する閉ループは
+\begin{equation}
+  \begin{bmatrix}
+    \dot{x}\\
+    \dot{e}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    A-BK & BK\\
+    0 & A-LC
+  \end{bmatrix}
+  \begin{bmatrix}
+    x\\
+    e
+  \end{bmatrix}
+  +
+  \begin{bmatrix}
+    G & 0\\
+    G & -L
+  \end{bmatrix}
+  \begin{bmatrix}
+    w\\
+    v
+  \end{bmatrix}.
+  \label{eq:lqg-augmented-dynamics}
+\end{equation}
+係数行列はブロック上三角である。ノイズを 0 として平均の安定性だけを見ると、その固有値は $A-BK$ の固有値と $A-LC$ の固有値を合わせたものになる。したがって、LQR で $A-BK$ を Hurwitz にし、Kalman--Bucy フィルタで $A-LC$ を Hurwitz にすれば、平均的な閉ループは安定になる。さらにノイズ強度が有限で、両方の行列が Hurwitz なら、拡大系の共分散も定常値へ収束し、状態と推定誤差の二乗平均は有界に保たれる。
+
+調整の解釈は二組に分けると整理しやすい。$Q_x$ と $R_u$ は、制御として何を優先するかを決める。$Q_x$ を大きくすると状態偏差を強く抑えるため $K$ が大きくなりやすく、応答は速くなる一方で入力の振れや飽和の危険が増える。$R_u$ を大きくすると入力を節約し、応答は穏やかになる。これに対し、$Q_w$ と $R_v$ は、推定器がモデルと測定のどちらを信じるかを決める。$Q_w$ を大きくすると、モデル化しない外乱が大きいと見なされ、推定器は測定の革新へ強く反応する。$R_v$ を大きくすると、測定値を疑うため $L$ は小さくなり、推定値はモデル予測に近づく。たとえば熱系で室温を制御する場合、外気や人の出入りによる未モデル化熱流が大きいなら $Q_w$ を増やし、温度センサのばらつきや量子化が大きいなら $R_v$ を増やす。入力重み $R_u$ はヒータ出力の制限や消費電力に対応し、状態重み $Q_x$ は温度偏差をどれだけ早く戻したいかに対応する。
+
+ただし、分離して設計できることと、相互作用を確認しなくてよいことは同じではない。$K$ が大きいと、推定値に含まれる高周波の測定ノイズ成分が入力へ強く入る。$L$ が大きいと、推定値は測定に素早く追従するが、センサノイズにも敏感になる。入力飽和、レート制限、むだ時間、非線形性、モデル誤差、ノイズの相関、非ガウス分布、センサの帯域制限があると、上の分離原理の仮定から外れる。特に入力が飽和すると、推定器が仮定している既知入力 $u$ と実際に対象へ入った入力がずれ、推定誤差の独立なリカッチ方程式という構造が崩れる。LQG は線形ガウスモデルに対する基準設計として強力であるが、最終的な設計では飽和を含む閉ループシミュレーション、ノイズ共分散の妥当性確認、革新系列の白色性、入力の実効範囲、モデル誤差に対する感度を確認する必要がある。
+
+離散時間でも同じ構造が成り立つ。離散時間 LQR のリカッチ方程式から $K_k$ を求め、離散時間 Kalman フィルタから $\hat{x}_{k|k}$ を求めて
+\begin{equation}
+  u_k=-K_k\hat{x}_{k|k}
+\end{equation}
+とすればよい。実装では、サンプリング周期、ゼロ次ホールドで離散化した $A_d,B_d,Q_d$、測定時刻、計算遅れをそろえる。連続時間の式で設計したゲインをそのままデジタル制御器へ入れるのではなく、実際のサンプル周期で推定と制御がどの順序で実行されるかを明示することが、LQG を実機へ移すときの第一条件である。
