@@ -15,7 +15,7 @@ The Japanese manuscript is the source edition. Differential equations, transfer 
 | `ja/` | Japanese source edition |
 | `en/` | English mirrored edition placeholder |
 | `common/style/` | Shared LaTeX style |
-| `docs/` | Curriculum maps and design notes |
+| `docs/` | Japanese README |
 | `pdf/` | Prebuilt PDFs for quick reading |
 
 ## Build

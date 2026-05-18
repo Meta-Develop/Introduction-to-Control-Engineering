@@ -3,6 +3,10 @@ AGENTS.md
 .github/agents/
 .github/hooks/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # LaTeX build products
 *.aux
 *.bbl
