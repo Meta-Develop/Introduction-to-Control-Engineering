@@ -1,12 +1,35 @@
-\section{状態変数}
+\section{状態空間と線形現代制御}
 
-伝達関数は入力から出力への関係をよく表すが、内部の量を直接扱いたいときには状態空間表現が必要になる。状態 $x\in\R^n$、入力 $u\in\R^m$、出力 $y\in\R^p$ に対して、線形時不変系は
+\subsection{状態変数}
+
+伝達関数は入力から出力への関係をよく表すが、内部の量を直接扱いたいときには状態空間表現が必要になる。状態空間表現では、対象の過去の履歴をすべて覚えておく代わりに、時刻 $t$ の状態ベクトル $x(t)$ に必要な情報を集める。入力 $u(t)$ を与えれば、次の瞬間の状態変化 $\dot{x}(t)$ と出力 $y(t)$ が現在の $x(t)$ と $u(t)$ から決まる、という因果構造を式にする。
+
+有限次元の連続時間線形時不変系を考える。状態 $x(t)\in\R^n$、入力 $u(t)\in\R^m$、出力 $y(t)\in\R^p$ に対して、状態方程式と出力方程式は
 \begin{align}
   \dot{x}(t)&=Ax(t)+Bu(t),\\
   y(t)&=Cx(t)+Du(t)
   \label{eq:ss}
 \end{align}
-と書く。$A$ は内部の自然な変化、$B$ は入力の入り方、$C$ は出力として見る向き、$D$ は入力が直接出力へ抜ける成分である。
+と書く。ここで
+\begin{equation}
+  A\in\R^{n\times n},\quad
+  B\in\R^{n\times m},\quad
+  C\in\R^{p\times n},\quad
+  D\in\R^{p\times m}
+\end{equation}
+である。行列が時刻に依存しないので、同じ状態と同じ入力からは時刻によらず同じ変化率と同じ出力が得られる。この性質を時不変性という。式が $x$ と $u$ の一次結合で書けるので、重ね合わせが成り立つ。この性質を線形性という。
+
+$A$ は自律行列またはシステム行列であり、入力を加えないときに状態同士がどのように結合して変化するかを表す。成分で書けば
+\begin{equation}
+  \dot{x}_i=\sum_{j=1}^{n}a_{ij}x_j+\sum_{j=1}^{m}b_{ij}u_j
+\end{equation}
+であるから、$a_{ij}$ は $j$ 番目の状態が $i$ 番目の状態の変化率へ与える係数である。$B$ は入力行列であり、各入力がどの状態方程式へどの強さで入るかを表す。$C$ は出力行列であり、状態のどの組み合わせを測定量または制御したい量として取り出すかを表す。$D$ は直達行列であり、入力が状態の積分を経ずに同じ時刻の出力へ直接現れる成分である。多くの機械系で位置を出力にすると $D=0$ になるが、静的な増幅器、センサの直接項、または入力そのものを出力に含むモデルでは $D\ne0$ になり得る。
+
+外乱やノイズを明示したいときは、例えば
+\begin{equation}
+  \dot{x}=Ax+Bu+Ew,\qquad y=Cx+Du+v
+\end{equation}
+のように、外乱 $w$ と測定ノイズ $v$ を分けて書く。本節では状態遷移と制御設計の基本を見やすくするため、まず \weq{ss} の形を中心に扱う。
 
 ベクトルは複数の量を一つの点として扱う記法であり、内積
 \begin{equation}
@@ -30,81 +53,600 @@
 \end{equation}
 で定義される。状態方程式では、$A$ の固有値が内部モードの速さと振動を決める。
 
-\section{行列指数関数}
+\subsection{行列指数関数と状態遷移行列}
 
-入力なしの状態方程式 $\dot{x}=Ax$ の解は
+スカラーの微分方程式 $\dot{x}=ax$ の解が $x(t)=e^{a(t-t_0)}x(t_0)$ であるように、入力なしのベクトル微分方程式
+\begin{equation}
+  \dot{x}=Ax
+\end{equation}
+の解は行列指数関数で表される。行列指数関数は
+\begin{equation}
+  e^{A\Delta t}
+  =I+A\Delta t+\frac{1}{2!}A^2\Delta t^2+\frac{1}{3!}A^3\Delta t^3+\cdots
+  \label{eq:matrix-exponential-definition}
+\end{equation}
+という冪級数で定義される。右辺の各項はすべて $n\times n$ 行列であり、$I$ は単位行列である。級数定義を使うと、行列指数関数の基本性質はスカラー指数関数と同じ形で確かめられる。
+\begin{align}
+  e^{A\cdot 0}&=I,\\
+  \frac{\dd}{\dd t}e^{A(t-t_0)}&=Ae^{A(t-t_0)}=e^{A(t-t_0)}A,\\
+  e^{A(t_2-t_1)}e^{A(t_1-t_0)}&=e^{A(t_2-t_0)},\\
+  \left(e^{A(t-t_0)}\right)^{-1}&=e^{-A(t-t_0)}.
+\end{align}
+ただし、異なる行列が混ざるときは注意が必要である。一般には $AB\ne BA$ なので、$e^{(A+B)t}=e^{At}e^{Bt}$ は成り立たない。これはスカラー指数関数との重要な違いである。
+
+連続時間線形時不変系では
+\begin{equation}
+  \Phi(t,t_0)=e^{A(t-t_0)}
+  \label{eq:state-transition-matrix}
+\end{equation}
+を状態遷移行列という。状態遷移行列は、時刻 $t_0$ の状態を時刻 $t$ の状態へ写す行列であり、同次系の解は
+\begin{equation}
+  x_h(t)=\Phi(t,t_0)x(t_0)
+  \label{eq:homogeneous-solution}
+\end{equation}
+である。この $x_h$ を同次解、自然応答、または零入力応答という。入力がないときの状態の減衰、発散、振動は $A$ の固有値によって決まる。$A$ が対角化できて $A=V\Lambda V^{-1}$ なら
+\begin{equation}
+  e^{A(t-t_0)}=V e^{\Lambda(t-t_0)}V^{-1},\qquad
+  e^{\Lambda(t-t_0)}=\diag(e^{\lambda_1(t-t_0)},\ldots,e^{\lambda_n(t-t_0)}).
+\end{equation}
+したがって、固有値の実部が負なら対応するモードは減衰し、正なら増大し、虚部は振動角周波数として現れる。
+
+入力がある場合、解は同次解と強制解の和になる。時刻 $t_0$ から始めると
+\begin{equation}
+  x(t)=\Phi(t,t_0)x(t_0)
+  +\int_{t_0}^{t}\Phi(t,\tau)Bu(\tau)\,\dd\tau
+  \label{eq:ss-solution}
+\end{equation}
+である。第一項は初期状態だけが作る零入力応答であり、第二項は入力が作る零状態応答である。積分の中の $\Phi(t,\tau)B$ は、時刻 $\tau$ に入力が状態へ加えた小さな変化 $Bu(\tau)\dd\tau$ が、その後 $t$ まで自然運動で運ばれた結果を表す。この形を畳み込み積分という。線形時不変系では $\Phi(t,\tau)=e^{A(t-\tau)}$ なので、現在の状態は過去入力の履歴を重み $e^{A(t-\tau)}B$ で足し合わせたものになる。
+
+出力も同じ分解で表せる。\weq{ss-solution} を出力方程式へ代入すると
+\begin{equation}
+  y(t)=C\Phi(t,t_0)x(t_0)
+  +\int_{t_0}^{t}C\Phi(t,\tau)Bu(\tau)\,\dd\tau
+  +Du(t)
+  \label{eq:ss-output-solution}
+\end{equation}
+である。零初期状態なら、入力から出力への動的な核は
+\begin{equation}
+  g(t-\tau)=Ce^{A(t-\tau)}B
+\end{equation}
+であり、$D$ は積分を経ない同時刻の項である。伝達関数でいう直達項は、この $D$ に対応する。
+
+\subsubsection{二状態モデルにおける状態遷移}
+
+二つの状態だけをもつ標準的な例として、正規化した質量ばねダンパ系
+\begin{align}
+  \dot{x}
+  &=
+  \begin{bmatrix}0&1\\-2&-3\end{bmatrix}x
+  +
+  \begin{bmatrix}0\\1\end{bmatrix}u,\\
+  y&=\begin{bmatrix}1&0\end{bmatrix}x
+\end{align}
+を考える。$x_1$ は変位、$x_2$ は速度である。第一行 $\dot{x}_1=x_2$ は速度が変位の時間微分であることを表す。第二行 $\dot{x}_2=-2x_1-3x_2+u$ では、$-2x_1$ が復元力、$-3x_2$ が減衰力、$u$ が外力に相当する。出力行列 $C=\begin{bmatrix}1&0\end{bmatrix}$ は変位だけを測ることを表し、この例では $D=0$ なので入力は出力へ直接現れない。
+
+この系の $A$ の固有値は $-1$ と $-2$ である。したがって状態遷移行列は
+\begin{equation}
+  e^{At}=
+  \begin{bmatrix}
+    2e^{-t}-e^{-2t}&e^{-t}-e^{-2t}\\
+    -2e^{-t}+2e^{-2t}&-e^{-t}+2e^{-2t}
+  \end{bmatrix}.
+  \label{eq:two-state-transition}
+\end{equation}
+実際、$t=0$ を代入すると単位行列になり、微分すると $Ae^{At}$ に一致する。入力がないときは
 \begin{equation}
   x(t)=e^{At}x(0)
 \end{equation}
-である。行列指数関数は級数
+であり、出力は
 \begin{equation}
-  e^{At}=I+At+\frac{1}{2!}A^2t^2+\frac{1}{3!}A^3t^3+\cdots
+  y(t)=
+  \begin{bmatrix}1&0\end{bmatrix}e^{At}x(0)
+  =(2e^{-t}-e^{-2t})x_1(0)+(e^{-t}-e^{-2t})x_2(0)
 \end{equation}
-で定義される。$A$ が対角化できて $A=V\Lambda V^{-1}$ なら
+となる。初期変位と初期速度の影響が、二つの指数モード $e^{-t}$、$e^{-2t}$ の重ね合わせとして現れている。
+
+次に、初期状態を $x(0)=0$ とし、一定入力 $u(t)=u_0$ を加える。このとき零状態応答は
+\begin{align}
+  x(t)
+  &=\int_0^t e^{A(t-\tau)}
+    \begin{bmatrix}0\\1\end{bmatrix}u_0\,\dd\tau\\
+  &=
+  \begin{bmatrix}
+    \dfrac{u_0}{2}\left(1-2e^{-t}+e^{-2t}\right)\\
+    u_0\left(e^{-t}-e^{-2t}\right)
+  \end{bmatrix}.
+\end{align}
+したがって
 \begin{equation}
-  e^{At}=V e^{\Lambda t}V^{-1},\qquad
-  e^{\Lambda t}=\diag(e^{\lambda_1t},\ldots,e^{\lambda_nt}).
+  y(t)=\frac{u_0}{2}\left(1-2e^{-t}+e^{-2t}\right)
 \end{equation}
-固有値の実部が負なら対応する指数は減衰し、正なら増大する。
-
-入力がある場合、解は
+である。定常状態では $\dot{x}=0$ なので
 \begin{equation}
-  x(t)=e^{At}x(0)+\int_0^t e^{A(t-\tau)}Bu(\tau)\,\dd\tau
-  \label{eq:ss-solution}
+  0=Ax_\infty+
+  \begin{bmatrix}0\\1\end{bmatrix}u_0
 \end{equation}
-である。第一項は零入力応答、第二項は零状態応答である。状態空間で「自然に動く部分」と「入力で作る部分」を分けて見られるのは、この式があるからである。
+を解いて $x_\infty=\begin{bmatrix}u_0/2&0\end{bmatrix}^\T$ を得る。畳み込み積分から得た解も $t\to\infty$ で同じ値へ収束する。もし $D\ne0$ なら、これに加えて入力ステップと同時に $Du_0$ が出力へ現れるため、出力の初期値やジャンプの有無が変わる。
 
-\section{離散化}
+\subsection{ゼロ次ホールドによる離散時間状態空間モデル}
 
-計算機で制御するには、連続時間モデルをサンプリング周期 $T_s$ の離散時間モデルへ移す。入力をサンプル間で一定とみなすゼロ次ホールドでは
+計算機で制御する場合、制御入力は連続時間のすべての時刻で更新されるのではなく、サンプリング周期 $T_s>0$ ごとの時刻
+\begin{equation}
+  t_k=kT_s\qquad(k=0,1,2,\ldots)
+\end{equation}
+で計算される。状態のサンプル値を
+\begin{equation}
+  x_k=x(t_k),\qquad u_k=u(t_k)
+\end{equation}
+と書く。ディジタル制御器が計算した入力を次のサンプル時刻まで一定に保持する回路または処理をゼロ次ホールド、英語では zero-order hold、略して ZOH という。ZOH では
+\begin{equation}
+  u(t)=u_k\qquad(t_k\le t<t_{k+1})
+  \label{eq:zoh-input}
+\end{equation}
+と仮定する。この仮定のもとでは、連続時間モデル \weq{ss} の解公式を $t_k$ から $t_{k+1}$ まで適用すれば、サンプル値だけで閉じた状態更新式が得られる。
+
+時不変性より $\Phi(t_{k+1},t_k)=e^{AT_s}$ である。さらに区間内の入力は $u_k$ で一定なので、
+\begin{align}
+  x_{k+1}
+  &=e^{AT_s}x_k
+    +\int_{t_k}^{t_{k+1}}e^{A(t_{k+1}-\tau)}B u_k\,\dd\tau\\
+  &=e^{AT_s}x_k
+    +\left(\int_{0}^{T_s}e^{A\sigma}B\,\dd\sigma\right)u_k.
+    \label{eq:zoh-state-update}
+\end{align}
+ここで $\sigma=t_{k+1}-\tau$ と変数変換した。したがって、ZOH による厳密な離散時間状態空間モデルは
 \begin{align}
   x_{k+1}&=A_d x_k+B_d u_k,\\
-  A_d&=e^{AT_s},\\
-  B_d&=\int_0^{T_s}e^{A\tau}B\,\dd\tau
+  y_k&=C_d x_k+D_d u_k
+  \label{eq:discrete-state-space}
 \end{align}
-となる。$A$ が正則なら
+であり、
+\begin{align}
+  A_d&=e^{AT_s},&
+  B_d&=\int_{0}^{T_s}e^{A\sigma}B\,\dd\sigma,&
+  C_d&=C,&
+  D_d&=D
+  \label{eq:zoh-exact-discretization}
+\end{align}
+である。$y_k$ は時刻 $t_k$ でサンプルした出力である。出力を区間末端で評価するなら $y_{k+1}=Cx_{k+1}+Du_k$ のように時刻をそろえて書けばよく、どの時刻のサンプルを使うかを実装上明確にする必要がある。
+
+$B_d$ は $A$ が正則なら
 \begin{equation}
   B_d=A^{-1}(A_d-I)B
+  \label{eq:zoh-bd-nonsingular}
 \end{equation}
-と計算できる。
-
-もっと粗い近似として、前進オイラー法は
+と計算できる。これは
 \begin{equation}
-  x_{k+1}=x_k+T_s f(x_k,u_k)
+  \int_0^{T_s}e^{A\sigma}\,\dd\sigma
+  =A^{-1}(e^{AT_s}-I)
 \end{equation}
-である。4次の Runge--Kutta 法では
+から従う。ただし、積分器を含むモデルでは $A$ が特異になることが多く、この式は使えない。その場合でも ZOH 離散化は存在し、拡大行列の指数関数
+\begin{equation}
+  \exp\left(
+    T_s
+    \begin{bmatrix}
+      A&B\\
+      0&0
+    \end{bmatrix}
+  \right)
+  =
+  \begin{bmatrix}
+    A_d&B_d\\
+    0&I_m
+  \end{bmatrix}
+  \label{eq:zoh-block-exponential}
+\end{equation}
+で $A_d$ と $B_d$ を同時に得られる。右下の $I_m$ は入力次元 $m$ の単位行列である。この式は、定数入力 $u_k$ を状態と同じ拡大ベクトルに入れた同次系の状態遷移を計算していると見ればよい。
+
+\weq{discrete-state-space} はベクトルの差分方程式である。成分で書くと
+\begin{equation}
+  x_i[k+1]
+  =\sum_{j=1}^{n}(A_d)_{ij}x_j[k]
+   +\sum_{\ell=1}^{m}(B_d)_{i\ell}u_\ell[k]
+\end{equation}
+であり、次の状態は現在の状態と現在の入力から直接計算される。連続時間の $\dot{x}=Ax+Bu$ が「変化率」を与える式であるのに対し、離散時間の式は「一サンプル後の値」を与える漸化式である。連続時間の固有値 $\lambda_i(A)$ は、厳密 ZOH 離散化では
+\begin{equation}
+  z_i=e^{\lambda_i(A)T_s}
+  \label{eq:continuous-discrete-pole-map}
+\end{equation}
+に写る。したがって $\Re\lambda_i(A)<0$ なら $|z_i|<1$ となり、連続時間で安定な内部モードは厳密離散化後も離散時間の意味で安定になる。
+
+\subsubsection{数値積分による近似離散化}
+
+厳密な ZOH 離散化は線形時不変モデルに対して基準になる。一方、非線形モデル、時変モデル、簡易計算、または手計算の見通しを優先する場面では、数値積分に基づく近似離散化を使うことがある。連続時間線形系
+\begin{equation}
+  \dot{x}=Ax+Bu
+\end{equation}
+で、区間内の入力を $u_k$ で一定とする。
+
+前進オイラー法は、区間始端の傾きで一歩進める近似であり、
 \begin{align}
-  k_1&=f(x_k,u_k),\\
-  k_2&=f(x_k+T_s k_1/2,u_k),\\
-  k_3&=f(x_k+T_s k_2/2,u_k),\\
-  k_4&=f(x_k+T_s k_3,u_k),\\
-  x_{k+1}&=x_k+\frac{T_s}{6}(k_1+2k_2+2k_3+k_4)
+  x_{k+1}
+  &=x_k+T_s(Ax_k+Bu_k)\\
+  &=(I+T_sA)x_k+T_sB u_k.
 \end{align}
-と進める。制御計算では、この数値積分の精度と計算時間の釣り合いが重要になる。
-
-\section{可制御性}
-
-状態を望む方向へ動かせるかは、可制御性で決まる。連続時間線形系 \weq{ss} の可制御行列は
+したがって
 \begin{equation}
+  A_{\mathrm{FE}}=I+T_sA,\qquad
+  B_{\mathrm{FE}}=T_sB
+  \label{eq:forward-euler-discretization}
+\end{equation}
+である。前進オイラー法は簡単だが、$e^{\lambda T_s}$ を $1+\lambda T_s$ で近似しているため、$T_s$ が大きいと安定な連続時間モードでも $|1+\lambda T_s|\ge1$ となり、離散時間近似が不安定な極を持つことがある。
+
+後退オイラー法は、区間終端の傾きを用いる陰的な近似であり、
+\begin{equation}
+  x_{k+1}=x_k+T_s(Ax_{k+1}+Bu_k)
+\end{equation}
+と書く。$I-T_sA$ が正則なら
+\begin{equation}
+  x_{k+1}=(I-T_sA)^{-1}x_k+(I-T_sA)^{-1}T_sB u_k
+\end{equation}
+なので、
+\begin{equation}
+  A_{\mathrm{BE}}=(I-T_sA)^{-1},\qquad
+  B_{\mathrm{BE}}=(I-T_sA)^{-1}T_sB
+  \label{eq:backward-euler-discretization}
+\end{equation}
+である。後退オイラー法は安定な速いモードを強く減衰させる傾向があり、硬い系の数値積分では有利な場合がある。しかし、物理系の過渡応答を忠実に保つという意味では、余分な数値減衰を加えていることに注意する。
+
+台形則を使うと、始端と終端の傾きの平均で一歩進める。ZOH 入力を仮定すると
+\begin{equation}
+  x_{k+1}=x_k+\frac{T_s}{2}\{Ax_k+Bu_k+Ax_{k+1}+Bu_k\}
+\end{equation}
+であり、
+\begin{equation}
+  (I-\frac{T_s}{2}A)x_{k+1}
+  =(I+\frac{T_s}{2}A)x_k+T_sB u_k.
+\end{equation}
+したがって
+\begin{align}
+  A_{\mathrm{T}}&=\left(I-\frac{T_s}{2}A\right)^{-1}
+                 \left(I+\frac{T_s}{2}A\right),\\
+  B_{\mathrm{T}}&=\left(I-\frac{T_s}{2}A\right)^{-1}T_sB.
+  \label{eq:tustin-discretization}
+\end{align}
+この近似は Tustin 法または双一次変換に対応し、固有値の写像は
+\begin{equation}
+  z\approx\frac{1+\lambda T_s/2}{1-\lambda T_s/2}
+\end{equation}
+である。連続時間の左半平面を離散時間の単位円内へ写す性質を持つため、安定性の保存に有利である。一方、周波数軸は非線形に写るので、周波数特性にはワーピングが生じる。また、伝達関数を双一次変換で離散化するときは、状態更新式だけでなく出力式や直達項の扱いも選んだ実現に依存する。厳密なサンプル値応答を必要とする線形時不変モデルでは、まず \weq{zoh-exact-discretization} を基準にする。
+
+\subsubsection{二状態モデルの厳密離散化例}
+
+前の状態遷移の例で用いた
+\begin{equation}
+  A=\begin{bmatrix}0&1\\-2&-3\end{bmatrix},\qquad
+  B=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+  C=\begin{bmatrix}1&0\end{bmatrix},\qquad D=0
+\end{equation}
+を ZOH で離散化する。\weq{two-state-transition} より、$a=e^{-T_s}$、$b=e^{-2T_s}$ とおけば
+\begin{equation}
+  A_d=
+  \begin{bmatrix}
+    2a-b&a-b\\
+    -2a+2b&-a+2b
+  \end{bmatrix}.
+\end{equation}
+$B_d$ は $e^{A\sigma}B$ の積分であり、\weq{two-state-transition} の第二列を $0$ から $T_s$ まで積分して
+\begin{equation}
+  B_d=
+  \begin{bmatrix}
+    \dfrac{1}{2}(1-2a+b)\\
+    a-b
+  \end{bmatrix}
+\end{equation}
+となる。よって離散時間モデルは
+\begin{align}
+  x_{k+1}
+  &=
+  \begin{bmatrix}
+    2a-b&a-b\\
+    -2a+2b&-a+2b
+  \end{bmatrix}x_k
+  +
+  \begin{bmatrix}
+    \dfrac{1}{2}(1-2a+b)\\
+    a-b
+  \end{bmatrix}u_k,\\
+  y_k&=\begin{bmatrix}1&0\end{bmatrix}x_k.
+\end{align}
+例えば $T_s=0.1$ とすると
+\begin{equation}
+  A_d\approx
+  \begin{bmatrix}
+    0.99094&0.08611\\
+    -0.17221&0.73262
+  \end{bmatrix},\qquad
+  B_d\approx
+  \begin{bmatrix}
+    0.00453\\
+    0.08611
+  \end{bmatrix}.
+\end{equation}
+この行列を用いれば、連続時間の微分方程式を毎回解かなくても、サンプル時刻ごとの変位と速度を差分方程式として逐次計算できる。$T_s$ を大きくすれば計算回数は減るが、入力を区間内で一定とみなす仮定が粗くなり、サンプル間の応答や制御入力の遅れが閉ループ性能に影響する。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.96\linewidth,bb=0 0 1512 1152]{figures/state_transition_discretization_examples.png}
+\caption{二状態モデルにおける状態遷移、ZOH 離散化、サンプリング周期、座標変換の関係。左上は ZOH 入力のもとで連続状態が曲線として動き、離散モデルはサンプル時刻の点列を与えることを示す。右上は滑らかな入力を ZOH 入力で近似したときの状態誤差であり、$T_s$ が大きいほど保持入力の粗さが状態へ残る。左下は同じ現象を状態平面上の軌道として表し、右下は $P=\left[\begin{smallmatrix}1&1\\0.45&-0.85\end{smallmatrix}\right]$ とした $x=Pz$ による別の基底で同じ軌道を表示している。}
+\label{fig:state-transition-discretization-examples}
+\end{figure}
+
+図\ref{fig:state-transition-discretization-examples} の左上で曲線と黒点が一致するのは、\weq{zoh-exact-discretization} が ZOH 入力のもとでサンプル時刻の状態を厳密に写しているためである。階段状の線は、状態そのものが階段状に動くという意味ではなく、サンプル値だけを次のサンプルまで保持して表示したものである。実際の連続時間対象は、保持された入力を受けながら区間内でも $e^{A(t-t_k)}x_k+\int_0^{t-t_k}e^{A\sigma}B\,\dd\sigma\,u_k$ に従って動き続ける。
+
+右上の誤差は、連続入力 $u(t)$ をそのまま加えた基準軌道と、$u_k=u(t_k)$ を区間内で保持した ZOH 軌道との差である。$T_s$ を小さくすると入力の保持区間が短くなり、連続入力に近い軌道になる。$T_s$ を大きくすると計算回数は減るが、入力更新の遅れと保持誤差が大きくなり、サンプル点では妥当に見える離散モデルでもサンプル間の連続状態が設計意図から離れることがある。したがって離散化では $A_d,B_d$ の計算だけでなく、入力がどの周期で更新され、サンプル間の状態をどの程度まで無視できるかを確認する。
+
+右下は、同じ連続軌道を別の基底で表示した例である。ここで用いる座標変換行列を
+\begin{equation}
+  P=\begin{bmatrix}
+    1&1\\
+    0.45&-0.85
+  \end{bmatrix}
+  =\begin{bmatrix}p_1&p_2\end{bmatrix},\qquad
+  p_1=\begin{bmatrix}1\\0.45\end{bmatrix},\quad
+  p_2=\begin{bmatrix}1\\-0.85\end{bmatrix}
+  \label{eq:state-transition-coordinate-p}
+\end{equation}
+と定義する。$x=Pz$ とおけば、連続時間モデルは
+\begin{equation}
+  \dot{z}=P^{-1}APz+P^{-1}Bu
+\end{equation}
+となり、ZOH 離散モデルは
+\begin{equation}
+  z_{k+1}=P^{-1}A_dPz_k+P^{-1}B_d u_k
+  \label{eq:coordinate-transformed-discrete-model}
+\end{equation}
+となる。軌道の図形は座標成分の取り方で変わって見えるが、同じ物理状態を表している。可制御性、可観測性、安定性のような性質を座標変換で失ってはならないので、後で正準形や極配置を扱うときは、どの座標で設計し、元の座標へどう戻すかを明示する。
+
+\begin{practice}[状態遷移、ZOH、座標変換の確認]
+図\ref{fig:state-transition-discretization-examples} と同じ
+$A=\left[\begin{smallmatrix}0&1\\-2&-3\end{smallmatrix}\right]$、
+$B=\left[\begin{smallmatrix}0\\1\end{smallmatrix}\right]$ について、$T_s=0.45$ として $A_d=e^{AT_s}$ と $B_d=\int_0^{T_s}e^{A\sigma}B\,\dd\sigma$ を数値で求めよ。初期値 $x_0=\left[\begin{smallmatrix}0.25&-0.35\end{smallmatrix}\right]^\T$、入力 $u_0=1$ を用いて、$k=0$ から一歩後のサンプル状態 $x_{k+1}=A_dx_k+B_du_k$ を計算し、図の最初のサンプル点が連続軌道上にある理由を説明せよ。さらに \weq{state-transition-coordinate-p} の $P$ で $x=Pz$ とおいたとき、\weq{coordinate-transformed-discrete-model} の $P^{-1}A_dP$ と $P^{-1}B_d$ を計算し、同じ物理状態が異なる座標成分で表されることを確認せよ。
+\end{practice}
+
+\subsection{可制御性}
+
+状態フィードバックで極を動かす前に、そもそも入力が状態空間のどの方向へ作用できるかを調べる必要がある。ここでは有限次元の連続時間線形時不変系
+\begin{equation}
+  \dot{x}=Ax+Bu,\qquad x\in\R^n,\quad u\in\R^m
+\end{equation}
+を考える。入力 $u(t)$ は区分的連続で、振幅制限や速度制限はまだ入れない。したがって可制御性は、アクチュエータが理想的に使えるという代数的な判定であり、入力飽和を含む実装可能性とは別の概念である。
+
+\begin{definition}[可到達性と可制御性]
+ある時刻 $T>0$ が存在して、任意の初期状態 $x(0)=x_0$ から任意の終端状態 $x(T)=x_f$ へ入力で移せるとき、対 $(A,B)$ は可制御であるという。特に $x_0=0$ から到達できる状態の集合を可到達部分空間という。連続時間の有限次元線形時不変系では、この可到達性と可制御性は同じランク条件で判定できる。
+\end{definition}
+
+入力が作る状態変化は、解公式
+\begin{equation}
+  x(T)-e^{AT}x_0
+  =\int_0^T e^{A(T-\tau)}Bu(\tau)\,\dd\tau
+  \label{eq:reachable-increment}
+\end{equation}
+で表される。右辺に現れる $e^{A(T-\tau)}B$ は、入力行列 $B$ の列ベクトルを自然運動 $A$ で回し、混ぜ、伸縮させた方向である。したがって「入力が直接押せる方向」だけでなく、「対象自身の結合を通って入力が広がる方向」も数えなければならない。
+
+\begin{theorem}[Kalman の可制御性ランク条件]
+連続時間線形時不変系 $(A,B)$ が可制御であるための必要十分条件は
+\begin{equation}
+  \rank\mathcal{C}=n,\qquad
   \mathcal{C}=\begin{bmatrix}B&AB&A^2B&\cdots&A^{n-1}B\end{bmatrix}
+  \label{eq:kalman-controllability-matrix}
 \end{equation}
-である。$\rank\mathcal{C}=n$ なら、任意の初期状態から任意の終端状態へ有限時間で移せる。
+である。この $\mathcal{C}$ を可制御行列という。
+\end{theorem}
 
-この式は、入力 $B$ が直接押せる方向だけでなく、$A$ による自然な回転や結合を通じて広がる方向も数えている。倒立振子では、台車の力が直接角度を押すわけではないが、力が台車加速度を作り、拘束を通じて角度へ効くため、可制御になる。
-
-可制御でないモードが不安定なら、どんな状態フィードバックでも安定化できない。制御器の工夫より前に、アクチュエータ配置やモデルの取り方を見直す必要がある。
-
-\section{可観測性}
-
-状態を測れるか、または出力から推定できるかは可観測性で決まる。可観測行列は
+\begin{derivation}
+まず、行列指数関数の級数表示より
 \begin{equation}
-  \mathcal{O}=\begin{bmatrix}C\\ CA\\ CA^2\\ \vdots\\ CA^{n-1}\end{bmatrix}
+  e^{A\sigma}B
+  =\left(I+A\sigma+\frac{A^2\sigma^2}{2!}+\cdots\right)B
 \end{equation}
-であり、$\rank\mathcal{O}=n$ なら初期状態を出力履歴から一意に復元できる。
+である。Cayley--Hamilton の定理により $A^n,A^{n+1},\ldots$ は $I,A,\ldots,A^{n-1}$ の線形結合で表せるので、任意の $\sigma$ に対して $e^{A\sigma}B$ の列空間は $\mathcal{C}$ の列空間に含まれる。したがって \weq{reachable-increment} で作れる状態変化は、すべて
+\begin{equation}
+  \operatorname{Im}\mathcal{C}
+  =\operatorname{span}\{B,AB,\ldots,A^{n-1}B\}
+\end{equation}
+に入る。もし $\rank\mathcal{C}<n$ なら、この部分空間に直交する非零ベクトル $q$ が存在し、$q^\T A^iB=0$ が $i=0,\ldots,n-1$ で成り立つため、その方向の成分は入力で作れない。
 
-可制御性と可観測性は双対である。$(A,B)$ の可制御性は $(A^\T,C^\T)$ の可観測性と同じ形で判定できる。これは、入力で状態へ影響を広げる問題と、状態の影響が出力へ現れる問題が、行列の向きを反転した同じ構造を持つことを意味する。
+逆に $\rank\mathcal{C}=n$ とする。有限時間 $T>0$ に対し、可制御 Gramian を
+\begin{equation}
+  W_c(T)=\int_0^T e^{A(T-\tau)}BB^\T e^{A^\T(T-\tau)}\,\dd\tau
+\end{equation}
+とおく。任意の非零 $q$ について
+\begin{equation}
+  q^\T W_c(T)q
+  =\int_0^T \norm{B^\T e^{A^\T(T-\tau)}q}^2\,\dd\tau
+\end{equation}
+である。この値が 0 なら $B^\T e^{A^\T s}q=0$ がすべての $s$ で成り立つ。$s=0$ における微分を順に見ると $B^\T(A^\T)^iq=0$、すなわち $q^\T A^iB=0$ が $i=0,\ldots,n-1$ で成り立つが、これは $\rank\mathcal{C}=n$ と矛盾する。したがって $W_c(T)$ は正定値であり、逆行列を持つ。
 
-\section{状態フィードバックと極配置}
+任意の終端偏差
+\begin{equation}
+  z=x_f-e^{AT}x_0
+\end{equation}
+に対して
+\begin{equation}
+  u(\tau)=B^\T e^{A^\T(T-\tau)}W_c(T)^{-1}z
+\end{equation}
+と選べば、\weq{reachable-increment} の右辺は
+\begin{equation}
+  W_c(T)W_c(T)^{-1}z=z
+\end{equation}
+となる。よって任意の $x_0$ から任意の $x_f$ へ移せる。
+\end{derivation}
+
+可制御行列は、倒立振子のように入力が直接すべての状態へ入らない系で重要になる。台車へ加える力はまず台車速度に作用し、力学的な結合を通じて振子角へ伝わる。この「何回 $A$ を通ると別の状態方向へ届くか」を、$B,AB,A^2B,\ldots$ が数えている。
+
+二状態の例では、$B$ は入力が瞬時に押す方向であり、$AB$ はその変化が対象の内部結合を一回通った後に現れる方向である。これらが平面上で同一直線に重なるなら、入力で作れる状態変化は一次元に閉じる。可観測性でも同様に、$C^\T$ は出力がその瞬間に測っている方向、$A^\T C^\T$ は出力微分に現れる方向を表す。後の図\ref{fig:state-space-geometry-examples} の右上パネルでは、この対応を同じ状態平面上で示す。
+
+\subsubsection{PBH 可制御性判別}
+
+Kalman のランク条件は全方向をまとめて調べる。一方、どの固有モードが入力から見えていないかを知りたいときは、Popov--Belevitch--Hautus の判別法、通常 PBH 判別法を使う。
+
+\begin{theorem}[PBH 可制御性判別]
+対 $(A,B)$ が可制御であるための必要十分条件は、$A$ のすべての固有値 $\lambda\in\mathbb{C}$ について
+\begin{equation}
+  \rank\begin{bmatrix}\lambda I-A&B\end{bmatrix}=n
+  \label{eq:pbh-controllability}
+\end{equation}
+が成り立つことである。これは、$q^\ast A=\lambda q^\ast$ を満たす非零の左固有ベクトル $q$ で
+\begin{equation}
+  q^\ast B=0
+\end{equation}
+となるものが存在しない、という条件と同値である。
+\end{theorem}
+
+PBH 判別法に固有ベクトル方向が現れる理由は、状態を固有モードの重ね合わせとして分解すると明確になる。左固有ベクトル $q$ によるモード座標 $\eta=q^\ast x$ をとると
+\begin{equation}
+  \dot{\eta}=q^\ast\dot{x}=q^\ast Ax+q^\ast Bu
+  =\lambda q^\ast x+q^\ast Bu
+  =\lambda\eta+q^\ast Bu
+\end{equation}
+である。もし $q^\ast B=0$ なら、このモード座標は
+\begin{equation}
+  \dot{\eta}=\lambda\eta
+\end{equation}
+となり、入力をどのように選んでも直接変えられない。したがって、単に固有値が安定か不安定かを見るだけでなく、その固有値に対応する方向へ入力が射影されているかを調べる必要がある。同じ固有値をもつ方向が複数ある場合、一部の方向だけが可制御で、別の方向が入力から外れていることもある。
+
+可制御でないモードが存在しても、そのモードがすべて安定なら、閉ループ全体を安定にできる場合がある。この性質を安定化可能性という。可制御性はすべての極を任意に置くための条件であり、安定化可能性は少なくとも不安定なモードを制御できるための条件である。この違いは、PBH 判別法を不安定モードだけに制限した条件として定式化できる。
+
+\subsection{可観測性}
+
+状態を測れるか、または出力から推定できるかは可観測性で決まる。既知入力 $u$ と直達項 $D$ がある場合、$Du$ は出力から差し引けるので、初期状態の識別だけを考えると
+\begin{equation}
+  y_0(t)=Ce^{At}x(0)
+\end{equation}
+を調べればよい。可観測性は、異なる初期状態が異なる出力履歴を作るかという性質である。
+
+\begin{definition}[可観測性]
+ある有限時間区間 $0\le t\le T$ の出力履歴と既知入力から初期状態 $x(0)$ を一意に決められるとき、対 $(A,C)$ は可観測であるという。
+\end{definition}
+
+\begin{theorem}[Kalman の可観測性ランク条件]
+連続時間線形時不変系 $(A,C)$ が可観測であるための必要十分条件は
+\begin{equation}
+  \rank\mathcal{O}=n,\qquad
+  \mathcal{O}=\begin{bmatrix}C\\ CA\\ CA^2\\ \vdots\\ CA^{n-1}\end{bmatrix}
+  \label{eq:kalman-observability-matrix}
+\end{equation}
+である。この $\mathcal{O}$ を可観測行列という。
+\end{theorem}
+
+\begin{derivation}
+二つの初期状態 $x_a(0)$ と $x_b(0)$ が同じ出力を作るとする。その差を $\xi=x_a(0)-x_b(0)$ とおけば、出力差は
+\begin{equation}
+  \Delta y(t)=Ce^{At}\xi
+\end{equation}
+である。これがすべての $t$ で 0 なら、$t=0$ における値と微分から
+\begin{equation}
+  C\xi=0,\quad CA\xi=0,\quad CA^2\xi=0,\quad \ldots
+\end{equation}
+が得られる。Cayley--Hamilton の定理により $A^n$ 以上の冪は $I,A,\ldots,A^{n-1}$ の線形結合で表せるので、必要なのは
+\begin{equation}
+  \mathcal{O}\xi=0
+\end{equation}
+だけである。$\rank\mathcal{O}=n$ なら零空間は $\xi=0$ だけなので、同じ出力履歴を作る異なる初期状態は存在しない。逆に $\rank\mathcal{O}<n$ なら非零の $\xi$ で $\mathcal{O}\xi=0$ となるものがあり、その状態差は出力に現れない。
+\end{derivation}
+
+可制御性と可観測性は双対である。$(A,B)$ の可制御性は $(A^\T,B^\T)$ の可観測性と同じ形で判定できる。また、$(A,C)$ の可観測性は $(A^\T,C^\T)$ の可制御性と同じ形で判定できる。この双対性により、状態フィードバックの極配置とオブザーバゲインの極配置は、行列を転置した同じ代数問題として扱える。
+
+\subsubsection{PBH 可観測性判別}
+
+\begin{theorem}[PBH 可観測性判別]
+対 $(A,C)$ が可観測であるための必要十分条件は、$A$ のすべての固有値 $\lambda\in\mathbb{C}$ について
+\begin{equation}
+  \rank\begin{bmatrix}\lambda I-A\\ C\end{bmatrix}=n
+  \label{eq:pbh-observability}
+\end{equation}
+が成り立つことである。これは、$Av=\lambda v$ を満たす非零の右固有ベクトル $v$ で
+\begin{equation}
+  Cv=0
+\end{equation}
+となるものが存在しない、という条件と同値である。
+\end{theorem}
+
+右固有ベクトル $v$ 方向の初期状態 $x(0)=v$ は、入力を取り除いて見ると
+\begin{equation}
+  x(t)=e^{\lambda t}v,\qquad
+  y(t)=Ce^{\lambda t}v=e^{\lambda t}Cv
+\end{equation}
+という出力を作る。もし $Cv=0$ なら、その固有モードはどれだけ成長または振動しても出力には現れない。これが PBH 可観測性判別で固有ベクトル方向を見る理由である。固有値の数値だけを見ても、センサがそのモードの方向を見ているかどうかは分からない。
+
+可観測でないモードがあっても、そのモードがすべて安定なら、推定誤差の安定性には十分な場合がある。この性質を検出可能性という。検出可能性は、出力に現れない不安定モードがないことを求める条件であり、カルマンフィルタや LQG で重要になる。可観測性が全状態の復元を要求するのに対し、検出可能性は不安定な未検出成分を残さないことを要求する。
+
+\subsubsection{安定化可能性と検出可能性の PBH 条件}
+
+ここでは連続時間の有限次元線形時不変系を対象とし、$\sigma(A)$ を $A$ の固有値集合とする。行列 $A$ が Hurwitz であるとは、すべての $\lambda\in\sigma(A)$ が $\Re\lambda<0$ を満たすことをいう。したがって安定化設計で問題になるモードは、$\Re\lambda\ge0$ を満たす不安定または非減衰のモードである。離散時間系では、Hurwitz 安定を Schur 安定に、条件 $\Re\lambda\ge0$ を $|\lambda|\ge1$ に置き換える。
+
+\begin{definition}[安定化可能性と検出可能性]
+対 $(A,B)$ が安定化可能であるとは、ある行列 $K\in\R^{m\times n}$ が存在して $A-BK$ が Hurwitz になることをいう。対 $(A,C)$ が検出可能であるとは、ある行列 $L\in\R^{n\times p}$ が存在して $A-LC$ が Hurwitz になることをいう。
+\end{definition}
+
+\begin{theorem}[PBH--Hautus の安定化可能性判別]
+対 $(A,B)$ が安定化可能であるための必要十分条件は、$A$ のすべての固有値 $\lambda\in\sigma(A)$ のうち $\Re\lambda\ge0$ を満たすものについて
+\begin{equation}
+  \rank\begin{bmatrix}\lambda I-A&B\end{bmatrix}=n
+  \label{eq:pbh-stabilizability}
+\end{equation}
+が成り立つことである。等価に、$q^\ast A=\lambda q^\ast$ かつ $q^\ast B=0$ を満たす非零の左固有ベクトル $q$ が存在するなら、その固有値は必ず $\Re\lambda<0$ でなければならない。
+\end{theorem}
+
+\begin{theorem}[PBH--Hautus の検出可能性判別]
+対 $(A,C)$ が検出可能であるための必要十分条件は、$A$ のすべての固有値 $\lambda\in\sigma(A)$ のうち $\Re\lambda\ge0$ を満たすものについて
+\begin{equation}
+  \rank\begin{bmatrix}\lambda I-A\\ C\end{bmatrix}=n
+  \label{eq:pbh-detectability}
+\end{equation}
+が成り立つことである。等価に、$Av=\lambda v$ かつ $Cv=0$ を満たす非零の右固有ベクトル $v$ が存在するなら、その固有値は必ず $\Re\lambda<0$ でなければならない。
+\end{theorem}
+
+これらの条件は、完全な可制御性と可観測性が十分条件ではあるが必要条件ではないことを示している。可制御性の PBH 判別はすべての固有値について \weq{pbh-controllability} を要求するため、安定な不可制御モードも許さない。これに対し、安定化可能性では安定な不可制御モードを残してよい。状態フィードバックでその極を任意に動かすことはできないが、もともと減衰するため閉ループの漸近安定性を破壊しない。同様に、可観測性はすべての初期状態を出力履歴から一意に復元する条件であるが、検出可能性では安定な不可観測モードを許す。オブザーバはその成分を出力補正で直接同定できないが、推定誤差が自然に減衰するなら $A-LC$ を Hurwitz にできる。
+
+対角化されたモードでこの差を確認する。状態 $x=\begin{bmatrix}x_1&x_2\end{bmatrix}^\T$ に対し
+\begin{equation}
+  A=\begin{bmatrix}1&0\\0&-2\end{bmatrix},\qquad
+  B=\begin{bmatrix}1\\0\end{bmatrix},\qquad
+  C=\begin{bmatrix}1&0\end{bmatrix}
+  \label{eq:modal-stabilizable-detectable-example}
+\end{equation}
+を考える。$x_1$ は固有値 $1$ の不安定モード、$x_2$ は固有値 $-2$ の安定モードである。可制御行列と可観測行列は
+\begin{equation}
+  \mathcal{C}=\begin{bmatrix}B&AB\end{bmatrix}
+  =\begin{bmatrix}1&1\\0&0\end{bmatrix},\qquad
+  \mathcal{O}=\begin{bmatrix}C\\CA\end{bmatrix}
+  =\begin{bmatrix}1&0\\1&0\end{bmatrix}
+\end{equation}
+なので、どちらもランクは $1$ であり、完全には可制御でも可観測でもない。しかし不安定な固有値 $\lambda=1$ に限れば
+\begin{equation}
+  \begin{bmatrix}\lambda I-A&B\end{bmatrix}_{\lambda=1}
+  =
+  \begin{bmatrix}0&0&1\\0&3&0\end{bmatrix},\qquad
+  \begin{bmatrix}\lambda I-A\\C\end{bmatrix}_{\lambda=1}
+  =
+  \begin{bmatrix}0&0\\0&3\\1&0\end{bmatrix}
+\end{equation}
+であり、どちらもランクは $2$ である。したがって $(A,B)$ は安定化可能であり、$(A,C)$ は検出可能である。実際、$K=\begin{bmatrix}k&0\end{bmatrix}$ とすれば
+\begin{equation}
+  A-BK=\begin{bmatrix}1-k&0\\0&-2\end{bmatrix}
+\end{equation}
+であるから、$k>1$ で Hurwitz になる。また、$L=\begin{bmatrix}\ell\\0\end{bmatrix}$ とすれば
+\begin{equation}
+  A-LC=\begin{bmatrix}1-\ell&0\\0&-2\end{bmatrix}
+\end{equation}
+であるから、$\ell>1$ で推定誤差は指数的に減衰する。第二モードの極 $-2$ は入力でも出力補正でも動かせないが、閉ループ安定性と推定誤差安定性には支障を与えない。
+
+反対に、入力行列だけを
+\begin{equation}
+  \tilde{B}=\begin{bmatrix}0\\1\end{bmatrix}
+\end{equation}
+へ変えると、$\lambda=1$ について
+\begin{equation}
+  \rank\begin{bmatrix}\lambda I-A&\tilde{B}\end{bmatrix}_{\lambda=1}
+  =
+  \rank\begin{bmatrix}0&0&0\\0&3&1\end{bmatrix}
+  =1<n
+\end{equation}
+となる。この場合、不安定な $x_1$ モードは入力で変えられないため、どの $K$ を選んでも $A-\tilde{B}K$ には固有値 $1$ が残る。同様に、出力行列を $\tilde{C}=\begin{bmatrix}0&1\end{bmatrix}$ とすると不安定な $x_1$ モードは出力に現れず、どの $L$ を選んでも $A-L\tilde{C}$ の固有値 $1$ は残る。したがって安定化可能性と検出可能性は、設計で制御または推定できなければならないモードを、不安定または非減衰のモードに限定した条件である。
+
+\subsection{状態フィードバックと極配置}
 
 状態が利用できるなら、入力を
 \begin{equation}
@@ -116,29 +658,552 @@
 \end{equation}
 であり、$K$ によって $A-BK$ の固有値を動かす。可制御なら、望む極集合を原理的には配置できる。
 
-SISO 系では、可制御正準形に変換すると極配置の意味が分かりやすい。特性多項式を
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{0.72mm}
+\begin{picture}(165,64)
+  \scriptsize
+  \thinlines
+  \put(5,38){\makebox(0,0)[r]{$r_u$}}
+  \put(8,38){\vector(1,0){22}}
+  \put(34,38){\circle{8}}
+  \put(29,43){\makebox(0,0){$+$}}
+  \put(29,31){\makebox(0,0){$-$}}
+  \put(38,38){\vector(1,0){18}}
+  \put(47,42){\makebox(0,0)[b]{$u$}}
+  \put(56,30){\framebox(42,16){\shortstack{対象\\$\dot{x}=Ax+Bu$}}}
+  \put(98,38){\vector(1,0){30}}
+  \put(130,38){\makebox(0,0)[l]{$x$}}
+  \put(114,38){\line(0,1){14}}
+  \put(114,52){\vector(1,0){8}}
+  \put(122,47){\framebox(18,10){$C$}}
+  \put(140,52){\vector(1,0){14}}
+  \put(158,52){\makebox(0,0)[l]{$y$}}
+  \put(114,38){\line(0,-1){22}}
+  \put(114,16){\vector(-1,0){22}}
+  \put(70,10){\framebox(22,12){$K$}}
+  \put(70,16){\vector(-1,0){32}}
+  \put(34,16){\vector(0,1){18}}
+  \put(56,19){\makebox(0,0)[b]{$Kx$}}
+  \put(124,24){\makebox(0,0)[l]{状態の帰還}}
+\end{picture}
+\caption{状態フィードバック $u=-Kx+r_u$ の信号経路。参照入力 $r_u$、制御入力 $u$、状態 $x$、出力 $y$、および $Kx$ の負帰還経路を分けて示している。}
+\label{fig:state-feedback-block}
+\end{figure}
+
+図\ref{fig:state-feedback-block} の和差点は、設計式 $u=-Kx+r_u$ の符号を表している。$r_u$ は閉ループ極そのものを決める信号ではなく、状態が原点へ戻った後の平衡値や目標値を与えるための入力である。極配置で扱うのは、まず $r_u=0$ とした同次閉ループ $\dot{x}=(A-BK)x$ の内部モードである。
+
+以下では、連続時間の有限次元線形時不変 SISO 系
 \begin{equation}
-  \det(sI-A+BK)=s^n+\alpha_{n-1}s^{n-1}+\cdots+\alpha_0
+  \dot{x}=Ax+bu
 \end{equation}
-にしたいなら、$K$ を係数が一致するように選ぶ。実務では極を左へ動かすほど応答は速くなるが、入力が大きくなり、ノイズや未モデル dynamics に弱くなる。
+に対する状態フィードバックを考える。仮定は、$(A,b)$ が可制御であり、制御に用いる状態 $x$ が利用可能であり、設計モデル $A,b$ が対象の線形近似として用いられることである。希望極は実数係数の特性多項式を作る必要があるため、複素極を指定するときは共役対で指定する。アクチュエータ飽和、未モデル化の高周波ダイナミクス、測定ノイズはこの代数計算には含まれない。
 
-\section{オブザーバと分離定理}
+望む閉ループ特性多項式を
+\begin{equation}
+  p_d(s)=s^n+\alpha_{n-1}s^{n-1}+\cdots+\alpha_1s+\alpha_0
+  \label{eq:desired-poly}
+\end{equation}
+と書く。極配置とは、
+\begin{equation}
+  \det\{sI-(A-bK)\}=p_d(s)
+\end{equation}
+となる行ベクトル $K$ を求めることである。
 
-すべての状態が測れるとは限らない。そこで推定状態 $\hat{x}$ を
+\subsubsection{可制御正準形}
+
+可制御 SISO 系では、座標変換により入力行列を正準形へ変換できる。多項式
+\begin{equation}
+  a(s)=s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0
+\end{equation}
+をもつ可制御正準形は
+\begin{align}
+  A_c&=\begin{bmatrix}
+    0&1&0&\cdots&0\\
+    0&0&1&\cdots&0\\
+    \vdots&\vdots&\vdots&\ddots&\vdots\\
+    0&0&0&\cdots&1\\
+    -a_0&-a_1&-a_2&\cdots&-a_{n-1}
+  \end{bmatrix},&
+  b_c&=\begin{bmatrix}0\\0\\\vdots\\0\\1\end{bmatrix}
+\end{align}
+である。この形では、入力は最後の状態方程式にのみ直接入る。$A_c$ の特性多項式は
+\begin{equation}
+  \det(sI-A_c)=s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0
+\end{equation}
+であり、最下行の係数がそのまま特性多項式の係数を決める。
+
+一般の可制御対 $(A,b)$ からこの形へ移るには、$x=Tz$ とおく。可制御行列を
+\begin{align}
+  \mathcal{C}&=\begin{bmatrix}b&Ab&\cdots&A^{n-1}b\end{bmatrix},&
+  \mathcal{C}_c&=\begin{bmatrix}b_c&A_cb_c&\cdots&A_c^{n-1}b_c\end{bmatrix}
+\end{align}
+とすると、
+\begin{equation}
+  T=\mathcal{C}\mathcal{C}_c^{-1}
+\end{equation}
+により
+\begin{equation}
+  T^{-1}AT=A_c,\qquad T^{-1}b=b_c
+\end{equation}
+が成り立つ。可制御性により $\mathcal{C}$ は正則であり、正準形側の $\mathcal{C}_c$ も正則である。座標 $z$ で設計したゲインを $K_c$ とすれば、元の座標のゲインは
+\begin{equation}
+  K=K_cT^{-1}
+\end{equation}
+で与えられる。
+
+\subsubsection{伝達関数実現と可観測正準形}
+
+可制御正準形は、極配置のためだけでなく、伝達関数から状態空間モデルを作る標準的な実現でもある。零初期状態で \weq{ss} をラプラス変換すると
+\begin{align}
+  sX(s)&=AX(s)+BU(s),\\
+  Y(s)&=CX(s)+DU(s)
+\end{align}
+である。$sI-A$ が正則な $s$ について
+\begin{equation}
+  X(s)=(sI-A)^{-1}BU(s)
+\end{equation}
+だから、入力から出力への伝達関数行列は
+\begin{equation}
+  G(s)=C(sI-A)^{-1}B+D
+  \label{eq:ss-transfer-realization}
+\end{equation}
+となる。逆に、同じ $G(s)$ を与える組 $(A,B,C,D)$ を、その伝達関数の実現という。実現は一意ではない。状態座標を変えれば行列は変わるし、入力出力には現れない余分な状態を足しても同じ伝達関数が得られる。
+
+SISO のプロパーな伝達関数を、直達項と厳密にプロパーな部分に分けて
+\begin{equation}
+  G(s)=d+
+  \frac{\beta_{n-1}s^{n-1}+\beta_{n-2}s^{n-2}+\cdots+\beta_1s+\beta_0}
+       {a(s)},\qquad
+  a(s)=s^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0
+  \label{eq:proper-transfer-split}
+\end{equation}
+と書く。直達項 $d$ は、入力が状態を介さず出力へ直接現れる成分であり、\weq{ss-transfer-realization} の $D$ に対応する。先ほどの可制御正準形の $A_c,b_c$ に
+\begin{equation}
+  c_c=\begin{bmatrix}\beta_0&\beta_1&\cdots&\beta_{n-1}\end{bmatrix},
+  \qquad D=d
+\end{equation}
+を組み合わせると、一つの実現
+\begin{equation}
+  \dot{z}=A_cz+b_cu,\qquad y=c_cz+du
+\end{equation}
+が得られる。実際、
+\begin{equation}
+  (sI-A_c)^{-1}b_c
+  =\frac{1}{a(s)}
+  \begin{bmatrix}1&s&\cdots&s^{n-1}\end{bmatrix}^\T
+\end{equation}
+であるため、
+\begin{align}
+  c_c(sI-A_c)^{-1}b_c+d
+  &=d+
+  \frac{\beta_0+\beta_1s+\cdots+\beta_{n-1}s^{n-1}}{a(s)}\\
+  &=G(s)
+\end{align}
+となる。
+
+可観測正準形は、この可制御正準形の双対として作れる。すなわち
+\begin{equation}
+  A_o=A_c^\T,\qquad b_o=c_c^\T,\qquad c_o=b_c^\T,\qquad D=d
+  \label{eq:observable-canonical-realization}
+\end{equation}
+とおく。すると
+\begin{equation}
+  c_o(sI-A_o)^{-1}b_o+d
+  =
+  c_c(sI-A_c)^{-1}b_c+d
+\end{equation}
+なので、同じ伝達関数を表す。この形では出力行列が
+\begin{equation}
+  c_o=\begin{bmatrix}0&0&\cdots&1\end{bmatrix}
+\end{equation}
+となり、可制御正準形で入力が最後の状態方程式へ入っていた構造を、行列の転置によって出力が最後の状態を取り出す構造へ移している。したがって $(A_o,c_o)$ の可観測性は、$(A_c,b_c)$ の可制御性と同じランク条件で保証される。
+
+\begin{theorem}[最小実現の判定]
+有限次元線形時不変系の実現 $(A,B,C,D)$ が、同じ伝達関数をもつ実現の中で状態次数をこれ以上下げられない最小実現であるための必要十分条件は、$(A,B)$ が可制御であり、かつ $(A,C)$ が可観測であることである。
+\end{theorem}
+
+この判定は、伝達関数の極零相殺を状態空間の内部モードへ対応づけたものである。可制御でない状態成分は、零初期状態の入力応答では励起されない。可観測でない状態成分は、動いていても出力へ現れない。どちらも伝達関数だけを扱うと相殺されたように扱われるが、状態空間には余分な内部モードとして残る。隠れたモードが安定なら、主な問題は次数が余分で数値計算が悪くなることである。隠れたモードが不安定なら、入力出力の伝達関数が安定な形になっていても、初期誤差、丸め誤差、飽和後のずれによって内部状態が増大する危険がある。
+
+小さな例として
+\begin{equation}
+  G(s)=\frac{s+3}{s^2+5s+6}
+      =\frac{s+3}{(s+2)(s+3)}
+      =\frac{1}{s+2}
+\end{equation}
+を考える。未約分の分母次数に合わせて可制御正準形を作ると
+\begin{equation}
+  A_c=\begin{bmatrix}0&1\\-6&-5\end{bmatrix},\qquad
+  b_c=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+  c_c=\begin{bmatrix}3&1\end{bmatrix}
+\end{equation}
+である。この実現は可制御だが、可観測行列は
+\begin{equation}
+  \mathcal{O}
+  =\begin{bmatrix}c_c\\ c_cA_c\end{bmatrix}
+  =\begin{bmatrix}3&1\\-6&-2\end{bmatrix}
+\end{equation}
+となり、第二行が第一行の $-2$ 倍なので $\rank\mathcal{O}=1$ である。したがって二次の実現は最小ではなく、相殺された極 $s=-3$ が出力から見えない内部モードとして隠れている。約分後の最小実現は
+\begin{equation}
+  \dot{x}_m=-2x_m+u,\qquad y=x_m
+\end{equation}
+でよい。この一次実現は可制御かつ可観測であり、同じ伝達関数 $1/(s+2)$ を持つ。
+
+\subsubsection{係数比較による極配置}
+
+正準形では、状態フィードバックを
+\begin{equation}
+  u=-K_cz+r_u,\qquad
+  K_c=\begin{bmatrix}k_0&k_1&\cdots&k_{n-1}\end{bmatrix}
+\end{equation}
+と書くと、閉ループ行列は
+\begin{equation}
+  A_c-b_cK_c=
+  \begin{bmatrix}
+    0&1&0&\cdots&0\\
+    0&0&1&\cdots&0\\
+    \vdots&\vdots&\vdots&\ddots&\vdots\\
+    0&0&0&\cdots&1\\
+    -(a_0+k_0)&-(a_1+k_1)&-(a_2+k_2)&\cdots&-(a_{n-1}+k_{n-1})
+  \end{bmatrix}
+\end{equation}
+となる。したがって閉ループ特性多項式は
+\begin{equation}
+  \det\{sI-(A_c-b_cK_c)\}
+  =s^n+(a_{n-1}+k_{n-1})s^{n-1}+\cdots+(a_1+k_1)s+(a_0+k_0)
+\end{equation}
+である。これを \weq{desired-poly} と係数比較すれば、
+\begin{equation}
+  k_i=\alpha_i-a_i,\qquad i=0,1,\ldots,n-1
+  \label{eq:canonical-pole-placement}
+\end{equation}
+が得られる。この計算により、極配置は正準形の最下行の係数を希望特性多項式の係数へ一致させる操作として表される。
+
+\subsubsection{Ackermann の公式}
+
+係数比較を毎回正準形へ明示的に変換して行う代わりに、元の座標のままゲインを一度に書く公式が Ackermann の公式である。$e_n$ を第 $n$ 成分だけが 1 の単位ベクトルとし、
+\begin{equation}
+  p_d(A)=A^n+\alpha_{n-1}A^{n-1}+\cdots+\alpha_1A+\alpha_0I
+\end{equation}
+と定義する。$(A,b)$ が可制御なら、
+\begin{equation}
+  K=e_n^\T \mathcal{C}^{-1}p_d(A),\qquad
+  \mathcal{C}=\begin{bmatrix}b&Ab&\cdots&A^{n-1}b\end{bmatrix}
+  \label{eq:ackermann}
+\end{equation}
+が $u=-Kx+r_u$ に対する極配置ゲインを与える。これを Ackermann の公式という。
+
+この公式は、Cayley--Hamilton の定理と可制御正準形における係数比較から得られる。正準形では \weq{canonical-pole-placement} により、希望係数と開ループ係数の差が $K_c$ になる。元の座標へ戻すと $K=K_cT^{-1}$ である。$p_d(A)$ は希望特性多項式を行列 $A$ に適用した行列であり、$\mathcal{C}^{-1}$ は可制御行列の基底に関する座標を与える。$e_n^\T$ は正準形で特性多項式係数に対応する行を抽出する。
+
+Ackermann の公式は SISO 系の極配置ゲインを閉形式で与える。一方、高次系や可制御行列の条件数が悪い系では数値誤差に敏感である。実装では、Schur 分解に基づく極配置アルゴリズムや最適制御を用いることがある。多入力系では同じ極集合を実現するゲインが一般に一意ではないため、入力の大きさ、ロバスト性、構造制約を含めて設計自由度を選ぶ。
+
+\subsubsection{二次系の数値例}
+
+質量ばねダンパ系を標準化した二次モデルとして
+\begin{equation}
+  A=\begin{bmatrix}0&1\\-2&-3\end{bmatrix},\qquad
+  b=\begin{bmatrix}0\\1\end{bmatrix}
+\end{equation}
+を考える。開ループの特性多項式は
+\begin{equation}
+  \det(sI-A)=s^2+3s+2
+\end{equation}
+であり、この系はすでに可制御正準形になっている。希望極を $-4,-5$ に置くと
+\begin{equation}
+  p_d(s)=(s+4)(s+5)=s^2+9s+20
+\end{equation}
+である。係数比較より
+\begin{equation}
+  K=\begin{bmatrix}20-2&9-3\end{bmatrix}
+   =\begin{bmatrix}18&6\end{bmatrix}
+\end{equation}
+となる。実際、
+\begin{align}
+  A-bK
+  &=\begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+    -\begin{bmatrix}0\\1\end{bmatrix}
+     \begin{bmatrix}18&6\end{bmatrix}\\
+  &=\begin{bmatrix}0&1\\-20&-9\end{bmatrix}
+\end{align}
+なので、
+\begin{equation}
+  \det\{sI-(A-bK)\}=s^2+9s+20=(s+4)(s+5)
+\end{equation}
+となる。
+
+同じ結果を Ackermann の公式でも確認できる。可制御行列は
+\begin{equation}
+  \mathcal{C}=\begin{bmatrix}b&Ab\end{bmatrix}
+  =\begin{bmatrix}0&1\\1&-3\end{bmatrix},\qquad
+  \mathcal{C}^{-1}=\begin{bmatrix}3&1\\1&0\end{bmatrix}
+\end{equation}
+である。また
+\begin{align}
+  p_d(A)&=A^2+9A+20I\\
+  &=\begin{bmatrix}18&6\\-12&0\end{bmatrix}
+\end{align}
+である。したがって
+\begin{equation}
+  K=\begin{bmatrix}0&1\end{bmatrix}
+    \begin{bmatrix}3&1\\1&0\end{bmatrix}
+    \begin{bmatrix}18&6\\-12&0\end{bmatrix}
+   =\begin{bmatrix}18&6\end{bmatrix}
+\end{equation}
+となり、係数比較と一致する。
+
+この例では極を $-1,-2$ から $-4,-5$ へ移動しているため、閉ループの指数減衰率は増加する。一方、$K$ の増加により、同じ状態偏差に対する入力振幅も増加する。入力制限およびモデル誤差が存在する場合、指定極のみで閉ループ性能を評価することはできない。
+
+\subsection{オブザーバと分離定理}
+
+すべての状態が測れるとは限らない。位置だけを測る質量ばねダンパ系では、速度は差分で粗く作れるが、ノイズが増幅されやすい。そこでモデルと出力のずれを使って状態を推定する。直達項 $D$ がある場合は既知入力から $y-Du$ を作っておけばよいので、ここでは簡単のため $D=0$ として
+\begin{equation}
+  y=Cx
+\end{equation}
+を使う。
+
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{0.70mm}
+\begin{picture}(174,84)
+  \scriptsize
+  \thinlines
+  \put(5,60){\makebox(0,0)[r]{$r_u$}}
+  \put(8,60){\vector(1,0){20}}
+  \put(32,60){\circle{8}}
+  \put(27,65){\makebox(0,0){$+$}}
+  \put(27,53){\makebox(0,0){$-$}}
+  \put(36,60){\vector(1,0){18}}
+  \put(45,64){\makebox(0,0)[b]{$u$}}
+  \put(54,53){\framebox(34,14){対象}}
+  \put(88,60){\vector(1,0){20}}
+  \put(112,60){\circle{8}}
+  \put(108,65){\makebox(0,0){$+$}}
+  \put(108,53){\makebox(0,0){$-$}}
+  \put(108,67){\makebox(0,0)[b]{$y$}}
+  \put(116,60){\vector(1,0){20}}
+  \put(127,64){\makebox(0,0)[b]{$e_y=y-\hat{y}$}}
+  \put(136,52){\line(0,-1){20}}
+  \put(136,32){\vector(-1,0){12}}
+  \put(74,20){\framebox(50,18){\shortstack{オブザーバ\\$A\hat{x}+Bu+Le_y$}}}
+  \put(45,60){\line(0,-1){31}}
+  \put(45,29){\vector(1,0){29}}
+  \put(57,32){\makebox(0,0)[b]{$u$}}
+  \put(124,29){\vector(1,0){18}}
+  \put(144,29){\makebox(0,0)[l]{$\hat{x}$}}
+  \put(142,29){\line(0,1){17}}
+  \put(142,46){\vector(-1,0){18}}
+  \put(124,41){\framebox(18,10){$C$}}
+  \put(124,46){\vector(-1,0){8}}
+  \put(116,46){\line(0,1){10}}
+  \put(116,56){\line(-1,0){4}}
+  \put(112,56){\vector(0,1){4}}
+  \put(121,48){\makebox(0,0)[r]{$\hat{y}$}}
+  \put(142,29){\line(0,-1){14}}
+  \put(142,15){\vector(-1,0){22}}
+  \put(98,9){\framebox(22,12){$K$}}
+  \put(98,15){\vector(-1,0){66}}
+  \put(32,15){\vector(0,1){41}}
+  \put(70,18){\makebox(0,0)[b]{$K\hat{x}$}}
+\end{picture}
+\caption{推定状態を用いる状態フィードバックと Luenberger オブザーバの信号経路。対象とオブザーバには同じ制御入力 $u$ が入り、測定値 $y$ と推定出力 $\hat{y}=C\hat{x}$ の差 $e_y$ が推定誤差を修正する。}
+\label{fig:observer-separation-block}
+\end{figure}
+
+図\ref{fig:observer-separation-block} では、制御器が真の状態 $x$ ではなく推定状態 $\hat{x}$ を使うため、入力は $u=-K\hat{x}+r_u$ になる。測定値 $y$ は対象から得られる信号であり、推定出力 $\hat{y}=C\hat{x}$ はオブザーバ内部のモデルから作る信号である。両者の差 $e_y=y-\hat{y}$ が、観測された誤差を状態推定へ戻す経路である。
+
+Luenberger オブザーバは
 \begin{equation}
   \dot{\hat{x}}=A\hat{x}+Bu+L(y-C\hat{x})
+  \label{eq:luenberger-observer}
 \end{equation}
-で更新する。推定誤差 $e_x=x-\hat{x}$ は
+で定義される。$\hat{x}$ は推定状態、$L\in\R^{n\times p}$ はオブザーバゲインである。項 $y-C\hat{x}$ は、実測出力と推定出力の差であり、イノベーションまたは出力誤差と呼ばれる。
+
+推定誤差を
 \begin{equation}
-  \dot{e}_x=(A-LC)e_x
+  e_x=x-\hat{x}
 \end{equation}
-に従う。$(A,C)$ が可観測なら、$L$ によって $A-LC$ の極を望ましく置ける。
+とおくと、
+\begin{align}
+  \dot{e}_x
+  &=\dot{x}-\dot{\hat{x}}\\
+  &=(Ax+Bu)-\{A\hat{x}+Bu+L(Cx-C\hat{x})\}\\
+  &=(A-LC)(x-\hat{x})\\
+  &=(A-LC)e_x
+  \label{eq:observer-error-dynamics}
+\end{align}
+である。したがって、推定誤差の減衰速度は $A-LC$ の固有値で決まる。$(A,C)$ が可観測なら、双対性により $(A^\T,C^\T)$ は可制御なので、状態フィードバックの極配置と同じ計算を転置系へ適用して $L$ を設計できる。
 
-推定状態を使って $u=-K\hat{x}$ としても、状態フィードバックの極とオブザーバの極は別々に設計できる。これを分離定理という。閉ループ全体の固有値は、$A-BK$ の固有値と $A-LC$ の固有値を合わせたものになる。ただし、分離定理は線形モデルと理想化された条件の話であり、飽和やノイズが強い実装では相互作用を確認する必要がある。
+\subsubsection{二次系のオブザーバゲイン例}
 
-\section{線形系のリアプノフ安定性}
+状態フィードバックの例と同じ
+\begin{equation}
+  A=\begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+\end{equation}
+に対し、位置だけを測る
+\begin{equation}
+  C=\begin{bmatrix}1&0\end{bmatrix}
+\end{equation}
+を考える。可観測行列は
+\begin{equation}
+  \mathcal{O}=\begin{bmatrix}C\\ CA\end{bmatrix}
+  =\begin{bmatrix}1&0\\0&1\end{bmatrix}
+\end{equation}
+であり、$\rank\mathcal{O}=2$ だから可観測である。オブザーバゲインを
+\begin{equation}
+  L=\begin{bmatrix}l_1\\l_2\end{bmatrix}
+\end{equation}
+とおくと、
+\begin{equation}
+  A-LC
+  =\begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+   -\begin{bmatrix}l_1\\l_2\end{bmatrix}
+    \begin{bmatrix}1&0\end{bmatrix}
+  =\begin{bmatrix}-l_1&1\\-2-l_2&-3\end{bmatrix}
+\end{equation}
+である。特性多項式は
+\begin{align}
+  \det\{sI-(A-LC)\}
+  &=\det\begin{bmatrix}s+l_1&-1\\2+l_2&s+3\end{bmatrix}\\
+  &=(s+l_1)(s+3)+(2+l_2)\\
+  &=s^2+(l_1+3)s+(3l_1+2+l_2).
+\end{align}
+推定誤差を制御応答より少し速く消したいとして、オブザーバ極を $-6,-7$ に置くと
+\begin{equation}
+  p_o(s)=(s+6)(s+7)=s^2+13s+42
+\end{equation}
+である。係数比較から
+\begin{equation}
+  l_1+3=13,\qquad 3l_1+2+l_2=42
+\end{equation}
+となり、
+\begin{equation}
+  L=\begin{bmatrix}10\\10\end{bmatrix}
+\end{equation}
+を得る。実際、
+\begin{equation}
+  A-LC=\begin{bmatrix}-10&1\\-12&-3\end{bmatrix}
+\end{equation}
+であり、その特性多項式は $s^2+13s+42$ である。
 
-固有値を見る方法は線形系に強いが、同じ安定性をエネルギーのような関数でも表せる。ここではまず線形系だけを見る。平衡点 $x=0$ に対し、正定値関数 $V(x)$ があり
+オブザーバ極を左へ大きく動かすほど、初期推定誤差は速く消える。しかし、イノベーション $y-C\hat{x}$ には測定ノイズも含まれるので、$L$ を大きくしすぎると推定状態がノイズに敏感になる。可観測性と極配置は代数的な可能性を与えるが、実装ではセンサ帯域、サンプリング周期、量子化、モデル誤差を合わせて確認する。
+
+推定状態を使って $u=-K\hat{x}$ とする。$e_x=x-\hat{x}$ なので $\hat{x}=x-e_x$ であり、
+\begin{align}
+  \dot{x}
+  &=Ax+B(-K\hat{x})\\
+  &=(A-BK)x+BK e_x,\\
+  \dot{e}_x&=(A-LC)e_x.
+\end{align}
+したがって
+\begin{equation}
+  \frac{\dd}{\dd t}
+  \begin{bmatrix}x\\e_x\end{bmatrix}
+  =
+  \begin{bmatrix}
+    A-BK&BK\\
+    0&A-LC
+  \end{bmatrix}
+  \begin{bmatrix}x\\e_x\end{bmatrix}
+\end{equation}
+となる。この行列はブロック上三角なので、閉ループ全体の固有値は $A-BK$ の固有値と $A-LC$ の固有値を合わせたものになる。これを分離定理という。ただし、分離定理は線形モデル、既知入力、同じモデルを使う制御器とオブザーバ、飽和を無視した理想条件のもとでの極の分離である。ノイズが強い場合や入力飽和が起こる場合、設計を分けた後に閉ループ全体のシミュレーションで相互作用を確認する。
+
+\subsection{内部安定性、BIBO 安定性、Lyapunov 安定性}
+
+安定性という語は、何を入力とし、何を出力として観察し、初期状態をどのように扱うかによって意味が変わる。状態空間モデル
+\begin{align}
+  \dot{x}&=Ax+Bu,\\
+  y&=Cx+Du
+  \label{eq:stability-ss-model}
+\end{align}
+では、内部状態 $x$ の自然応答を評価する内部安定性と、零初期状態で入力 $u$ から出力 $y$ への写像だけを評価する BIBO 安定性を区別する必要がある。さらに、平衡点の近くにとどまるか、平衡点へ収束するか、指数関数的に収束するかを述べるために、Lyapunov 安定性、漸近安定性、指数安定性を分けて定義する。
+
+\begin{definition}[Lyapunov 安定性、漸近安定性、指数安定性]
+自律系 $\dot{x}=f(x)$ が平衡点 $x=0$、すなわち $f(0)=0$ を持つとする。任意の $\varepsilon>0$ に対してある $\delta>0$ が存在し、$\norm{x(0)}<\delta$ ならすべての $t\ge0$ で $\norm{x(t)}<\varepsilon$ となるとき、原点は Lyapunov 安定であるという。さらに、十分小さい初期値について
+\begin{equation}
+  \lim_{t\to\infty}x(t)=0
+\end{equation}
+も成り立つとき、原点は漸近安定であるという。ある定数 $M\ge1$、$\alpha>0$、$\rho>0$ が存在し、$\norm{x(0)}<\rho$ なら
+\begin{equation}
+  \norm{x(t)}\le M e^{-\alpha t}\norm{x(0)}
+  \qquad (t\ge0)
+  \label{eq:exponential-stability}
+\end{equation}
+が成り立つとき、原点は指数安定であるという。線形時不変系ではこれらは局所的ではなく大域的な性質として判定できる。
+\end{definition}
+
+Lyapunov 安定性は「初期値を十分小さく選べば、その後も十分小さい範囲に残る」ことだけを要求し、収束を要求しない。例えば $\dot{x}=0$ は、初期値がそのまま保たれるため Lyapunov 安定だが、$x(0)\ne0$ なら原点へ収束しないので漸近安定ではない。漸近安定性は Lyapunov 安定性に収束を加えた性質であり、指数安定性は収束の速さを \weq{exponential-stability} の形で下から保証する性質である。
+
+連続時間線形時不変系 $\dot{x}=Ax$ では、固有値によってこれらを完全に判定できる。$A$ のすべての固有値の実部が負であるとき、$A$ を Hurwitz 行列といい、
+\begin{equation}
+  \Re\lambda_i(A)<0\qquad(i=1,\ldots,n)
+\end{equation}
+が成り立つ。このとき、ある $M\ge1$、$\alpha>0$ が存在して
+\begin{equation}
+  \norm{e^{At}}\le M e^{-\alpha t}
+\end{equation}
+となるので、原点は指数安定であり、したがって漸近安定でも Lyapunov 安定でもある。有限次元の連続時間線形時不変系では、漸近安定性と指数安定性は同値であり、どちらも $A$ が Hurwitz であることと同値である。一方、Lyapunov 安定性だけなら、固有値の実部がすべて非正で、虚軸上の固有値に対応する Jordan ブロックがすべて一次であることが必要十分条件になる。虚軸上の重複固有値に大きな Jordan ブロックがあると、$te^{j\omega t}$ のような項が現れ、振幅が時間とともに増えるため Lyapunov 安定ではない。
+
+\begin{definition}[内部安定性]
+有限次元線形時不変系 \weq{stability-ss-model} の内部安定性とは、零入力 $u=0$ のもとで任意の初期状態から内部状態が原点へ収束する性質である。連続時間では、これは $A$ が Hurwitz であることと同値である。状態フィードバック後の閉ループであれば、$A$ の代わりに $A-BK$ が Hurwitz かどうかを判定する。
+\end{definition}
+
+内部安定性は、出力に現れない状態も含めて評価する。したがって、センサで測っていない状態、入力で励起されにくい状態、伝達関数で相殺されて見えない状態も判定対象である。内部安定な系では、$B$、$C$、$D$ が有限行列である限り、任意の有界入力に対して状態と出力は有界に保たれる。実際、$u$ が $\norm{u(t)}\le \bar{u}$ を満たし、$\norm{e^{At}}\le M e^{-\alpha t}$ なら、解公式より
+\begin{align}
+  \norm{x(t)}
+  &\le M e^{-\alpha t}\norm{x(0)}
+     +\int_0^t M e^{-\alpha(t-\tau)}\norm{B}\bar{u}\,\dd\tau\\
+  &\le M\norm{x(0)}+\frac{M\norm{B}}{\alpha}\bar{u}
+  \label{eq:bounded-state-from-hurwitz}
+\end{align}
+となる。$y=Cx+Du$ も同じく有界である。
+
+\begin{definition}[BIBO 安定性]
+零初期状態 $x(0)=0$ とし、任意の有界入力 $u$ に対して出力 $y$ が有界になるとき、入出力写像は BIBO 安定であるという。すなわち、任意の $\bar{u}<\infty$ について $\sup_{t\ge0}\norm{u(t)}\le\bar{u}$ なら、ある有限な $\bar{y}$ が存在して $\sup_{t\ge0}\norm{y(t)}\le\bar{y}$ となる性質である。
+\end{definition}
+
+BIBO 安定性は、初期状態を 0 に固定し、入力から出力への関係だけを見る。零初期状態で \weq{stability-ss-model} をラプラス変換すると
+\begin{equation}
+  Y(s)=G(s)U(s),\qquad
+  G(s)=C(sI-A)^{-1}B+D
+  \label{eq:bibo-transfer}
+\end{equation}
+である。有限次元のプロパーな連続時間有理伝達関数では、BIBO 安定性の判定は、約分後の伝達関数 $G(s)$ のすべての極が開左半平面にあることである。SISO であれば、分母多項式の根がすべて $\Re s<0$ にあることを Routh--Hurwitz 判別法で調べられる。MIMO では伝達関数行列の各成分、または共通分母や Smith--McMillan 形で現れる極を調べる。
+
+内部安定性と BIBO 安定性は、実現が最小であるときに一致する。実現 $(A,B,C,D)$ が可制御かつ可観測なら、$A$ の固有値は伝達関数の極として現れるため、$A$ が Hurwitz であることと、$G(s)$ のすべての極が開左半平面にあることは同値である。ところが非最小実現では、可制御でないモードや可観測でないモードが伝達関数から消える。したがって、$G(s)$ だけを見た BIBO 安定性は、隠れた内部モードの安定性を保証しない。
+
+不安定な相殺を含む例として
+\begin{equation}
+  G(s)=\frac{s-1}{s^2-1}=\frac{1}{s+1}
+\end{equation}
+を考える。約分後の伝達関数の極は $s=-1$ だけなので、入出力写像は BIBO 安定である。一方、未約分の分母に合わせた実現
+\begin{equation}
+  A=\begin{bmatrix}0&1\\1&0\end{bmatrix},\qquad
+  b=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+  c=\begin{bmatrix}-1&1\end{bmatrix},\qquad D=0
+  \label{eq:hidden-unstable-realization}
+\end{equation}
+は
+\begin{equation}
+  c(sI-A)^{-1}b
+  =\frac{s-1}{s^2-1}
+  =\frac{1}{s+1}
+\end{equation}
+を与える。行列 $A$ の固有値は $1$ と $-1$ であり、$A$ は Hurwitz ではない。特に $v=\begin{bmatrix}1&1\end{bmatrix}^\T$ は $Av=v$ を満たし、かつ
+\begin{equation}
+  cv=\begin{bmatrix}-1&1\end{bmatrix}
+    \begin{bmatrix}1\\1\end{bmatrix}=0
+\end{equation}
+なので、$s=1$ の不安定モードは出力から見えない。初期状態が $x(0)=v$、入力が $u=0$ なら
+\begin{equation}
+  x(t)=e^t v,\qquad y(t)=ce^t v=0
+\end{equation}
+となる。出力は常に 0 で有界だが、内部状態は指数的に発散する。この例は、BIBO 安定な伝達関数が必ずしも内部安定な状態空間実現を意味しないことを示している。
+
+実用上は、伝達関数だけで閉ループの安定性を述べるときには、相殺後の入出力極を見ているのか、状態空間実現の内部モードまで含めて見ているのかを明記する必要がある。物理モデルから得た状態空間表現、オブザーバを含む拡大系、制御器の内部状態を持つ動的補償器では、伝達関数上の極零相殺だけに依存せず、閉ループ全体の実現が最小でない可能性も含めて内部安定性を確認する。
+
+\subsection{線形系のリアプノフ安定性}
+
+固有値や伝達関数の極による判定は線形時不変系に有効であるが、同じ安定性を二次形式などのスカラー関数の減少としても表現できる。ここでは内部安定性、すなわち $\dot{x}=Ax$ の原点の漸近安定性を、Lyapunov の直接法で判定する。平衡点 $x=0$ に対し、正定値関数 $V(x)$ があり
 \begin{equation}
   V(x)>0\quad(x\ne0),\qquad V(0)=0
 \end{equation}
@@ -164,7 +1229,20 @@ SISO 系では、可制御正準形に変換すると極配置の意味が分か
 
 正定値行列は、ベクトルの重み付き大きさを作る行列である。$P>0$ なら $x^\T P x$ は $x\ne0$ で常に正になる。半正定値 $P\ge0$ では 0 になる方向が残る。評価関数や共分散行列で正定値性が重要になるのは、距離や不確かさを破綻なく測るためである。
 
-\section{状態空間の式変形を省略しない}
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.94\linewidth,bb=0 0 1296 1152]{figures/state_space_geometry_examples.png}
+\caption{二状態モデル $A=\left[\begin{smallmatrix}0&1\\-2&-3\end{smallmatrix}\right]$、$b=\left[\begin{smallmatrix}0&1\end{smallmatrix}\right]^\T$、$C=\left[\begin{smallmatrix}1&0\end{smallmatrix}\right]$ に対する状態空間の幾何。左上は $K=\left[\begin{smallmatrix}18&6\end{smallmatrix}\right]$ による閉ループ軌道、右上は可制御方向 $B,AB$ と可観測方向 $C^\T,A^\T C^\T$、左下は $L=\left[\begin{smallmatrix}10&10\end{smallmatrix}\right]^\T$ による推定誤差軌道、右下は $A-bK$ に対する $V=x^\T Px$ のレベル集合を示す。}
+\label{fig:state-space-geometry-examples}
+\end{figure}
+
+図\ref{fig:state-space-geometry-examples} の右下では、閉ループ軌道が楕円の外側から内側へ横切っている。これは $\dot{V}=-x^\T Qx<0$ が、各軌道に沿って $V$ の値を単調に減らすことを幾何的に表している。左上の閉ループ軌道と左下の推定誤差軌道を比べると、制御極とオブザーバ極を別々に配置しても、どちらも原点へ向かう二次元の流れとして確認できる。
+
+\begin{practice}[状態空間の幾何と信号経路の確認]
+図\ref{fig:state-space-geometry-examples} の右上で、$B$ と $AB$ が一次独立であること、および $C$ と $CA$ が一次独立であることを、対応する可制御行列と可観測行列のランク計算で確認せよ。さらに、図\ref{fig:state-feedback-block} と図\ref{fig:observer-separation-block} の信号名を用いて、$r_u=0$ のときの閉ループ状態方程式と推定誤差方程式をそれぞれ書き出せ。
+\end{practice}
+
+\subsection{状態空間の式変形を省略しない}
 
 \begin{theorem}[行列指数関数による解公式]
 線形時不変系 $\dot{x}=Ax+Bu$ の解は
@@ -205,34 +1283,6 @@ $x(0)=z(0)$ なので
   x(t)&=e^{At}x(0)+e^{At}\int_0^t e^{-A\tau}Bu(\tau)\,\dd\tau\\
   &=e^{At}x(0)+\int_0^t e^{A(t-\tau)}Bu(\tau)\,\dd\tau.
 \end{align}
-\end{derivation}
-
-\begin{theorem}[Kalman の可制御性ランク条件]
-連続時間線形系 $(A,B)$ が可制御であるための必要十分条件は
-\begin{equation}
-  \rank\begin{bmatrix}B&AB&\cdots&A^{n-1}B\end{bmatrix}=n
-\end{equation}
-である。
-\end{theorem}
-
-\begin{why}
-この行列は、入力が直接作る方向 $B$、一度自然な運動 $A$ を通って現れる方向 $AB$、さらに繰り返した方向 $A^2B$ を並べている。ランクが $n$ なら、状態空間のすべての方向を入力から組み合わせて作れる。
-\end{why}
-
-\begin{derivation}
-オブザーバ誤差の式も省略せずに出す。$y=Cx$、推定器
-\begin{equation}
-  \dot{\hat{x}}=A\hat{x}+Bu+L(y-C\hat{x})
-\end{equation}
-を使う。誤差を $e_x=x-\hat{x}$ とおくと
-\begin{align}
-  \dot{e}_x
-  &=\dot{x}-\dot{\hat{x}}\\
-  &=(Ax+Bu)-\{A\hat{x}+Bu+L(Cx-C\hat{x})\}\\
-  &=A(x-\hat{x})-LC(x-\hat{x})\\
-  &=(A-LC)e_x.
-\end{align}
-したがって $A-LC$ の固有値を左半平面に置けば、推定誤差は減衰する。
 \end{derivation}
 
 \begin{theorem}[Lyapunov の直接法]

@@ -1,0 +1,1317 @@
+\subsection{非線形系への拡張}
+
+線形系では、応答、安定性、状態フィードバック、オブザーバ、LQR、カルマンフィルタが一つの流れとしてつながった。しかし、同じ線形モデルを対象の全領域へそのまま広げると、すぐに限界が現れる。小角の振子では $\sin\theta\simeq\theta$ と見なせるが、大きく振れた振子や上向き平衡点の近くでは、重力トルクの傾きも安定性の性質も小角モデルとは異なる。タンクの流出は水位差に比例するのではなく、典型的には水位の平方根に依存するため、ある水位で合わせた一次モデルは水位が大きく変わると流量予測にずれを生じる。アクチュエータが飽和する系では、設計上の入力をいくら大きくしても実際の力やトルクは上限で止まり、線形モデルが仮定した比例関係が崩れる。
+
+この限界は、線形制御を破棄すべきことを意味しない。必要なのは、まず対象が実際にどの変数で動き、入力、外乱、測定量、制約がどのように関係するかを非線形モデルとして書き、そのうえでどの動作点または基準軌道の近くを扱うのかを明示することである。近似を使う場合は、関数がその近傍で十分滑らかであること、偏差が小さいこと、入力飽和や接触切替のような不連続が支配的でないことを仮定する。この仮定のもとでだけ、偏差変数、接平面、ヤコビアンによる一次近似が、前章までの線形系の設計法へ接続する。
+
+\subsubsection{非線形状態方程式と出力方程式}
+
+この目的のため、連続時間の非線形状態空間モデルを
+\begin{align}
+  \dot{x}&=f(x,u),\\
+  y&=h(x,u)
+\end{align}
+と書く。ここで $x(t)\in\R^n$ は状態、$u(t)\in\R^m$ は入力、$y(t)\in\R^p$ は出力である。$f:\R^n\times\R^m\to\R^n$ は状態の時間変化率を与えるベクトル場、$h:\R^n\times\R^m\to\R^p$ は状態と入力から測定量または制御に使う量を作る写像である。線形状態空間モデルは
+\begin{align}
+  f(x,u)&=Ax+Bu,\\
+  h(x,u)&=Cx+Du
+\end{align}
+という特別な場合であった。非線形モデルでは、ばね力が変位の三乗を含む、振子の重力項が $\sin\theta$ を含む、センサが距離の二乗や角度から測定値を作る、というように $f,h$ が一般の関数になる。
+
+外乱 $d$、パラメータ $p$、時刻 $t$ を明示したい場合は
+\begin{align}
+  \dot{x}&=f(x,u,d,p,t),\\
+  y&=h(x,u,d,p,t)
+\end{align}
+と書ける。ただし局所線形化の基本構造は変わらない。どの変数を既知入力、未知外乱、推定対象、固定パラメータとして扱うかを決め、それぞれの基準値からの偏差に対する一次感度を計算する。
+
+\subsubsection{平衡点と動作点}
+
+一定入力 $u_e$ のもとで状態が一定値 $x_e$ に留まるとき、
+\begin{equation}
+  f(x_e,u_e)=0
+\end{equation}
+を満たす組 $(x_e,u_e)$ を平衡点という。このとき出力の基準値は
+\begin{equation}
+  y_e=h(x_e,u_e)
+\end{equation}
+である。平衡点は、温度制御なら定常温度、RC 回路なら定常電圧、モータなら一定速度、振子なら静止角度に対応する。入力の基準値 $u_e$ は、状態をその点に保つためのバイアス入力であり、制御器が計算する偏差入力とは区別しておく。
+
+制御対象が一定点ではなく時間で変わる基準運動に沿って動く場合は、平衡点ではなく動作点または基準軌道を用いる。基準軌道 $(\bar{x}(t),\bar{u}(t))$ が
+\begin{equation}
+  \dot{\bar{x}}(t)=f(\bar{x}(t),\bar{u}(t))
+\end{equation}
+を満たすなら、その近くの小さなずれを解析できる。定常動作では $\bar{x}(t)=x_e$、$\bar{u}(t)=u_e$ が定数になり、平衡点の議論へ戻る。したがって、平衡点は動作点の定数版である。
+
+\subsubsection{偏差変数と接平面による局所線形化}
+
+動作点の近くのずれを
+\begin{equation}
+  \tilde{x}=x-\bar{x},\qquad
+  \tilde{u}=u-\bar{u},\qquad
+  \tilde{y}=y-\bar{y},
+  \qquad
+  \bar{y}=h(\bar{x},\bar{u})
+\end{equation}
+と置く。$f,h$ が動作点の近くで連続微分可能なら、多変数の一次テイラー展開により
+\begin{align}
+  f(\bar{x}+\tilde{x},\bar{u}+\tilde{u})
+  &=f(\bar{x},\bar{u})+A\tilde{x}+B\tilde{u}+r_f(\tilde{x},\tilde{u}),\\
+  h(\bar{x}+\tilde{x},\bar{u}+\tilde{u})
+  &=h(\bar{x},\bar{u})+C\tilde{x}+D\tilde{u}+r_h(\tilde{x},\tilde{u})
+\end{align}
+と書ける。ただし
+\begin{align}
+  A&=\left.\frac{\pp f}{\pp x}\right|_{(\bar{x},\bar{u})},
+  &B&=\left.\frac{\pp f}{\pp u}\right|_{(\bar{x},\bar{u})},\\
+  C&=\left.\frac{\pp h}{\pp x}\right|_{(\bar{x},\bar{u})},
+  &D&=\left.\frac{\pp h}{\pp u}\right|_{(\bar{x},\bar{u})}
+\end{align}
+である。$A,B,C,D$ はそれぞれヤコビアンであり、成分で書けば
+\begin{equation}
+  A_{ij}=\left.\frac{\pp f_i}{\pp x_j}\right|_{(\bar{x},\bar{u})},
+  \qquad
+  B_{ij}=\left.\frac{\pp f_i}{\pp u_j}\right|_{(\bar{x},\bar{u})}
+\end{equation}
+である。$A_{ij}$ は「状態 $x_j$ を少し変えたとき、状態変化率の第 $i$ 成分がどれだけ変わるか」を表し、$B_{ij}$ は入力 $u_j$ の小さな変化に対する同じ感度を表す。
+
+基準軌道がモデルを満たしているとき、$\dot{\tilde{x}}=\dot{x}-\dot{\bar{x}}$ なので
+\begin{align}
+  \dot{\tilde{x}}
+  &=f(\bar{x}+\tilde{x},\bar{u}+\tilde{u})-f(\bar{x},\bar{u})\\
+  &=A\tilde{x}+B\tilde{u}+r_f(\tilde{x},\tilde{u})
+\end{align}
+である。一次近似では高次の残りを捨てて
+\begin{equation}
+  \dot{\tilde{x}}\simeq A\tilde{x}+B\tilde{u},
+  \qquad
+  \tilde{y}\simeq C\tilde{x}+D\tilde{u}
+\end{equation}
+を得る。平衡点まわりでは $A,B,C,D$ は定数行列になり、線形時不変の偏差モデルが得られる。時間変化する基準軌道まわりでは $A(t),B(t),C(t),D(t)$ となり、線形時変の偏差モデルになる。
+
+幾何学的には、一次テイラー展開は曲がった面を接平面で置き換える操作である。たとえば $f_i(x,u)$ のグラフを、変数 $(x,u)$ と値 $f_i$ からなる空間内の曲面と見る。点 $(\bar{x},\bar{u})$ での接平面は
+\begin{equation}
+  f_i(x,u)\simeq
+  f_i(\bar{x},\bar{u})
+  +\sum_{j=1}^{n}
+    \left.\frac{\pp f_i}{\pp x_j}\right|_{(\bar{x},\bar{u})}(x_j-\bar{x}_j)
+  +\sum_{j=1}^{m}
+    \left.\frac{\pp f_i}{\pp u_j}\right|_{(\bar{x},\bar{u})}(u_j-\bar{u}_j)
+\end{equation}
+で表される。この式を全成分に対してまとめたものが、ヤコビアンによる線形化である。したがって、接平面は単なる図形的説明ではなく、線形状態方程式の係数そのものである。
+
+\subsubsection{有効領域と高次項}
+
+局所線形化は、非線形モデルを全領域で線形モデルへ置き換える主張ではない。$\delta z=[\tilde{x}^\T,\tilde{u}^\T]^\T$ とおき、$f$ が動作点近傍で二回連続微分可能で、二階偏微分が有界であるとする。このとき残り項は
+\begin{equation}
+  \norm{r_f(\tilde{x},\tilde{u})}
+  \le c_f\norm{\delta z}^2
+\end{equation}
+を満たすような定数 $c_f>0$ を、十分小さい近傍で選べる。同様に
+\begin{equation}
+  \norm{r_h(\tilde{x},\tilde{u})}
+  \le c_h\norm{\delta z}^2
+\end{equation}
+である。一次項は偏差の大きさに比例し、残り項はおおよそ偏差の二乗以上で小さくなる。したがって、偏差が十分小さく、一次項が支配的な領域では線形化が有効である。
+
+有効領域は、単に数式の滑らかさだけでは決まらない。入力飽和、摩擦の不連続、角度の折り返し、接触の切替、センサの飽和、モデル化していない遅れがあると、接平面で表したモデルから実際の対象が外れやすい。また、ヤコビアンのある列が 0 になる動作点では、その方向の一次感度が消えるため、二次以上の項が実際の変化を支配することがある。この場合、線形化モデルだけで可制御性、可観測性、ゲイン余裕を判断すると、非線形モデルの重要な性質を見誤る。
+
+\subsubsection{局所設計と非線形推定への接続}
+
+平衡点まわりで線形化できれば、線形状態フィードバック、オブザーバ、LQR、線形 Kalman フィルタの考え方を局所的に使える。たとえば偏差入力を
+\begin{equation}
+  \tilde{u}=-K\tilde{x}
+\end{equation}
+と設計したなら、実際に対象へ加える入力は
+\begin{equation}
+  u=u_e-K(x-x_e)
+\end{equation}
+である。ここで $u_e$ を省くと、制御器は平衡点を保つために必要なバイアス入力を失い、偏差モデルで設計した原点が実対象の平衡点でなくなる。動作点が複数ある場合は、各動作点で $A,B$ とゲインを計算して切り替えるゲインスケジューリングへ進む。ただし、切替のなめらかさ、飽和、安定性の共通領域は別に確認する必要がある。
+
+EKF も同じ局所線形化に基づく。予測値は非線形写像 $f$ で進めるが、推定誤差と共分散の伝搬には、推定値まわりのヤコビアンを用いる。すなわち、EKF では制御設計のための平衡点まわりのヤコビアンではなく、時々刻々の推定値まわりのヤコビアンが接線モデルになる。UKF や粒子フィルタは、この接線近似または単一ガウス近似の限界を補う別の近似であり、後で扱う NMPC も非線形モデルを保ったまま、各反復で局所的な線形近似や二次近似を使う。
+
+\begin{example}[トルク入力をもつ単振子の局所線形化]
+長さ $l$ [m]、質量 $m$ [kg] の単振子に粘性減衰 $b$ [N\,m\,s/rad] とトルク入力 $u$ [N\,m] が作用するとする。角度 $\theta$ [rad] は下向きを $0$ とし、角速度を $\omega=\dot{\theta}$ [rad/s] とおく。状態を
+\begin{equation}
+  x=\begin{bmatrix}\theta\\ \omega\end{bmatrix}
+\end{equation}
+と選ぶと、非線形状態方程式と角度出力は
+\begin{align}
+  \dot{x}_1&=x_2,\\
+  \dot{x}_2&=-\frac{g}{l}\sin x_1-\frac{b}{ml^2}x_2+\frac{1}{ml^2}u,\\
+  y&=x_1
+\end{align}
+である。一定角度 $\theta_e$ に静止させる平衡点では
+\begin{equation}
+  x_e=
+  \begin{bmatrix}\theta_e\\0\end{bmatrix},
+  \qquad
+  u_e=mgl\sin\theta_e
+\end{equation}
+を満たす。実際に第 2 式へ代入すると
+\begin{equation}
+  -\frac{g}{l}\sin\theta_e
+  +\frac{1}{ml^2}mgl\sin\theta_e
+  =0
+\end{equation}
+となり、角加速度は 0 である。
+
+この平衡点まわりの偏差を
+\begin{equation}
+  \tilde{\theta}=\theta-\theta_e,\qquad
+  \tilde{\omega}=\omega,\qquad
+  \tilde{u}=u-u_e
+\end{equation}
+と置く。ヤコビアンを計算すると
+\begin{align}
+  A
+  &=
+  \left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)}
+  =
+  \begin{bmatrix}
+    0&1\\
+    -\dfrac{g}{l}\cos\theta_e&-\dfrac{b}{ml^2}
+  \end{bmatrix},\\
+  B
+  &=
+  \left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}
+  =
+  \begin{bmatrix}
+    0\\
+    \dfrac{1}{ml^2}
+  \end{bmatrix},\\
+  C
+  &=
+  \left.\frac{\pp h}{\pp x}\right|_{(x_e,u_e)}
+  =
+  \begin{bmatrix}1&0\end{bmatrix},
+  \qquad
+  D=0.
+\end{align}
+したがって一次近似は
+\begin{equation}
+  \begin{bmatrix}
+    \dot{\tilde{\theta}}\\
+    \dot{\tilde{\omega}}
+  \end{bmatrix}
+  =
+  A
+  \begin{bmatrix}
+    \tilde{\theta}\\
+    \tilde{\omega}
+  \end{bmatrix}
+  +B\tilde{u},
+  \qquad
+  \tilde{y}=C
+  \begin{bmatrix}
+    \tilde{\theta}\\
+    \tilde{\omega}
+  \end{bmatrix}
+\end{equation}
+である。
+
+上向き平衡点 $\theta_e=\pi$ を考え、$m=1$、$l=1$、$b=0.2$、$g=9.8$ とする。このとき $u_e=0$ であり、
+\begin{equation}
+  A=
+  \begin{bmatrix}
+    0&1\\
+    9.8&-0.2
+  \end{bmatrix},
+  \qquad
+  B=
+  \begin{bmatrix}
+    0\\1
+  \end{bmatrix}
+\end{equation}
+となる。偏差フィードバック $\tilde{u}=-K\tilde{x}$、$K=\begin{bmatrix}k_1&k_2\end{bmatrix}$ を入れると、閉ループ行列は
+\begin{equation}
+  A-BK=
+  \begin{bmatrix}
+    0&1\\
+    9.8-k_1&-0.2-k_2
+  \end{bmatrix}
+\end{equation}
+であり、特性多項式は
+\begin{equation}
+  s^2+(0.2+k_2)s+(k_1-9.8)
+\end{equation}
+である。局所閉ループ極を $-2$ と $-3$ に置きたいなら、目標多項式は
+\begin{equation}
+  (s+2)(s+3)=s^2+5s+6
+\end{equation}
+なので
+\begin{equation}
+  k_2=4.8,\qquad k_1=15.8
+\end{equation}
+を得る。実対象へ加える入力は
+\begin{equation}
+  u=-15.8(\theta-\pi)-4.8\omega
+\end{equation}
+である。この制御則は上向き平衡点近傍の接線モデルを安定化する局所制御器であり、大きく倒れた振子を全角度から必ず起こす大域制御器ではない。
+
+この例で捨てた高次項は、重力項の
+\begin{equation}
+  \sin(\pi+\tilde{\theta})
+  =-\sin\tilde{\theta}
+  =-\tilde{\theta}+\frac{1}{6}\tilde{\theta}^3+\cdots
+\end{equation}
+から現れる。一次近似では $-\tilde{\theta}$ だけを使い、$\tilde{\theta}^3/6$ 以降を無視している。したがって、$\abs{\tilde{\theta}}$ が小さい領域では接線モデルがよい近似になるが、角度偏差が大きい領域では非線形項が無視できず、EKF の共分散伝搬や局所状態フィードバックの予測も同じ理由でずれやすくなる。
+\end{example}
+
+局所線形化は、非線形モデルを一点の接線で近似して線形制御へ戻る方法である。しかし、追従させたい出力への入力の伝わり方が状態とともに変わる場合、一点で作った入力経路をそのまま使うと、目標から離れた領域で出力応答を指定しにくくなる。以下では、出力を微分して入力が現れる階数を調べ、出力側の非線形項を式の上で扱う制御則と、その背後に残る内部運動を確認する。
+
+\subsection{入出力線形化と零ダイナミクス}
+
+ロボットアームの手先位置を目標軌道へ追わせる、あるいは振子角度を望む角度へ近づけるとき、平衡点の近くで作った線形フィードバックだけでは十分でないことがある。入力トルクは、測っている出力そのものに直接足し込まれるのではなく、関節加速度や角加速度を通じて出力の時間微分に現れるからである。手先位置は関節角の非線形関数であり、振子角度も重力項を含む非線形運動方程式に従うため、一点の接線モデルで入力から出力までの経路を固定してしまうと、目標から離れた領域で追従誤差が残りやすい。
+
+このような出力追従問題では、まず出力を何回微分すれば入力が現れるかを調べる。入力が現れた階数の式で非線形項を打ち消すように入力を選べれば、出力の応答を線形系のように指定できる。一方で、出力だけを整えても、出力に現れない内部状態が不安定に動くことがあるため、内部ダイナミクスと零ダイナミクスを同時に確認する必要がある。
+
+この考えを定式化するため、入力が状態方程式にアフィンに入る系を考える。入力が一つで出力も一つの連続時間系を
+\begin{align}
+  \dot{x}&=f(x)+g(x)u,\\
+  y&=h(x)
+\end{align}
+と書く。ここで $x\in\R^n$、$u\in\R$、$y\in\R$ であり、$f(x)$ と $g(x)$ は滑らかなベクトル場、$h(x)$ は滑らかなスカラー出力である。この形を制御アフィン系という。複数入力では $\dot{x}=f(x)+\sum_{j=1}^{m}g_j(x)u_j$ と書くが、まず一入力系で入力が出力の何階微分に現れるかを調べる。
+
+\subsubsection{Lie 微分と相対次数}
+
+出力 $y=h(x)$ の時間微分は、連鎖律から
+\begin{align}
+  \dot{y}
+  &=\frac{\pp h}{\pp x}(x)\dot{x}\\
+  &=\frac{\pp h}{\pp x}(x)f(x)
+    +\frac{\pp h}{\pp x}(x)g(x)u
+\end{align}
+である。ここで
+\begin{align}
+  L_fh(x)&=\frac{\pp h}{\pp x}(x)f(x),\\
+  L_gh(x)&=\frac{\pp h}{\pp x}(x)g(x)
+\end{align}
+と置く。$L_fh$ を $h$ の $f$ に沿った Lie 微分、$L_gh$ を $g$ に沿った Lie 微分という。これは新しい種類の微分ではなく、関数 $h(x)$ をベクトル場 $f(x)$ の方向へどれだけ変えるかを表す方向微分である。したがって
+\begin{equation}
+  \dot{y}=L_fh(x)+L_gh(x)u
+\end{equation}
+と短く書ける。
+
+入力が $\dot{y}$ に直接現れない、すなわち $L_gh(x)=0$ が考えている領域で成り立つ場合は、さらに微分する。$L_fh$ も状態の関数なので、
+\begin{equation}
+  \frac{\dd}{\dd t}L_fh(x)
+  =L_f^2h(x)+L_gL_fh(x)u
+\end{equation}
+である。一般に $L_f^k h$ は $h$ を $f$ に沿って $k$ 回 Lie 微分した関数を表す。
+
+\begin{definition}[相対次数]
+領域 $D$ 上で
+\begin{align}
+  L_gh(x)&=0,\\
+  L_gL_fh(x)&=0,\\
+  &\vdots\\
+  L_gL_f^{r-2}h(x)&=0
+\end{align}
+が成り立ち、かつ
+\begin{equation}
+  L_gL_f^{r-1}h(x)\ne0\qquad(x\in D)
+\end{equation}
+であるとき、この系は領域 $D$ で出力 $y=h(x)$ に関して相対次数 $r$ をもつという。このとき、入力 $u$ は出力を $r$ 回微分した式に初めて現れる。
+\end{definition}
+
+$r=1$ の場合は、$L_gh(x)\ne0$ が最初から成り立つため、上の 0 条件は空であると解釈する。
+
+相対次数 $r$ をもつ領域では、出力の微分は
+\begin{align}
+  y&=h(x),\\
+  \dot{y}&=L_fh(x),\\
+  &\vdots\\
+  y^{(r-1)}&=L_f^{r-1}h(x),\\
+  y^{(r)}&=L_f^rh(x)+L_gL_f^{r-1}h(x)u
+\end{align}
+となる。線形伝達関数での相対次数が「入力から出力までの微分の遅れ」を表したように、非線形系の相対次数も、入力が出力微分に現れるまでの段数を表している。ただし、ここでは伝達関数ではなく、出力関数とベクトル場の Lie 微分で定義される。
+
+\subsubsection{入出力線形化則}
+
+$L_gL_f^{r-1}h(x)$ が 0 でない領域では、仮想入力 $v$ を用いて
+\begin{equation}
+  u=
+  \frac{-L_f^rh(x)+v}
+       {L_gL_f^{r-1}h(x)}
+\end{equation}
+と選べる。この入力を $y^{(r)}$ の式へ代入すると
+\begin{align}
+  y^{(r)}
+  &=L_f^rh(x)+L_gL_f^{r-1}h(x)
+    \frac{-L_f^rh(x)+v}
+         {L_gL_f^{r-1}h(x)}\\
+  &=v
+\end{align}
+となる。これが入出力線形化の基本式である。出力追従問題で目標出力を $y_d(t)$ とし、誤差を
+\begin{equation}
+  e=y-y_d
+\end{equation}
+と置くなら、たとえば
+\begin{equation}
+  v=y_d^{(r)}
+    -a_{r-1}e^{(r-1)}
+    -\cdots
+    -a_1\dot{e}
+    -a_0e
+\end{equation}
+と選ぶ。すると誤差は
+\begin{equation}
+  e^{(r)}+a_{r-1}e^{(r-1)}+\cdots+a_1\dot{e}+a_0e=0
+\end{equation}
+に従う。係数 $a_0,\ldots,a_{r-1}$ を Hurwitz 多項式
+\begin{equation}
+  s^r+a_{r-1}s^{r-1}+\cdots+a_1s+a_0
+\end{equation}
+が安定になるように選べば、線形誤差方程式として出力誤差を収束させられる。
+
+この線形化はテイラー展開による近似ではない。モデル $f,g,h$ が正しく、相対次数が保たれ、分母が 0 にならない領域では、代数的な打消しにより $y^{(r)}=v$ が成り立つ。一方で、打ち消す項を正確に知っていること、状態 $x$ を測定または推定できること、入力が必要な値を実際に出せることが前提である。モデル誤差、入力飽和、ノイズ、未モデル化ダイナミクスがあると、非線形項の完全な打消しは崩れる。
+
+\subsubsection{厳密フィードバック線形化と内部ダイナミクス}
+
+相対次数が状態次元に等しく $r=n$ であり、写像
+\begin{equation}
+  \Phi(x)=
+  \begin{bmatrix}
+    h(x)\\
+    L_fh(x)\\
+    \vdots\\
+    L_f^{n-1}h(x)
+  \end{bmatrix}
+\end{equation}
+のヤコビアンが領域 $D$ で正則であるとする。このとき
+\begin{equation}
+  z=\Phi(x)
+\end{equation}
+は局所的な座標変換になり、入力変換と合わせて
+\begin{align}
+  \dot{z}_1&=z_2,\\
+  \dot{z}_2&=z_3,\\
+  &\vdots\\
+  \dot{z}_n&=v
+\end{align}
+という積分器の直列へ変換できる。このように、状態方程式そのものを局所座標変換とフィードバックで線形系へ変換する考え方を厳密フィードバック線形化という。厳密という語は、線形化が一次近似ではなく、指定した領域内の非線形座標変換と入力変換による同値変換であることを表す。
+
+一方、$r<n$ の場合は、出力とその微分だけでは状態全体を表せない。出力側の座標を
+\begin{equation}
+  z_1=h(x),\quad z_2=L_fh(x),\quad\ldots,\quad z_r=L_f^{r-1}h(x)
+\end{equation}
+とし、残りの座標を $\eta\in\R^{n-r}$ で補うと、正則な座標変換が取れる領域では
+\begin{align}
+  \dot{z}_1&=z_2,\\
+  &\vdots\\
+  \dot{z}_r&=v,\\
+  \dot{\eta}&=q(z,\eta)
+\end{align}
+という標準形で考えられる。$z$ は外部入出力に現れる出力側の線形化された運動であり、$\eta$ は出力から直接は決まらない内部状態である。この内部状態の運動を内部ダイナミクスという。
+
+出力を 0 に保つ運動を調べるため、
+\begin{equation}
+  z_1=z_2=\cdots=z_r=0,\qquad v=0
+\end{equation}
+を課す。このとき内部状態は
+\begin{equation}
+  \dot{\eta}=q(0,\eta)
+\end{equation}
+に従う。この自律系を零ダイナミクスという。零ダイナミクスが漸近安定なら、入出力線形化で出力を望ましく動かしたとき内部状態も抑えられる。この性質を最小位相性という。逆に零ダイナミクスが不安定なら、出力 $y$ の追従誤差は小さく見えても、内部状態 $\eta$ が発散する可能性がある。この場合、出力だけを見た制御性能は良くても、実対象としては許容できない。
+
+\subsubsection{特異点と適用領域}
+
+入出力線形化を使う前に、少なくとも次の条件を領域 $D$ で確認する必要がある。第一に、$f,g,h$ が必要な回数だけ微分可能である。第二に、相対次数 $r$ が領域内で一定である。第三に、デカップリング項 $L_gL_f^{r-1}h(x)$ が 0 から離れている。多入力多出力系では、これに対応するデカップリング行列が正則でなければならない。第四に、座標変換に使うヤコビアンが正則であり、状態がその座標で一意に表せる。第五に、計算された入力がアクチュエータの飽和、速度制限、安全制約を破らない。
+
+これらの条件が破れる点を特異点という。特異点の近くでは、分母が小さくなって入力が過大になる、相対次数が変わる、座標変換が折り畳まれて別の状態と区別できなくなる、といった問題が起こる。したがって、入出力線形化は任意の非線形系を全領域で線形系へ変える方法ではなく、選んだ出力、座標、入力が有効な領域で使う設計法である。特に、零ダイナミクスの安定性と入力制約は、線形化後の誤差方程式だけからは分からない。
+
+\begin{example}[零ダイナミクスをもつ入出力線形化]
+三状態の制御アフィン系
+\begin{align}
+  \dot{x}_1&=x_2,\\
+  \dot{x}_2&=x_3^2+u,\\
+  \dot{x}_3&=-x_3+x_1^2,\\
+  y&=x_1
+\end{align}
+を考える。ここでは
+\begin{align}
+  f(x)&=
+  \begin{bmatrix}
+    x_2\\
+    x_3^2\\
+    -x_3+x_1^2
+  \end{bmatrix},
+  &
+  g(x)&=
+  \begin{bmatrix}
+    0\\
+    1\\
+    0
+  \end{bmatrix},
+  &
+  h(x)&=x_1
+\end{align}
+である。まず
+\begin{equation}
+  L_gh(x)=
+  \begin{bmatrix}1&0&0\end{bmatrix}
+  \begin{bmatrix}0\\1\\0\end{bmatrix}
+  =0
+\end{equation}
+なので、入力は $\dot{y}$ には現れない。次に
+\begin{equation}
+  L_fh(x)=x_2
+\end{equation}
+であり、
+\begin{equation}
+  L_gL_fh(x)=
+  \begin{bmatrix}0&1&0\end{bmatrix}
+  \begin{bmatrix}0\\1\\0\end{bmatrix}
+  =1
+\end{equation}
+である。したがって、この系の相対次数は $r=2$ である。さらに
+\begin{equation}
+  L_f^2h(x)=x_3^2
+\end{equation}
+なので、入力を
+\begin{equation}
+  u=-x_3^2+v
+\end{equation}
+と選ぶと
+\begin{equation}
+  \ddot{y}=v
+\end{equation}
+が得られる。原点への出力レギュレーションなら
+\begin{equation}
+  v=-a_1\dot{y}-a_0y
+\end{equation}
+とし、$s^2+a_1s+a_0$ を Hurwitz に選べば、出力は線形二次系
+\begin{equation}
+  \ddot{y}+a_1\dot{y}+a_0y=0
+\end{equation}
+に従う。
+
+状態は三次元で相対次数は二なので、内部状態が一つ残る。この例では $\eta=x_3$ と選べる。零ダイナミクスは
+\begin{equation}
+  y=0,\qquad \dot{y}=0,\qquad v=0
+\end{equation}
+すなわち $x_1=0$、$x_2=0$、$v=0$ を課したときの $\eta$ の運動である。上の制御則では $u=-x_3^2$ となるが、$\dot{x}_3$ の式には $u$ が入らないため
+\begin{equation}
+  \dot{\eta}=-\eta
+\end{equation}
+を得る。この零ダイナミクスは漸近安定であり、この出力選択に関して系は局所的に最小位相である。
+
+もし第 3 式だけが
+\begin{equation}
+  \dot{x}_3=x_3+x_1^2
+\end{equation}
+であったなら、同じ入出力線形化により $\ddot{y}=v$ は得られるが、零ダイナミクスは
+\begin{equation}
+  \dot{\eta}=\eta
+\end{equation}
+となり不安定である。この場合、出力 $y$ を 0 に保つほど内部状態は発散する。したがって、入出力線形化の設計では、出力側の線形誤差方程式だけでなく、零ダイナミクスと入力の有効領域を同じ設計対象として扱う。
+\end{example}
+
+\subsection{非線形安定性と Lyapunov 直接法}
+
+非線形系では、平衡点の近くで固有値を見るだけでは十分でない。固有値は線形化された接線モデルの情報であり、そこから言えるのは原則として局所的な振る舞いである。大きな初期ずれ、入力飽和、角度の周期性、複数の平衡点を含む系では、状態空間のどの範囲で解が残り、どの平衡点へ近づくかを別に調べる必要がある。そこで、まず入力を一定値に固定するか、フィードバック $u=\kappa(x)$ を代入して自律系
+\begin{equation}
+  \dot{x}=f(x),\qquad x\in\R^n
+\end{equation}
+として安定性を定義する。もとの系が $\dot{x}=f(x,u)$ のとき、一定入力 $u_e$ に対して
+\begin{equation}
+  f(x_e,u_e)=0
+\end{equation}
+を満たす組 $(x_e,u_e)$ を平衡点という。閉ループでは $u=\kappa(x)$ を代入した $f_\text{cl}(x)=f(x,\kappa(x))$ に対して $f_\text{cl}(x_e)=0$ を見る。以下では表記を軽くするため、ずれ $z=x-x_e$ を改めて $x$ と書き、平衡点を原点 $x=0$ とする。
+
+\begin{definition}[Lyapunov 安定性、局所安定性、大域安定性]
+原点 $x=0$ が平衡点である自律系 $\dot{x}=f(x)$ を考える。任意の $\varepsilon>0$ に対して、ある $\delta>0$ が存在し、
+\begin{equation}
+  \norm{x(0)}<\delta
+  \quad\Longrightarrow\quad
+  \norm{x(t)}<\varepsilon\quad(t\ge0)
+\end{equation}
+が成り立つとき、原点は Lyapunov の意味で安定であるという。この性質を原点近傍で述べるとき局所安定という。さらに、ある $r>0$ が存在して
+\begin{equation}
+  \norm{x(0)}<r
+  \quad\Longrightarrow\quad
+  \lim_{t\to\infty}x(t)=0
+\end{equation}
+も成り立つとき、原点は局所漸近安定である。すべての初期値 $x(0)\in\R^n$ から解が存在し、安定性と
+\begin{equation}
+  \lim_{t\to\infty}x(t)=0
+\end{equation}
+が成り立つとき、大域漸近安定であるという。対象領域を $D\subset\R^n$ に限る場合は、同じ定義を $x(0)\in D$ に制限して用いる。
+\end{definition}
+
+この定義の要点は、安定性と収束性が別の性質であることにある。安定性は、小さく始めればずっと小さいまま残るという性質であり、漸近安定性はそれに加えて原点へ近づくことを要求する。したがって、解が原点の近くに留まるだけで回り続ける系は安定であっても漸近安定ではない。逆に、ある方向から原点へ近づいても、別の小さな初期値で一度大きく離れるなら Lyapunov 安定ではない。
+
+\begin{definition}[正定値関数と軌道に沿った微分]
+原点を含む領域 $D$ 上の連続関数 $V:D\to\R$ が
+\begin{equation}
+  V(0)=0,\qquad V(x)>0\quad(x\ne0)
+\end{equation}
+を満たすとき、$V$ は正定値関数であるという。$V$ が連続微分可能なら、自律系 $\dot{x}=f(x)$ の軌道に沿った微分は
+\begin{equation}
+  \dot{V}(x)
+  =\frac{\dd}{\dd t}V(x(t))
+  =\frac{\pp V}{\pp x}(x)f(x)
+  =\nabla V(x)^\T f(x)
+\end{equation}
+である。さらに $\norm{x}\to\infty$ のとき $V(x)\to\infty$ なら、$V$ は放射状に非有界であるという。
+\end{definition}
+
+正定値関数は、必ずしも物理的なエネルギーである必要はない。原点からの距離を測る人工的な関数でもよい。ただし、制御で使うには「大きさを測る関数」として矛盾してはならない。$V(x)$ が正定値なら原点以外で正であり、$\dot{V}(x)$ が負なら軌道に沿ってその大きさが減る。これは、エネルギーが散逸して静止点へ向かうという直感を、一般の状態空間へ移した考え方である。
+
+\begin{theorem}[Lyapunov の直接法]
+原点を含む領域 $D$ で $V:D\to\R$ が連続微分可能な正定値関数であるとする。軌道に沿った微分が
+\begin{equation}
+  \dot{V}(x)\le0\quad(x\in D)
+\end{equation}
+を満たすなら、原点は Lyapunov 安定である。さらに
+\begin{equation}
+  \dot{V}(x)<0\quad(x\in D,\ x\ne0)
+\end{equation}
+を満たすなら、原点は局所漸近安定である。$D=\R^n$、$V$ が放射状に非有界で、上の負定値条件が全空間で成り立つなら、大域漸近安定である。
+\end{theorem}
+
+\begin{derivation}
+$V$ が正定値なので、原点の近くで $V(x)$ の小さな値をもつ集合
+\begin{equation}
+  \Omega_c=\{x\in D\mid V(x)\le c\}
+\end{equation}
+は原点のまわりの小さな領域を作る。軌道に沿って $\dot{V}\le0$ なら
+\begin{equation}
+  \frac{\dd}{\dd t}V(x(t))\le0
+\end{equation}
+であるから、時刻 $0$ で $x(0)\in\Omega_c$ なら
+\begin{equation}
+  V(x(t))\le V(x(0))\le c\qquad(t\ge0)
+\end{equation}
+となり、軌道は $\Omega_c$ から出ない。したがって、十分小さい $c$ を選べば、初期値を十分小さくした軌道は指定した $\varepsilon$ 球の中に留まる。これが Lyapunov 安定性である。さらに $\dot{V}<0$ が原点以外で成り立つなら、軌道が原点以外に留まる限り $V$ は減り続ける。$V$ は下に 0 で抑えられているので、軌道は $V$ を減らせない点、すなわち原点へ近づく。
+\end{derivation}
+
+線形系で使ったリアプノフ方程式は、この定理の特別な場合である。線形自律系 $\dot{x}=Ax$ に対して
+\begin{equation}
+  V(x)=x^\T P x,\qquad P=P^\T>0
+\end{equation}
+と置くと、積の微分公式から
+\begin{align}
+  \dot{V}
+  &=\dot{x}^\T Px+x^\T P\dot{x}\\
+  &=(Ax)^\T Px+x^\T P(Ax)\\
+  &=x^\T(A^\T P+PA)x
+\end{align}
+である。ここで $A^\T P+PA=-Q$、$Q=Q^\T>0$ を満たす $P>0$ があれば
+\begin{equation}
+  \dot{V}=-x^\T Qx<0\quad(x\ne0)
+\end{equation}
+となる。つまり、線形章で扱った二次形式の判定は、非線形系で使う Lyapunov 直接法の二次関数版である。LQR の価値関数や Kalman フィルタの共分散も同じ二次形式の言葉で書かれるため、安定性、最適性、不確かさの三つはここで同じ数学に戻ってくる。
+
+\begin{example}[スカラー非線形系の大域漸近安定性]
+スカラー系
+\begin{equation}
+  \dot{x}=-x-x^3
+\end{equation}
+を考える。原点は $f(0)=0$ より平衡点である。候補として
+\begin{equation}
+  V(x)=\frac{1}{2}x^2
+\end{equation}
+を選ぶと、$V(0)=0$、$x\ne0$ で $V(x)>0$ であり、さらに $\abs{x}\to\infty$ で $V(x)\to\infty$ である。軌道に沿った微分は
+\begin{align}
+  \dot{V}
+  &=x\dot{x}\\
+  &=x(-x-x^3)\\
+  &=-x^2-x^4
+\end{align}
+である。これは $x\ne0$ で常に負なので、Lyapunov の直接法により原点は大域漸近安定である。線形化だけを見ると $\dot{x}\simeq -x$ なので局所安定性は分かるが、$-x^3$ が遠方でも原点へ引き戻すことまでは、この Lyapunov 関数によって大域的に確認できる。
+\end{example}
+
+\subsection{LaSalle の不変原理とエネルギー例}
+
+Lyapunov 直接法で $\dot{V}<0$ を示せれば強い結論が得られる。しかし、物理系のエネルギーを $V$ に選ぶと、摩擦や抵抗が一部の速度だけを減らすため、しばしば
+\begin{equation}
+  \dot{V}(x)\le0
+\end{equation}
+までしか示せない。$\dot{V}=0$ となる点が原点以外にも広がると、負定値条件は使えない。このとき、$\dot{V}=0$ の集合の中で本当に軌道として残り続けられる部分だけを見るのが LaSalle の不変原理である。
+
+\begin{definition}[不変集合]
+自律系 $\dot{x}=f(x)$ に対して集合 $S$ が正の不変集合であるとは、任意の初期値 $x(0)\in S$ から出発した解が
+\begin{equation}
+  x(t)\in S\qquad(t\ge0)
+\end{equation}
+を満たすことをいう。正負両方向の時刻で同じ性質が成り立つとき、単に不変集合という。LaSalle の不変原理では、集合
+\begin{equation}
+  E=\{x\in D\mid \dot{V}(x)=0\}
+\end{equation}
+の中に含まれる最大の不変集合を調べる。
+\end{definition}
+
+\begin{theorem}[LaSalle の不変原理]
+コンパクトな正の不変集合 $\Omega\subset D$ 上で、$V:D\to\R$ が連続微分可能で
+\begin{equation}
+  \dot{V}(x)\le0\qquad(x\in\Omega)
+\end{equation}
+を満たすとする。$E=\{x\in\Omega\mid\dot{V}(x)=0\}$ とし、$E$ に含まれる最大の不変集合を $M$ とする。このとき、$\Omega$ から出発するすべての解は $M$ に近づく。特に、原点が Lyapunov 安定であり $M=\{0\}$ なら、原点は $\Omega$ 内で漸近安定である。
+\end{theorem}
+
+LaSalle の不変原理は、$\dot{V}=0$ となる点をそのまま「止まる点」と見なさない。ある瞬間に $\dot{V}=0$ でも、直後に $\dot{V}<0$ の領域へ動くなら、その点は不変集合には入らない。したがって、判定の核心は
+\begin{equation}
+  \dot{V}=0\quad\text{かつ}\quad \dot{x}=f(x)
+\end{equation}
+を同時に満たして、その集合の中に残り続ける運動が何かを調べることである。
+
+\begin{example}[粘性減衰をもつ単振子]
+長さ $l$、質量 $m$ の単振子に粘性減衰 $b>0$ があるとする。角度は $2\pi$ 周期で同一視し、下向きの平衡点の代表値を $\theta=0$ とする。角速度を $\omega=\dot{\theta}$ とおくと
+\begin{align}
+  \dot{\theta}&=\omega,\\
+  ml^2\dot{\omega}&=-b\omega-mgl\sin\theta
+\end{align}
+である。力学的エネルギーを下向き平衡点から測って
+\begin{equation}
+  V(\theta,\omega)
+  =\frac{1}{2}ml^2\omega^2+mgl(1-\cos\theta)
+\end{equation}
+と置く。これは $\theta=0,\omega=0$ の近くで正定値である。軌道に沿って微分すると
+\begin{align}
+  \dot{V}
+  &=ml^2\omega\dot{\omega}+mgl\sin\theta\,\dot{\theta}\\
+  &=\omega(-b\omega-mgl\sin\theta)+mgl\sin\theta\,\omega\\
+  &=-b\omega^2\le0.
+\end{align}
+ここで $\dot{V}=0$ は $\omega=0$ 全体で成り立つので、負定値ではない。しかし $\omega=0$ の集合に軌道が残り続けるには、同時に $\dot{\omega}=0$ でなければならない。運動方程式より
+\begin{equation}
+  \dot{\omega}=-\frac{g}{l}\sin\theta
+\end{equation}
+であるから、$\omega=0$ に留まれるのは $\sin\theta=0$、すなわち $\theta=k\pi$ の平衡点だけである。角度を円周上の点として扱い、エネルギー準位を
+\begin{equation}
+  \Omega_c=\{(\theta,\omega)\mid V(\theta,\omega)\le c\},\qquad 0<c<2mgl
+\end{equation}
+に限れば、上向き平衡点 $\theta=\pi$ には届かない。したがって $\Omega_c$ 内で $E=\{\dot{V}=0\}$ に含まれる最大の不変集合は $\theta=0\pmod{2\pi}$、$\omega=0$ で表される下向き平衡点だけであり、LaSalle の不変原理により、代表値の座標では
+\begin{equation}
+  (\theta(t),\omega(t))\to(0,0)
+\end{equation}
+が分かる。
+\end{example}
+
+この振子の例は、非線形安定性で「大域」という言葉を使う難しさも示している。角度は $2\pi$ 周期であり、上向き平衡点も存在するので、単一の座標平面全体で下向き平衡点へ大域漸近安定とは言えない。線形化は下向き平衡点の近くの減衰振動をよく説明するが、上向き近傍や大振幅回転を同じ結論で扱うことはできない。EKF でも同じで、共分散の更新は接線モデルに基づくため、推定誤差が大きい領域や角度の巻き戻りをまたぐ領域では、局所近似の限界が現れる。後で扱う非線形制御、受動性、エネルギー整形、NMPC の終端集合は、いずれも「どの領域を不変に保ち、どの関数を減らすか」という Lyapunov 的な見方に戻ってくる。
+
+\subsection{受動性とエネルギー整形}
+
+Lyapunov 関数を物理的なエネルギーとして選べる場合、安定性の議論は入力と出力の積が表す仕事率と結びつく。電気回路では電圧と電流の積が電力であり、機械系では力と速度、またはトルクと角速度の積が仕事率である。制御入力が対象へ入れる瞬時のエネルギーを $u^\T y$ と書けるとき、「外から入れたエネルギー以上には内部エネルギーが増えない」という性質を受動性という。
+
+\begin{definition}[受動性、蓄積関数、供給率]
+入力 $u(t)\in\R^m$、出力 $y(t)\in\R^m$ をもつ系を考える。非負関数 $\mathcal{S}(x)\ge0$ が存在し、任意の時刻 $T\ge0$ と任意の入力に対して
+\begin{equation}
+  \mathcal{S}(x(T))-\mathcal{S}(x(0))
+  \le
+  \int_0^T u(t)^\T y(t)\,\dd t
+\end{equation}
+が成り立つとき、この系は入力 $u$、出力 $y$ に関して受動的であるという。$\mathcal{S}$ を蓄積関数、$u^\T y$ を供給率という。$\mathcal{S}$ が微分可能で、軌道に沿って
+\begin{equation}
+  \dot{\mathcal{S}}(x)\le u^\T y
+\end{equation}
+が成り立つなら、積分すると上の不等式が得られる。
+\end{definition}
+
+供給率 $u^\T y$ の単位は、入力と出力を共役な物理量として選んだとき [J/s] になる。したがって蓄積関数 $\mathcal{S}$ はエネルギー [J] と同じ単位をもつ。たとえば力 $F$ [N] と速度 $v$ [m/s] では $F^\T v$ [W]、トルク $\tau$ [N\,m] と角速度 $\omega$ [rad/s] では $\tau^\T \omega$ [W] である。受動性は「エネルギーを作り出さない」性質であり、線形系の正実性や電気回路の抵抗・インダクタ・キャパシタの性質と同じ考え方に属する。
+
+受動性には強さの違いがある。ある $\varepsilon>0$ について
+\begin{equation}
+  \dot{\mathcal{S}}\le u^\T y-\varepsilon\norm{y}^2
+\end{equation}
+が成り立つなら出力強受動的であり、
+\begin{equation}
+  \dot{\mathcal{S}}\le u^\T y-\varepsilon\norm{u}^2
+\end{equation}
+が成り立つなら入力強受動的である。単なる受動性では蓄積エネルギーが増えないことまでしか言えないが、強受動性では出力または入力に比例した散逸が明示されるため、収束性を示しやすい。
+
+\begin{theorem}[受動性定理の基本形]
+二つの系 $\Sigma_1,\Sigma_2$ がそれぞれ入力 $u_i$、出力 $y_i$ に関して受動的であり、蓄積関数を $\mathcal{S}_i$ とする。外部入力を 0 とし、負のフィードバック結合
+\begin{equation}
+  u_1=-y_2,\qquad u_2=y_1
+\end{equation}
+を作ると、合計蓄積関数
+\begin{equation}
+  \mathcal{W}(x_1,x_2)=\mathcal{S}_1(x_1)+\mathcal{S}_2(x_2)
+\end{equation}
+は
+\begin{equation}
+  \dot{\mathcal{W}}\le0
+\end{equation}
+を満たす。さらに、どちらか一方が適切な出力に関して強受動的であり、$\mathcal{W}$ が平衡点のまわりで正定値なら、LaSalle の不変原理を用いて閉ループの安定性や収束性を調べられる。
+\end{theorem}
+
+\begin{derivation}
+受動性の微分不等式から
+\begin{equation}
+  \dot{\mathcal{S}}_1\le u_1^\T y_1,\qquad
+  \dot{\mathcal{S}}_2\le u_2^\T y_2
+\end{equation}
+である。負のフィードバック結合を代入すると
+\begin{align}
+  \dot{\mathcal{W}}
+  &\le u_1^\T y_1+u_2^\T y_2\\
+  &=(-y_2)^\T y_1+y_1^\T y_2\\
+  &=0
+\end{align}
+となる。二つの系の間ではエネルギーが受け渡されるが、合計蓄積量は増えない。これが受動性定理の直観である。強受動性があれば、右辺に $-\varepsilon\norm{y_i}^2$ のような負の項が残り、出力収束を評価する条件になる。ただし、出力が 0 であることから状態が平衡点に限られるかどうかは、別に不変集合として確認する必要がある。
+\end{derivation}
+
+静的な出力フィードバックも同じ枠組みで解釈できる。受動的なプラントに対して
+\begin{equation}
+  u=r-Ky,\qquad K=K^\T \ge0
+\end{equation}
+を加えると、蓄積関数は
+\begin{equation}
+  \dot{\mathcal{S}}\le y^\T r-y^\T Ky
+\end{equation}
+を満たす。外部入力 $r=0$ なら $\dot{\mathcal{S}}\le0$ であり、$K>0$ なら出力方向の散逸が増える。このため、機械系では速度フィードバックが減衰注入として働く。
+
+\subsubsection{機械系の受動性}
+
+一般化座標を $q\in\R^n$、一般化速度を $\dot{q}$、入力トルクまたは一般化力を $\tau$ とする。全駆動の機械系を
+\begin{equation}
+  M(q)\ddot{q}+C(q,\dot{q})\dot{q}+D(q)\dot{q}+\nabla U(q)=\tau
+\end{equation}
+と書く。ここで $M(q)=M(q)^\T>0$ は慣性行列、$C(q,\dot{q})\dot{q}$ はコリオリ力・遠心力、$D(q)=D(q)^\T \ge0$ は粘性減衰、$U(q)$ はポテンシャルエネルギーである。標準的な機械系では、$C$ を適切に選ぶと
+\begin{equation}
+  \dot{M}(q)-2C(q,\dot{q})
+\end{equation}
+が歪対称になる。この性質により、運動エネルギーの微分に出るコリオリ項が打ち消される。
+
+自然エネルギーを
+\begin{equation}
+  H(q,\dot{q})
+  =
+  \frac{1}{2}\dot{q}^\T M(q)\dot{q}+U(q)
+\end{equation}
+と置く。軌道に沿って微分すると
+\begin{align}
+  \dot{H}
+  &=
+  \dot{q}^\T M\ddot{q}
+  +\frac{1}{2}\dot{q}^\T \dot{M}\dot{q}
+  +\nabla U(q)^\T \dot{q}\\
+  &=
+  \dot{q}^\T(\tau-C\dot{q}-D\dot{q}-\nabla U)
+  +\frac{1}{2}\dot{q}^\T \dot{M}\dot{q}
+  +\nabla U(q)^\T \dot{q}\\
+  &=
+  \dot{q}^\T\tau
+  -\dot{q}^\T D\dot{q}
+  +\frac{1}{2}\dot{q}^\T(\dot{M}-2C)\dot{q}.
+\end{align}
+歪対称行列 $A=-A^\T$ では任意の $z$ に対して $z^\T A z=0$ なので、最後の項は 0 である。したがって
+\begin{equation}
+  \dot{H}
+  =
+  \tau^\T \dot{q}-\dot{q}^\T D(q)\dot{q}
+  \le
+  \tau^\T \dot{q}
+\end{equation}
+を得る。これは、入力を $\tau$、出力を $\dot{q}$ とした受動性の不等式である。
+
+\subsubsection{エネルギー整形と減衰注入}
+
+エネルギー整形は、閉ループで減らしたい蓄積関数を、望ましいエネルギー関数として設計する方法である。目標平衡点を $q_\star$ とし、$q_\star$ で厳密な最小値をもつ望ましいポテンシャル $U_\mathrm{cl}(q)$ を選ぶ。全駆動で入力が各一般化座標に直接作用し、モデルが既知であると仮定する。このとき
+\begin{equation}
+  \tau
+  =
+  \nabla U(q)-\nabla U_\mathrm{cl}(q)-K_d\dot{q},
+  \qquad
+  K_d=K_d^\T \ge0
+\end{equation}
+と置くと、閉ループは
+\begin{equation}
+  M(q)\ddot{q}+C(q,\dot{q})\dot{q}
+  +(D(q)+K_d)\dot{q}
+  +\nabla U_\mathrm{cl}(q)=0
+\end{equation}
+になる。自然ポテンシャル $U$ が、設計したポテンシャル $U_\mathrm{cl}$ に置き換わり、さらに $K_d\dot{q}$ による減衰が加わっている。
+
+閉ループ蓄積関数を
+\begin{equation}
+  H_\mathrm{cl}(q,\dot{q})
+  =
+  \frac{1}{2}\dot{q}^\T M(q)\dot{q}+U_\mathrm{cl}(q)
+\end{equation}
+と選ぶと、同じ計算から
+\begin{equation}
+  \dot{H}_\mathrm{cl}
+  =
+  -\dot{q}^\T(D(q)+K_d)\dot{q}
+  \le0
+\end{equation}
+を得る。$U_\mathrm{cl}$ が $q_\star$ のまわりで正定値で、エネルギー準位集合がコンパクトであり、$\dot{q}=0$ に留まり続けられる点が $q=q_\star$ だけなら、LaSalle の不変原理により $(q,\dot{q})\to(q_\star,0)$ が言える。
+
+\begin{example}[質点の位置決めにおけるエネルギー整形]
+質量 $m>0$ の質点が直線上を動き、入力力 $u$ を受ける系
+\begin{equation}
+  m\ddot{q}=u
+\end{equation}
+を考える。目標位置を $q_\star$ とし、閉ループで持たせたいポテンシャルを
+\begin{equation}
+  U_\mathrm{cl}(q)=\frac{1}{2}k(q-q_\star)^2,\qquad k>0
+\end{equation}
+と選ぶ。制御入力を
+\begin{equation}
+  u=-k(q-q_\star)-c\dot{q},\qquad c>0
+\end{equation}
+とすると、閉ループは
+\begin{equation}
+  m\ddot{q}+c\dot{q}+k(q-q_\star)=0
+\end{equation}
+である。蓄積関数
+\begin{equation}
+  H_\mathrm{cl}
+  =
+  \frac{1}{2}m\dot{q}^2+\frac{1}{2}k(q-q_\star)^2
+\end{equation}
+の微分は
+\begin{align}
+  \dot{H}_\mathrm{cl}
+  &=m\dot{q}\ddot{q}+k(q-q_\star)\dot{q}\\
+  &=\dot{q}(-c\dot{q}-k(q-q_\star))
+    +k(q-q_\star)\dot{q}\\
+  &=-c\dot{q}^2\le0.
+\end{align}
+これは、ばねポテンシャルを人工的に作り、粘性減衰を注入した最も単純なエネルギー整形である。
+\end{example}
+
+\begin{example}[単振子の局所的な重力補償とポテンシャル整形]
+トルク入力をもつ単振子
+\begin{equation}
+  ml^2\ddot{\theta}+b\dot{\theta}+mgl\sin\theta=\tau
+\end{equation}
+を、目標角 $\theta_\star$ の近くで制御する。自然ポテンシャルの勾配は $mgl\sin\theta$ である。局所的に二次ポテンシャル
+\begin{equation}
+  U_\mathrm{cl}(\theta)=\frac{1}{2}k(\theta-\theta_\star)^2,\qquad k>0
+\end{equation}
+を持たせたいなら
+\begin{equation}
+  \tau=mgl\sin\theta-k(\theta-\theta_\star)-c\dot{\theta},
+  \qquad c>0
+\end{equation}
+と選ぶ。すると閉ループは
+\begin{equation}
+  ml^2\ddot{\theta}+(b+c)\dot{\theta}+k(\theta-\theta_\star)=0
+\end{equation}
+となり、
+\begin{equation}
+  H_\mathrm{cl}
+  =
+  \frac{1}{2}ml^2\dot{\theta}^2+\frac{1}{2}k(\theta-\theta_\star)^2
+\end{equation}
+に対して
+\begin{equation}
+  \dot{H}_\mathrm{cl}=-(b+c)\dot{\theta}^2\le0
+\end{equation}
+である。ただし、角度は周期変数であり、自然ポテンシャルの完全な打消しには $m,g,l$ の正確な値が必要で、トルク飽和があれば計算した $\tau$ は実現できないことがある。この設計は、指定した角度近傍での局所的なエネルギー整形として解釈する。
+\end{example}
+
+エネルギー整形の限界は、入力の入り方に強く依存する。全駆動系では各一般化力を直接作れるため、望ましいポテンシャル勾配を比較的そのまま実装できる。これに対して劣駆動系では、入力が作用しない座標方向のエネルギーを自由には整形できない。この場合、望ましいエネルギー関数が入力方向と整合するためのマッチング条件が必要になる。また、モデル誤差、摩擦の不連続、入力飽和、速度制限、センサノイズ、遅れは、エネルギーの打消しや減衰注入を崩す。受動性はロバスト性を考える強い出発点になるが、安定化したい平衡点、エネルギー準位集合、入力制約を同時に確認しなければならない。
+
+\subsection{バックステッピングによる再帰的 Lyapunov 設計}
+
+入出力線形化は、出力を何回か微分した式に入力を出し、非線形項を代数的に打ち消す設計であった。これに対してバックステッピングは、状態方程式が三角形の形をもつとき、まだ実入力でない状態を仮想入力として扱い、Lyapunov 関数を一段ずつ拡張しながら制御則を作る方法である。
+
+\begin{definition}[strict-feedback 形]
+状態 $x=(x_1,\ldots,x_n)$ をもつ一入力系が
+\begin{align}
+  \dot{x}_1&=f_1(x_1)+g_1(x_1)x_2,\\
+  \dot{x}_2&=f_2(x_1,x_2)+g_2(x_1,x_2)x_3,\\
+  &\vdots\\
+  \dot{x}_n&=f_n(x_1,\ldots,x_n)+g_n(x_1,\ldots,x_n)u
+\end{align}
+の形で書けるとき、strict-feedback 形であるという。各 $f_i,g_i$ は滑らかで、設計領域で $g_i$ は 0 にならないと仮定する。$x_{i+1}$ は第 $i$ 段の仮想入力として現れ、最後の段だけに実入力 $u$ が現れる。
+\end{definition}
+
+バックステッピングの基本構成は次のように表せる。まず第 1 段で、$x_2$ を自由に選べる仮想入力と見なし、$x_1$ を安定化する理想値
+\begin{equation}
+  x_2=\alpha_1(x_1)
+\end{equation}
+を設計する。実際の $x_2$ はただちに $\alpha_1$ にはならないので、誤差
+\begin{equation}
+  z_1=x_1,\qquad z_2=x_2-\alpha_1(x_1)
+\end{equation}
+を導入し、Lyapunov 関数を
+\begin{equation}
+  V_2=V_1+\frac{1}{2}z_2^2
+\end{equation}
+へ拡張する。次の段では $x_3$ を仮想入力として、$\dot{V}_2$ に残る $z_2$ の項を打ち消すように $\alpha_2(x_1,x_2)$ を選ぶ。この操作を繰り返し、最後に $x_{n+1}$ の代わりに実入力 $u$ を選ぶ。各段で
+\begin{equation}
+  V_i=V_{i-1}+\frac{1}{2}z_i^2
+\end{equation}
+と増やすため、最終的な Lyapunov 関数は全誤差 $z_1,\ldots,z_n$ を測る関数になる。
+
+設計の要点は、各段で「現在の部分系を安定化する仮想入力」と「仮想入力を実現する次段の誤差」を同時に扱うことである。通常の一段の状態フィードバックでは、$x_2$ が入力でないことが障害になる。バックステッピングでは、その障害を $z_2=x_2-\alpha_1$ として Lyapunov 関数に取り込み、次の設計段へ渡す。この構成では、安定化したい先頭の式から始め、各段で生じる誤差を次段の設計変数として保持し、最終入力まで再帰的に進む。
+
+\begin{example}[二重積分器に対するバックステッピング]
+二重積分器
+\begin{equation}
+  \dot{x}_1=x_2,\qquad \dot{x}_2=u
+\end{equation}
+の原点を安定化する。まず $x_2$ を仮想入力とみなし、
+\begin{equation}
+  V_1=\frac{1}{2}x_1^2
+\end{equation}
+を考える。もし $x_2=-k_1x_1$、$k_1>0$ と選べるなら
+\begin{equation}
+  \dot{V}_1=x_1x_2=-k_1x_1^2
+\end{equation}
+となる。そこで仮想入力の理想値を
+\begin{equation}
+  \alpha_1(x_1)=-k_1x_1
+\end{equation}
+とし、誤差
+\begin{equation}
+  z_1=x_1,\qquad z_2=x_2-\alpha_1=x_2+k_1x_1
+\end{equation}
+を置く。このとき
+\begin{equation}
+  \dot{z}_1=\dot{x}_1=x_2=z_2-k_1z_1
+\end{equation}
+である。拡張 Lyapunov 関数
+\begin{equation}
+  V_2=\frac{1}{2}z_1^2+\frac{1}{2}z_2^2
+\end{equation}
+を用いると、$z_2$ の微分は
+\begin{equation}
+  \dot{z}_2=\dot{x}_2+k_1\dot{x}_1=u+k_1x_2
+\end{equation}
+である。ここで
+\begin{equation}
+  u=-k_1x_2-z_1-k_2z_2,\qquad k_2>0
+\end{equation}
+と選べば
+\begin{equation}
+  \dot{z}_2=-z_1-k_2z_2
+\end{equation}
+となる。したがって
+\begin{align}
+  \dot{V}_2
+  &=z_1(z_2-k_1z_1)+z_2(-z_1-k_2z_2)\\
+  &=-k_1z_1^2-k_2z_2^2
+  \le0
+\end{align}
+であり、原点は大域漸近安定である。実入力を元の状態で書くと
+\begin{equation}
+  u=-k_1x_2-x_1-k_2(x_2+k_1x_1)
+\end{equation}
+である。この例では線形制御でも同じ対象を安定化できるが、仮想入力 $\alpha_1$、誤差 $z_2$、拡張 Lyapunov 関数という構造が、非線形 strict-feedback 系でもそのまま使われる。
+\end{example}
+
+バックステッピングには明確な仮定がある。第一に、対象が strict-feedback 形またはそれに変換できる形でなければならない。一般の非線形系が自動的にこの形へ入るわけではない。第二に、各段の入力係数 $g_i$ が設計領域で 0 にならず、符号または値を扱える必要がある。第三に、仮想入力 $\alpha_i$ の時間微分を計算するため、モデル関数が十分滑らかで、状態が測定または推定されている必要がある。第四に、段数が増えると $\alpha_i$ の式とその微分が急速に長くなり、実装では計算量、ノイズ増幅、入力飽和が問題になる。
+
+また、Lyapunov 関数の微分が負になるように設計しても、入力制限で計算した $u$ が出せない場合や、推定誤差が大きい場合には証明した閉ループ系とは別の系になる。パラメータが未知なら適応バックステッピング、外乱が大きいならロバスト項、入力飽和が支配的なら飽和を含む Lyapunov 設計が必要になる。したがって、バックステッピングは「三角形構造をもつ既知モデルに対して、Lyapunov 関数を再帰的に構成する方法」として位置づけるのが適切であり、任意の非線形系へ無条件に適用できる汎用公式ではない。
+
+\subsection{スライディングモード制御、適応制御、ゲインスケジューリング}
+
+ここまでの設計では、非線形項を正確に打ち消す、エネルギー関数を形作る、または strict-feedback 形に沿って Lyapunov 関数を拡張する、という構造を使った。実際の対象では、モデルの一部が不確かであったり、動作点が広い範囲を移動したりする。スライディングモード制御、適応制御、ゲインスケジューリングは、この不確かさや広い運転範囲に対して異なる立場を取る設計法である。スライディングモード制御は不確かさを切替入力で押さえ込み、適応制御は未知パラメータをオンラインで更新し、ゲインスケジューリングは複数の局所設計を運転点に応じてつなぐ。
+
+\subsubsection{切替面と到達条件}
+
+スライディングモード制御では、状態そのものを直接原点へ向けるのではなく、まず状態空間内の面
+\begin{equation}
+  s(x,t)=0
+\end{equation}
+へ軌道を到達させ、その後はその面上に拘束された低次元の運動を設計する。この面を切替面またはスライディング面という。追従誤差 $e=q-q_d$ をもつ二階系では、典型的に
+\begin{equation}
+  s=\dot{e}+\lambda e,\qquad \lambda>0
+\end{equation}
+と選ぶ。もし $s=0$ が保たれれば
+\begin{equation}
+  \dot{e}+\lambda e=0
+\end{equation}
+であるから、誤差は $e(t)=e(0)e^{-\lambda t}$ と指数的に減衰する。したがって、設計目標は「任意の初期状態から有限時間で $s=0$ へ近づけること」と「面上で望ましい誤差方程式を保つこと」に分かれる。
+
+到達性は Lyapunov 関数
+\begin{equation}
+  V_s=\frac{1}{2}s^2
+\end{equation}
+で表せる。ある $\eta>0$ に対して
+\begin{equation}
+  s\dot{s}\le -\eta\abs{s}
+\end{equation}
+が $s\ne0$ で成り立つなら、$V_s$ は減少し、$s$ は 0 に向かう。実際、$s\ne0$ では
+\begin{equation}
+  \frac{\dd}{\dd t}\abs{s}
+  =
+  \frac{s\dot{s}}{\abs{s}}
+  \le -\eta
+\end{equation}
+なので、理想的な連続時間モデルでは高々 $\abs{s(0)}/\eta$ の時間で切替面へ到達する。この不等式を到達条件という。$s>0$ では $\dot{s}<0$、$s<0$ では $\dot{s}>0$ が要求されるので、ベクトル場は両側から切替面へ向く。
+
+不確かさを含む単純な形として
+\begin{equation}
+  \dot{s}=a(x,t)+b(x,t)u+w(t),
+  \qquad b(x,t)>0,\qquad \abs{w(t)}\le\bar{w}
+\end{equation}
+を考える。$a,b$ が既知で、$w=0$ なら、$\dot{s}=0$ を満たす入力
+\begin{equation}
+  u_\mathrm{eq}=-\frac{a(x,t)}{b(x,t)}
+\end{equation}
+が面上の運動を保つ。この $u_\mathrm{eq}$ を等価制御という。外乱 $w$ が有界なら、切替項を加えて
+\begin{equation}
+  u=u_\mathrm{eq}-\frac{k}{b(x,t)}\sgn(s),
+  \qquad k>\bar{w}
+\end{equation}
+とする。ここで
+\begin{equation}
+  \sgn(s)=
+  \begin{cases}
+    1,&s>0,\\
+    0,&s=0,\\
+    -1,&s<0
+  \end{cases}
+\end{equation}
+である。このとき
+\begin{align}
+  \dot{s}
+  &=w-k\sgn(s),\\
+  \dot{V}_s
+  &=s\dot{s}
+   =sw-k\abs{s}
+   \le(\bar{w}-k)\abs{s}
+\end{align}
+となり、$k>\bar{w}$ なら到達条件が成り立つ。切替項は、外乱の上界を上回る余裕で $s$ を面へ戻す役割を持つ。
+
+\begin{example}[不確かな加速度外乱をもつ質点追従]
+質点の位置 $q$ が
+\begin{equation}
+  \ddot{q}=u+d(t),\qquad \abs{d(t)}\le\bar{d}
+\end{equation}
+に従うとする。目標軌道 $q_d(t)$ が二階微分可能で、$e=q-q_d$、$s=\dot{e}+\lambda e$ と置くと
+\begin{equation}
+  \dot{s}
+  =
+  u+d-\ddot{q}_d+\lambda\dot{e}
+\end{equation}
+である。等価制御に対応する項を
+\begin{equation}
+  u_\mathrm{eq}=\ddot{q}_d-\lambda\dot{e}
+\end{equation}
+とし、
+\begin{equation}
+  u=u_\mathrm{eq}-k\sgn(s),\qquad k>\bar{d}
+\end{equation}
+を加えると
+\begin{equation}
+  \dot{s}=d-k\sgn(s)
+\end{equation}
+である。したがって
+\begin{equation}
+  s\dot{s}\le(\bar{d}-k)\abs{s}<0
+\end{equation}
+となり、切替面へ到達する。面上では $s=0$ より $\dot{e}+\lambda e=0$ であり、追従誤差は一次遅れの式で減衰する。
+\end{example}
+
+\subsubsection{等価制御、チャタリング、境界層}
+
+理想的なスライディングモードでは、軌道が $s=0$ に到達した後、切替入力が無限に速く正負を切り替え、その平均として等価制御が実現されると解釈する。しかし実装されたアクチュエータには帯域、サンプリング周期、遅れ、量子化、摩擦、飽和があるため、無限に速い切替は実現できない。その結果、状態が切替面の近くで細かく振動する。この現象をチャタリングという。
+
+チャタリングを抑える代表的な方法は、符号関数を連続な飽和関数で置き換える境界層である。厚さ $\phi>0$ を選び、
+\begin{equation}
+  \operatorname{sat}(\sigma)=
+  \begin{cases}
+    1,&\sigma>1,\\
+    \sigma,&\abs{\sigma}\le1,\\
+    -1,&\sigma<-1
+  \end{cases}
+\end{equation}
+と定義して
+\begin{equation}
+  u=u_\mathrm{eq}-\frac{k}{b(x,t)}
+    \operatorname{sat}\left(\frac{s}{\phi}\right)
+\end{equation}
+とする。$\abs{s}>\phi$ では符号関数と同じ切替入力が働き、$\abs{s}\le\phi$ では入力が連続になる。したがって、アクチュエータの高周波負担と測定ノイズの増幅は小さくなる。
+
+境界層は厳密なスライディングを近似的なスライディングへ置き換える。$\abs{s}\le\phi$ では $s=0$ を完全には満たさないため、二階追従例では
+\begin{equation}
+  \dot{e}+\lambda e=s,\qquad \abs{s}\le\phi
+\end{equation}
+となる。すなわち、追従誤差は完全な指数収束ではなく、境界層の厚さに比例した残留誤差を持ちうる。$\phi$ を小さくすれば精度は上がるが、入力は再び急峻になり、ノイズと遅れに敏感になる。したがって、スライディングモード制御の実装では、外乱上界、サンプリング周期、アクチュエータ帯域、許容追従誤差を同時に選ぶ必要がある。
+
+\subsubsection{パラメータ不確かさと Lyapunov 適応則}
+
+適応制御は、未知だが一定またはゆっくり変化するパラメータを、閉ループのデータから更新しながら制御する方法である。ロバスト制御が不確かさの上界を使って余裕を持たせるのに対し、適応制御は推定値 $\hat{\theta}$ を動かし、パラメータ誤差
+\begin{equation}
+  \tilde{\theta}=\hat{\theta}-\theta
+\end{equation}
+を Lyapunov 関数の中に入れる。ここで $\theta\in\R^r$ は未知の真のパラメータ、$\hat{\theta}$ はオンライン推定値である。
+
+多くの基本的な適応則は、未知パラメータが線形に現れる形から導かれる。追従誤差 $e$ の閉ループダイナミクスが
+\begin{equation}
+  \dot{e}=A_m e+B\,Y(x,t)\tilde{\theta}
+\end{equation}
+と書けるとする。$A_m$ は Hurwitz 行列、$Y(x,t)\in\R^{m\times r}$ は回帰行列であり、現在の状態、入力、参照信号から計算できる既知量である。正定値行列 $Q=Q^\T>0$ を選び、
+\begin{equation}
+  A_m^\T P+PA_m=-Q,\qquad P=P^\T>0
+\end{equation}
+を満たす $P$ を取る。適応ゲインを $\Gamma=\Gamma^\T>0$ として Lyapunov 関数
+\begin{equation}
+  V_a=e^\T Pe+\tilde{\theta}^\T \Gamma^{-1}\tilde{\theta}
+\end{equation}
+を考える。真の $\theta$ が一定なら $\dot{\tilde{\theta}}=\dot{\hat{\theta}}$ であり、
+\begin{align}
+  \dot{V}_a
+  &=
+  e^\T(A_m^\T P+PA_m)e
+  +2e^\T PB\,Y\tilde{\theta}
+  +2\tilde{\theta}^\T\Gamma^{-1}\dot{\hat{\theta}}\\
+  &=
+  -e^\T Qe
+  +2\tilde{\theta}^\T
+    \left(Y^\T B^\T Pe+\Gamma^{-1}\dot{\hat{\theta}}\right)
+\end{align}
+となる。そこで
+\begin{equation}
+  \dot{\hat{\theta}}=-\Gamma Y^\T B^\T Pe
+\end{equation}
+と選べば交差項が消え、
+\begin{equation}
+  \dot{V}_a=-e^\T Qe\le0
+\end{equation}
+を得る。この導出が Lyapunov 適応則の基本形である。誤差とパラメータ推定値の有界性は $V_a$ から評価できるが、これだけで $\hat{\theta}\to\theta$ が常に成り立つわけではない。
+
+\begin{example}[未知係数をもつ一次系の適応安定化]
+スカラー系
+\begin{equation}
+  \dot{x}=\theta x+u
+\end{equation}
+を考える。$\theta$ は未知定数であり、目標は $x$ を 0 へ近づけることである。推定値 $\hat{\theta}$ を用いて
+\begin{equation}
+  u=-a x-\hat{\theta}x,\qquad a>0
+\end{equation}
+と置くと、$\tilde{\theta}=\hat{\theta}-\theta$ に対して
+\begin{equation}
+  \dot{x}=-a x-\tilde{\theta}x
+\end{equation}
+である。Lyapunov 関数
+\begin{equation}
+  V=\frac{1}{2}x^2+\frac{1}{2\gamma}\tilde{\theta}^2,
+  \qquad \gamma>0
+\end{equation}
+を選ぶと
+\begin{align}
+  \dot{V}
+  &=x(-a x-\tilde{\theta}x)
+    +\frac{1}{\gamma}\tilde{\theta}\dot{\hat{\theta}}\\
+  &=-a x^2+\tilde{\theta}
+    \left(-x^2+\frac{1}{\gamma}\dot{\hat{\theta}}\right)
+\end{align}
+である。適応則
+\begin{equation}
+  \dot{\hat{\theta}}=\gamma x^2
+\end{equation}
+を選べば
+\begin{equation}
+  \dot{V}=-a x^2\le0
+\end{equation}
+となる。さらに $x$ と $\tilde{\theta}$ は有界で、$\dot{x}$ も有界になるため、上の積分評価から $x(t)\to0$ を示せる。この例は、未知係数を推定しながら状態を安定化する最小の構成を示している。
+\end{example}
+
+適応制御で注意すべき点は、安定性とパラメータ同定が同じではないことである。$\dot{V}_a\le0$ は追従誤差や推定値の有界性を与えるが、$\tilde{\theta}\to0$ には回帰行列が十分に多様な方向を励起する必要がある。代表的な条件は、ある $T>0$、$\alpha>0$ について
+\begin{equation}
+  \int_t^{t+T}Y(\tau)^\T Y(\tau)\,\dd\tau\ge\alpha I
+  \qquad(t\ge0)
+\end{equation}
+が成り立つことであり、これを持続的励起という。入力や参照がほぼ一定で、状態がすぐ 0 へ収束する調整問題では、データに含まれる情報が不足し、制御性能は保たれてもパラメータは真値へ収束しないことがある。
+
+実装上は、測定ノイズ、未モデル化ダイナミクス、入力飽和、時間変化する真のパラメータにより、純粋な積分型の適応則がゆっくり漂うことがある。推定値を物理的に許される範囲へ射影する投影法、誤差が小さいとき更新を止めるデッドゾーン、または
+\begin{equation}
+  \dot{\hat{\theta}}
+  =-\Gamma Y^\T B^\T Pe-\sigma\hat{\theta},
+  \qquad \sigma>0
+\end{equation}
+のように漏れ項を加える $\sigma$ 修正は、ロバスト化の代表例である。ただし、これらは理想的な交差項の完全消去を少し崩すため、最終的な誤差は小さい残留集合へ入る、という形で評価する。
+
+\subsubsection{ゲインスケジューリングと凍結時刻近似}
+
+ゲインスケジューリングは、非線形系を一つの大域制御則で扱う代わりに、複数の動作点で局所線形制御器を設計し、現在の運転状態を表す変数に応じてゲインを変える方法である。この運転状態を表す量をスケジューリング変数といい、ふつう $\rho(t)$ と書く。$\rho$ は速度、高度、角度、流量、温度、負荷、または基準値など、対象の線形化係数を大きく変える測定可能または推定可能な量である。
+
+各 $\rho$ に対して平衡点または準定常動作点
+\begin{equation}
+  f(x_e(\rho),u_e(\rho),\rho)=0
+\end{equation}
+を求め、そのまわりで
+\begin{equation}
+  \dot{\tilde{x}}=A(\rho)\tilde{x}+B(\rho)\tilde{u}
+\end{equation}
+を作る。局所制御器を
+\begin{equation}
+  \tilde{u}=-K(\rho)\tilde{x}
+\end{equation}
+と設計したなら、実入力は
+\begin{equation}
+  u=u_e(\rho)-K(\rho)\{x-x_e(\rho)\}
+\end{equation}
+である。離散的な格子点 $\rho_1,\ldots,\rho_N$ で設計したゲイン $K_i$ を使う場合は、重み $w_i(\rho)\ge0$、$\sum_iw_i(\rho)=1$ により
+\begin{equation}
+  K(\rho)=\sum_{i=1}^{N}w_i(\rho)K_i
+\end{equation}
+のように補間する。
+
+この設計の基本仮定は凍結時刻近似である。すなわち、ある時刻で $\rho$ を定数に凍結した系
+\begin{equation}
+  \dot{\tilde{x}}
+  =
+  \{A(\rho)-B(\rho)K(\rho)\}\tilde{x}
+\end{equation}
+が安定なら、$\rho(t)$ が十分ゆっくり変わる実際の系も安定に近い振る舞いをする、と期待する。しかし、凍結した各点で安定であることは、時間変化する閉ループ
+\begin{equation}
+  \dot{\tilde{x}}
+  =
+  A_\mathrm{cl}(\rho(t))\tilde{x}
+  +d_\rho(t)
+\end{equation}
+の安定性を自動的には保証しない。ここで $d_\rho(t)$ は、$x_e(\rho)$、$u_e(\rho)$、$K(\rho)$ の時間変化から生じる追加項をまとめた記号である。これらが変化すれば、その時間微分が偏差系へ入り、凍結した線形モデルだけで見た閉ループとは別の項を持つためである。
+
+安定性を強く確認したい場合は、すべての $\rho$ で共通に使える二次 Lyapunov 関数
+\begin{equation}
+  V=\tilde{x}^\T P\tilde{x},\qquad P=P^\T>0
+\end{equation}
+を探し、
+\begin{equation}
+  A_\mathrm{cl}(\rho)^\T P+P A_\mathrm{cl}(\rho)<0
+  \qquad(\rho\in\mathcal{P})
+\end{equation}
+を調べる。共通の $P$ が見つからない場合でも、$P(\rho)$ を使うパラメータ依存 Lyapunov 関数で評価できることがあるが、その場合は $\dot{\rho}$ による項
+\begin{equation}
+  \dot{V}
+  =
+  \tilde{x}^\T
+  \{A_\mathrm{cl}^\T P+P A_\mathrm{cl}+\dot{P}\}
+  \tilde{x}
+\end{equation}
+を含めて、スケジューリング変数の変化率を制限する必要がある。
+
+\begin{example}[振子平衡角による局所ゲインの補間]
+トルク入力をもつ単振子を角度 $\theta_e$ の近くで保持する。先に導いた線形化では
+\begin{equation}
+  A(\theta_e)=
+  \begin{bmatrix}
+    0&1\\
+    -\dfrac{g}{l}\cos\theta_e&-\dfrac{b}{ml^2}
+  \end{bmatrix},
+  \qquad
+  B=
+  \begin{bmatrix}
+    0\\
+    \dfrac{1}{ml^2}
+  \end{bmatrix}
+\end{equation}
+であり、平衡入力は
+\begin{equation}
+  u_e(\theta_e)=mgl\sin\theta_e
+\end{equation}
+である。複数の角度 $\theta_i$ で極配置または LQR により $K_i$ を設計し、現在の目標角 $\rho=\theta_e$ に応じて $K(\rho)$ を補間すれば
+\begin{equation}
+  u=mgl\sin\rho
+    -K(\rho)
+    \begin{bmatrix}
+      \theta-\rho\\
+      \omega
+    \end{bmatrix}
+\end{equation}
+というスケジュール制御器が得られる。これは各角度近傍では局所線形設計として解釈できるが、目標角を急に動かすと $\dot{\rho}$ による追加項が現れ、単なる凍結時刻の安定性だけでは過渡応答を説明できない。また、$\cos\rho$ が変わることで自然な安定性が大きく変わるため、補間したゲインが入力飽和を起こさないか、切替境界で入力が不連続にならないかを確認する必要がある。
+\end{example}
+
+ゲインスケジューリングは、実装しやすく、線形設計で得た知識を広い運転範囲へ広げられる。一方で、スケジューリング変数がノイズを含む、測定遅れを持つ、または状態そのものに依存する場合、ゲインの変化が追加のフィードバック経路になる。さらに、局所制御器の補間がなめらかでないと入力の段差を生み、アクチュエータや推定器を励起する。したがって、ゲインスケジューリングでは、局所設計、補間則、スケジューリング変数の測定品質、変化率、入力制約を一つの閉ループ設計として検証する必要がある。

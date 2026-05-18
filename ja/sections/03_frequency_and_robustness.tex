@@ -1,83 +1,1062 @@
-\section{周波数応答}
+\section{周波数領域と古典設計}
 
-線形時不変系に正弦波を入れると、十分時間が経った後の出力も同じ周波数の正弦波になる。入力を $u(t)=A\sin \omega t$ とすると、出力は
+\subsection{周波数応答}
+
+ステップ応答の時間波形は、制御系がどれくらい速く目標値へ近づき、どれくらい行き過ぎ、どの程度で整定するかを直接示す。これは時間領域の仕様として重要である。しかし、同じ時間波形だけでは、測定ノイズのどの周波数帯が出力へ通りやすいか、機械共振や電気的リップルのどの帯域が増幅されるか、むだ時間や計算遅れが安定余裕をどれだけ減らすかを分離して評価しにくい。急な目標値変更で大きなオーバーシュートが生じる場合も、立上りを作る高い周波数成分が制御対象の帯域制限や共振でどう変形されたかは、時間波形だけからは読み取りにくい。
+
+周波数領域では、時間波形を正弦波成分の重ね合わせとして扱う。単一の正弦波なら、入力から出力への変化は振幅比と位相差で表せる。方形波指令、急な外乱、サンプリングや電源に由来するリップルのような非正弦波は、多数の正弦波成分を含む。帯域が限られた系は高い周波数成分を減衰し、共振をもつ系は特定の周波数帯を増幅し、遅れをもつ系は成分ごとに位相を遅らせる。したがって、各周波数での振幅比と位相差を調べると、時間応答で観察した丸まり、振動、オーバーシュートを周波数帯ごとの通過、減衰、遅れと対応づけられる。
+
+周期信号を正弦波成分の和として表すときはフーリエ級数を用いる。非周期信号を広い時間範囲で扱うときはフーリエ変換を用い、時間波形に含まれる周波数成分を連続的なスペクトルとして記述する。一方、ラプラス変換は収束域、初期条件、過渡応答、極、零点、安定性を同じ枠で扱うための表現であり、伝達関数の導出や閉ループ安定性の議論に向く。周波数応答は、ラプラス変換で得た伝達関数を捨てる操作ではない。過渡成分が減衰した後に残る正弦波定常応答を評価するために、安定な線形時不変系の伝達関数を虚軸上で評価する操作である。
+
+安定な線形時不変系、または対象とする初期条件で過渡成分が減衰する線形時不変系に正弦波を入れると、過渡成分が消えた後の出力も同じ周波数の正弦波になる。入力を $u(t)=A\sin \omega t$ とする。ただし $A$ は振幅、$\omega\,[\mathrm{rad/s}]$ は角周波数である。このとき出力は
 \begin{equation}
   y(t)=A\abs{G(j\omega)}\sin\{\omega t+\angle G(j\omega)\}
 \end{equation}
-で表せる。$G(j\omega)$ は伝達関数 $G(s)$ に $s=j\omega$ を代入したもので、絶対値がゲイン、偏角が位相である。
+で表せる。$G(j\omega)$ は伝達関数 $G(s)$ に $s=j\omega$ を代入したものである。絶対値 $\abs{G(j\omega)}$ が入力振幅に対する出力振幅の比、偏角 $\angle G(j\omega)$ が入力正弦波に対する出力正弦波の位相差を表す。
 
-一次遅れ $G(s)=K/(\tau s+1)$ では
+一次遅れ $G(s)=K/(\tau s+1)$ について、ここでは $K>0$ とする。このとき
 \begin{align}
   \abs{G(j\omega)}&=\frac{K}{\sqrt{1+(\tau\omega)^2}},\\
   \angle G(j\omega)&=-\tan^{-1}(\tau\omega).
 \end{align}
-低周波では入力がゆっくり変わるため出力はほぼ追従し、高周波では対象が追いつけずゲインが下がり位相が遅れる。周波数応答は、速い目標値やノイズや振動が制御系をどう通るかを見るための道具である。
+低周波では入力がゆっくり変化するため出力はほぼ追従し、高周波では対象の応答遅れによりゲインが低下し位相が遅れる。時定数 $\tau$ が大きいほど、同じ $\omega$ でも $\tau\omega$ が大きくなるため、振幅低下と位相遅れが低い周波数から現れる。周波数応答は、目標値、ノイズ、振動成分が制御系を通過する際の振幅比と位相差を表す。
 
-\section{ボード線図}
+\subsubsection{方形波部分和による周波数成分の解釈}
 
-ボード線図は、$\abs{G(j\omega)}$ を dB 表示したゲイン線図と、$\angle G(j\omega)$ の位相線図を、横軸 $\omega$ の対数目盛で描く。ゲインは
+正弦波入力を個別に評価する理由は、正弦波だけが現実の信号であるからではない。周期信号の多くは、基本周波数とその整数倍の正弦波成分の和として表せる。したがって、各周波数成分に対するゲインと位相が分かれば、複雑な周期信号が制御系を通った後にどの成分を保ち、どの成分を遅らせ、どの成分を減衰するかを整理できる。方形波はこの関係を確認しやすい標準例である。
+
+周期 $2\pi$ の方形波
 \begin{equation}
-  20\log_{10}\abs{G(j\omega)}
+  q(\theta)=
+  \begin{cases}
+    1, & 0<\theta<\pi,\\
+    -1, & \pi<\theta<2\pi
+  \end{cases}
 \end{equation}
-で表す。積は dB では和になるため、複雑な伝達関数も因子ごとに読みやすい。
+を考える。ただし $q(\theta+2\pi)=q(\theta)$ とする。この奇関数のフーリエ級数は奇数次の正弦波だけを含み、奇数 $N$ までで打ち切った部分和を
+\begin{equation}
+  q_N(\theta)=
+  \frac{4}{\pi}\sum_{\substack{k=1\\k\ \mathrm{odd}}}^{N}
+  \frac{\sin k\theta}{k}
+  \label{eq:square-wave-fourier-partial}
+\end{equation}
+と書く。
 
-積分器 $1/s$ はゲインが $-20$ dB/dec、位相が $-90^\circ$ である。微分器 $s$ は $+20$ dB/dec、位相が $+90^\circ$ である。一次遅れ $1/(\tau s+1)$ は折点周波数 $\omega=1/\tau$ を超えると $-20$ dB/dec で下がり、位相は $0^\circ$ から $-90^\circ$ へ移る。
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.88\linewidth,bb=0 0 1296 864]{figures/fourier_square_partial_sums.png}
+\caption{周期 $2\pi$、振幅 $\pm1$ に正規化した方形波と、奇数次高調波 $k=1,3,\ldots,N$ だけを $N=1,3,9,25$ で打ち切ったフーリエ部分和。高い奇数次高調波ほど不連続点近傍の鋭い立上りを作るため、帯域制限をもつ制御対象や閉ループでは方形波指令や急な外乱が丸められ、帯域付近の位相遅れや共振が過渡応答として現れやすい。}
+\label{fig:fourier-square-partial-sums}
+\end{figure}
 
-開ループ $L(s)=C(s)G(s)$ のボード線図から、ゲイン交差周波数 $\omega_{gc}$ を
+図\ref{fig:fourier-square-partial-sums} では、$N$ を増やすほど平坦部が $\pm1$ に近づき、不連続点の近くで急な変化が作られる。理想的な方形波には、任意に高い奇数次高調波が必要である。制御対象や閉ループが高周波成分を減衰するなら、方形波指令や急な外乱は丸められ、帯域付近の位相遅れや共振が過渡応答として現れる。確認として、図の $N=1$ と $N=25$ を比べ、高い奇数次高調波が立上りと不連続点近傍の振動にどのように寄与しているかを説明する。さらに、$k=9$ 以上の成分がほとんど通過しない閉ループを想定し、出力波形の角がどのように変化するかを本文の語で述べる。
+
+\subsection{ボード線図}
+
+ボード線図は、横軸を対数目盛の角周波数 $\omega$ とし、上段にゲイン $20\log_{10}\abs{G(j\omega)}$、下段に位相 $\angle G(j\omega)$ を描く図である。ゲインを dB で表すと、伝達関数の積がゲイン線図では和になる。したがって
+\begin{equation}
+  G(s)=K\frac{(1+T_1s)(1+T_2s)}{s(1+\tau_1s)(1+\tau_2s)}
+\end{equation}
+のような形は、定数ゲイン、零点、積分器、一次遅れの寄与へ分解できる。
+
+\subsubsection{因子分解によるボード線図の漸近作図}
+
+漸近作図の目的は、厳密な数値計算を置き換えることではなく、どの周波数帯でどの因子が支配的かを図上で把握することである。ここでは各因子が無次元になるように正規化し、折点周波数を $\omega_b\,[\mathrm{rad/s}]$ と書く。1 decade は角周波数が 10 倍になる区間であり、ゲインの傾きは $\mathrm{dB/dec}$ で表す。
+
+定数ゲイン $K$ は
+\begin{equation}
+  20\log_{10}\abs{K}
+\end{equation}
+だけゲイン線図を上下に移動させる。$K>0$ なら位相は $0^\circ$、$K<0$ なら全周波数で $180^\circ$ を加える。積分器と微分器は $s^q$ とまとめて書ける。係数側に必要な単位を含め、原点因子の周波数依存だけを評価するときは、基準角周波数 $\omega_0=1\,\mathrm{rad/s}$ で割って無次元化しておく。$q$ が正なら $q$ 個の微分器、負なら $-q$ 個の積分器であり、
+\begin{align}
+  20\log_{10}\abs{\left(\frac{j\omega}{\omega_0}\right)^q}
+    &=20q\log_{10}\frac{\omega}{\omega_0},\\
+  \angle (j\omega)^q
+    &=90q^\circ
+\end{align}
+である。したがってゲイン傾きは $20q\,\mathrm{dB/dec}$ で、$1/s$ は $-20\,\mathrm{dB/dec}$ と $-90^\circ$、$s$ は $+20\,\mathrm{dB/dec}$ と $+90^\circ$ を与える。
+
+左半平面にある実零点は
+\begin{equation}
+  F_z(s)=1+\frac{s}{\omega_z}
+\end{equation}
+と書ける。この因子の厳密なゲインと位相は
+\begin{align}
+  20\log_{10}\abs{F_z(j\omega)}
+    &=10\log_{10}\left\{1+\left(\frac{\omega}{\omega_z}\right)^2\right\},\\
+  \angle F_z(j\omega)
+    &=\tan^{-1}\frac{\omega}{\omega_z}
+\end{align}
+である。$\omega\ll\omega_z$ では $F_z(j\omega)\simeq1$ なので $0\,\mathrm{dB}$、$\omega\gg\omega_z$ では $\abs{F_z(j\omega)}\simeq\omega/\omega_z$ なので $+20\,\mathrm{dB/dec}$ になる。よって $\omega_z$ を折点として、ゲイン傾きを $20\,\mathrm{dB/dec}$ 増やす。位相は $0^\circ$ から $+90^\circ$ へ移り、概略作図では $0.1\omega_z$ から $10\omega_z$ までを直線でつないで、$\omega_z$ で $+45^\circ$ と近似する。
+
+左半平面の実極
+\begin{equation}
+  F_p(s)=\frac{1}{1+s/\omega_p}
+\end{equation}
+は実零点の逆数であるから、ゲインと位相の寄与は実零点の符号を反転したものになる。すなわち折点 $\omega_p$ を越えるとゲイン傾きは $20\,\mathrm{dB/dec}$ 減り、位相は $0^\circ$ から $-90^\circ$ へ移る。右半平面の実零点 $1-s/\omega_z$ や右半平面の実極 $1/(1-s/\omega_p)$ は、ゲイン線図の漸近線は左半平面因子と同じであるが、位相の符号が反対になる。したがって非最小位相零点や不安定極を含むときは、ゲインだけを見て位相余裕を推測してはならない。
+
+二次因子は、減衰比 $\zeta>0$ と固有角周波数 $\omega_n$ を用いて
+\begin{equation}
+  F_2(s)=1+2\zeta\frac{s}{\omega_n}
+    +\left(\frac{s}{\omega_n}\right)^2
+\end{equation}
+と書く。$0<\zeta<1$ なら共役複素極または零点に対応し、$\zeta\ge1$ なら二つの実一次因子へ分解してもよい。$r=\omega/\omega_n$ とおくと
+\begin{align}
+  F_2(j\omega)
+    &=1-r^2+j2\zeta r,\\
+  \abs{F_2(j\omega)}
+    &=\sqrt{(1-r^2)^2+(2\zeta r)^2}.
+\end{align}
+二次零点 $F_2(s)$ は $\omega_n$ より十分低いところで $0\,\mathrm{dB}$、十分高いところで $+40\,\mathrm{dB/dec}$ となる。二次極 $1/F_2(s)$ は同じ折点で傾きが $40\,\mathrm{dB/dec}$ 減り、位相は $0^\circ$ から $-180^\circ$ へ移る。二次零点では位相の符号が逆になり、$0^\circ$ から $+180^\circ$ へ移る。$\omega=\omega_n$ では $F_2(j\omega_n)=j2\zeta$ なので、二次極の厳密なゲインは
+\begin{equation}
+  20\log_{10}\frac{1}{2\zeta}
+  =-20\log_{10}(2\zeta)
+\end{equation}
+である。したがって小さい $\zeta$ では折点付近に山が現れ、二本の直線漸近線だけでは共振を評価できない。
+
+一次因子の漸近線誤差は固定値として覚えられる。実零点で $x=\omega/\omega_z$ とおくと、ゲイン漸近線との差は
+\begin{equation}
+  e_z(x)=10\log_{10}(1+x^2)-\max\{0,20\log_{10}x\}
+\end{equation}
+である。折点 $x=1$ では $e_z(1)=10\log_{10}2\simeq3.01\,\mathrm{dB}$ であり、$x=0.1$ と $x=10$ では約 $0.043\,\mathrm{dB}$ まで小さくなる。実極の誤差は $-e_z(x)$ である。二次因子の折点誤差は $\zeta$ に依存し、二次極では $-20\log_{10}(2\zeta)$ が折点での厳密値になる。
+
+以上を使うと、漸近作図の手順は明確になる。まず因子分解して折点周波数を小さい順に並べる。次に定数ゲインと原点因子から低周波側の高さと傾きを決める。折点を通過するたびに、実零点なら $+20$、実極なら $-20$、二次零点なら $+40$、二次極なら $-40$ を傾きに加える。位相線図は各因子の寄与を同じ周波数軸上で足し合わせる。最後に一次因子の折点で約 $3\,\mathrm{dB}$、二次因子では $\zeta$ に応じた誤差または共振ピークを補正して、漸近線と厳密線図のずれを評価する。
+
+\begin{example}[積の形によるボード線図の漸近作図]
+背景知識を必要としない例として、次の正規化された開ループを考える。$s$ と各折点周波数の単位は $\mathrm{rad/s}$ であり、原点因子も $\omega_0=1\,\mathrm{rad/s}$ で割って無次元化する。したがって定数 $5$ は無次元の倍率として扱える。
+\begin{equation}
+\begin{aligned}
+  L(s)
+  &=5\,\frac{1+s/\omega_z}{(s/\omega_0)(1+s/\omega_p)}\\
+  &\quad{}\times
+    \frac{1}{1+2\zeta s/\omega_n+(s/\omega_n)^2},\\
+  \omega_0&=1\,\mathrm{rad/s},\quad
+  \omega_p=0.2\,\mathrm{rad/s},\\
+  \omega_z&=2\,\mathrm{rad/s},\quad
+  \omega_n=20\,\mathrm{rad/s},\\
+  \zeta&=0.5.
+\end{aligned}
+\end{equation}
+因子は、定数ゲイン $5$、正規化積分器 $1/(s/\omega_0)$、実零点 $1+s/\omega_z$、実極 $1/(1+s/\omega_p)$、減衰比 $\zeta=0.5$ と固有角周波数 $20\,\mathrm{rad/s}$ の二次極である。折点は
+\begin{equation}
+  0.2,\qquad 2,\qquad 20
+  \quad [\mathrm{rad/s}]
+\end{equation}
+の順に並ぶ。
+
+低周波側の初期線分では定数ゲインが $20\log_{10}5\simeq14\,\mathrm{dB}$、正規化積分器が $-20\log_{10}(\omega/\omega_0)$、すなわち $-20\,\mathrm{dB/dec}$ の傾きを与える。この初期線分を $\omega=1\,\mathrm{rad/s}$ へ外挿した切片は約 $14\,\mathrm{dB}$ であるが、有効な区間は最初の折点 $0.2\,\mathrm{rad/s}$ より低い範囲である。たとえば $\omega=0.1\,\mathrm{rad/s}$ では積分器が $+20\,\mathrm{dB}$ を与え、初期漸近ゲインは約 $34\,\mathrm{dB}$ になる。その後、$\omega=0.2$ で実極により傾きは $-40\,\mathrm{dB/dec}$ へ変わるので、$\omega=1\,\mathrm{rad/s}$ の漸近値は実極の寄与 $-20\log_{10}(1/0.2)$ を含み約 $0\,\mathrm{dB}$ である。$\omega=2$ で実零点が加わり、傾きは $-20\,\mathrm{dB/dec}$ へ戻る。$\omega=20$ で二次極が加わり、傾きは $-60\,\mathrm{dB/dec}$ になる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.88\linewidth,bb=0 0 1296 1007]{figures/bode_factor_example.png}
+\caption{正規化された開ループ $L(s)$ のボード線図。$0.2\,\mathrm{rad/s}$ の実極でゲイン傾きが下がり、$2\,\mathrm{rad/s}$ の実零点で戻り、$20\,\mathrm{rad/s}$ の二次極でさらに低下する。破線の漸近線と実線の厳密線図を比べると、折点近傍の誤差と位相遷移を確認できる。}
+\label{fig:bode-factor-example}
+\end{figure}
+
+位相は、正規化積分器の $-90^\circ$ から始める。実極 $1/(1+s/\omega_p)$ はおよそ $0.02$ から $2\,\mathrm{rad/s}$ の間でさらに $-90^\circ$ を加え、実零点 $1+s/\omega_z$ は $0.2$ から $20\,\mathrm{rad/s}$ の間で $+90^\circ$ を加える。二次極は $2$ から $200\,\mathrm{rad/s}$ 付近で $-180^\circ$ を加え、$\omega=20\,\mathrm{rad/s}$ では二次因子だけで $-90^\circ$ を与える。したがって高周波側の位相は、概略で
+\begin{equation}
+  -90^\circ-90^\circ+90^\circ-180^\circ=-270^\circ
+\end{equation}
+へ近づく。
+
+折点近傍では直線だけを信用しすぎない。$\omega=0.2$ の実極は漸近線より約 $3\,\mathrm{dB}$ 低く、$\omega=2$ の実零点は約 $3\,\mathrm{dB}$ 高い。二次極は $\zeta=0.5$ なので $\omega=20$ での厳密な寄与が $20\log_{10}\{1/(2\zeta)\}=0\,\mathrm{dB}$ となり、折点そのものでは直線漸近線と一致する。しかし $\zeta$ がもっと小さければ、この周波数帯に共振の山が生じる。概略作図では、傾きの変化で全体の形を決め、折点誤差でゲイン値を補正する。
+\end{example}
+
+\subsubsection{余裕・交差周波数・帯域を仕様へ翻訳する}
+
+本節では、設計仕様を開ループおよび閉ループの周波数応答指標として定義する。対象は単一入出力の単位負帰還系とし、開ループを
+\begin{equation}
+  L(s)=C(s)G(s)
+\end{equation}
+とおく。閉ループが安定で、評価する周波数で $L(j\omega)$ が定義できることを前提にする。開ループが右半平面極を持つ場合や交差周波数が複数ある場合には、余裕の値だけで安定性を断定せず、ナイキスト判別で閉ループ極の個数を確認する。
+
+角周波数 $\omega$ の単位は $\mathrm{rad/s}$ である。周波数 $f\,[\mathrm{Hz}]$ で表すときは
+\begin{equation}
+  \omega=2\pi f
+\end{equation}
+を使う。ゲイン $\abs{L(j\omega)}$ は無次元の比であり、dB 表示では $20\log_{10}\abs{L(j\omega)}$ と書く。位相はラジアンまたは度で表す。むだ時間を含む式ではラジアンを用いる。
+
+\begin{definition}[交差周波数と安定余裕]
+ゲイン交差周波数 $\omega_{gc}$ は
 \begin{equation}
   \abs{L(j\omega_{gc})}=1
 \end{equation}
-で定める。このとき位相余裕は
+を満たす周波数である。これは dB 表示で $0\,\mathrm{dB}$ を横切る周波数である。位相交差周波数 $\omega_{pc}$ は、位相を連続につないで読んだとき
 \begin{equation}
-  \phi_m=180^\circ+\angle L(j\omega_{gc})
+  \angle L(j\omega_{pc})=-\pi
+  \qquad (-180^\circ)
 \end{equation}
-である。位相余裕が小さいと、閉ループは振動的になりやすい。位相が $-180^\circ$ になる周波数 $\omega_{pc}$ でのゲインからはゲイン余裕
+を満たす周波数である。ゲイン交差周波数での位相余裕を
+\begin{equation}
+  \phi_m=\pi+\angle L(j\omega_{gc})
+\end{equation}
+と定義する。度で表すなら $\phi_m=180^\circ+\angle L(j\omega_{gc})$ である。位相交差周波数でのゲイン余裕を
 \begin{equation}
   g_m=\frac{1}{\abs{L(j\omega_{pc})}}
 \end{equation}
-が得られる。
+と定義し、dB では
+\begin{equation}
+  G_{m,\mathrm{dB}}=20\log_{10}g_m
+  =-20\log_{10}\abs{L(j\omega_{pc})}
+\end{equation}
+と表す。
+\end{definition}
 
-\section{ナイキスト線図}
+位相余裕の符号は、「あとどれだけ位相が遅れると $-180^\circ$ に達するか」を表すように取る。たとえば $\angle L(j\omega_{gc})=-135^\circ$ なら
+\begin{equation}
+  \phi_m=180^\circ-135^\circ=45^\circ
+\end{equation}
+である。正の位相余裕は、ゲイン交差周波数において位相が $-180^\circ$ に達していないことを示す。負の位相余裕は、同じ周波数で位相が $-180^\circ$ を越えていることを示す。ただし多重交差や不安定開ループ極がある場合には、この指標だけで閉ループ安定性を判定しない。
 
-ナイキスト線図は $L(j\omega)$ を複素平面に描いたものである。閉ループの安定性は
+\begin{derivation}
+ゲイン余裕が「何倍のゲイン増加に耐えるか」を表すことを式で見る。対象や制御器のゲインが見積もりより $k$ 倍になったとすると、開ループは $kL(s)$ になる。閉ループ特性方程式は
+\begin{equation}
+  1+kL(s)=0
+\end{equation}
+である。位相交差周波数では $L(j\omega_{pc})$ が負の実軸上にあり、
+\begin{equation}
+  L(j\omega_{pc})=-\abs{L(j\omega_{pc})}
+\end{equation}
+と書ける。境界的に $1+kL=0$ となる条件は
+\begin{align}
+  1-k\abs{L(j\omega_{pc})}&=0,\\
+  k&=\frac{1}{\abs{L(j\omega_{pc})}}
+\end{align}
+である。したがって $g_m$ は、単純なゲイン増加に対する許容量を無次元倍率で表している。
+\end{derivation}
+
+位相余裕は、むだ時間の許容量の近似評価に用いられる。むだ時間 $\tau_d$ は開ループに $e^{-s\tau_d}$ を掛けるので、周波数 $\omega$ での追加位相遅れは
+\begin{equation}
+  \angle e^{-j\omega\tau_d}=-\omega\tau_d
+\end{equation}
+である。ゲイン交差周波数の近くで閉ループ安定性が決まると見なせるなら、許されるむだ時間の目安は
+\begin{equation}
+  \tau_{d,\max}\simeq\frac{\phi_m}{\omega_{gc}}
+\end{equation}
+となる。ただしこの式の $\phi_m$ はラジアンである。$\omega_{gc}$ が大きいほど、同一の位相余裕に対する許容むだ時間は短くなる。したがって、応答帯域を高く設定することと、むだ時間に対するロバスト性を増加させることは一般にトレードオフとなる。
+
+閉ループの応答帯域は、相補感度
+\begin{equation}
+  T(s)=\frac{L(s)}{1+L(s)}
+\end{equation}
+の帯域幅により定義する。低周波で $T(0)\simeq 1$ なら、閉ループ帯域幅 $\omega_b$ は
+\begin{equation}
+  \abs{T(j\omega_b)}=\frac{1}{\sqrt{2}}\abs{T(0)}
+\end{equation}
+を初めて満たす周波数として定義する。これは低周波ゲインから
+\begin{equation}
+  20\log_{10}\frac{1}{\sqrt{2}}
+  =-10\log_{10}2\simeq -3.01\,\mathrm{dB}
+\end{equation}
+下がる点である。$\omega_b$ より十分低い目標値成分はよく追従され、$\omega_b$ より高い成分は閉ループで減衰し始める。したがって、目標値や外乱の主成分を通したいなら $\omega_b$ をその周波数より上に置き、測定ノイズや未モデル化共振を入れたくないなら $\omega_b$ をそれらより十分低く置く。
+
+一次閉ループ
+\begin{equation}
+  T_1(s)=\frac{1}{\tau_c s+1}
+\end{equation}
+では
+\begin{equation}
+  \abs{T_1(j\omega)}=\frac{1}{\sqrt{1+(\omega\tau_c)^2}}
+\end{equation}
+である。$\abs{T_1(j\omega_b)}=1/\sqrt{2}$ を代入すると
+\begin{align}
+  \frac{1}{\sqrt{1+(\omega_b\tau_c)^2}}&=\frac{1}{\sqrt{2}},\\
+  1+(\omega_b\tau_c)^2&=2,\\
+  \omega_b&=\frac{1}{\tau_c}
+\end{align}
+となる。一次応答の 10--90\% 立上り時間はおよそ $2.2\tau_c$、2\% 整定時間はおよそ $4\tau_c$ であるから、一次的に振る舞う閉ループでは
+\begin{equation}
+  t_r\simeq\frac{2.2}{\omega_b},
+  \qquad
+  T_s\simeq\frac{4}{\omega_b}
+\end{equation}
+という時間応答指標との近似対応が得られる。
+
+閉ループゲインの最大値を共振ピークという。低周波ゲインが 1 に正規化された閉ループでは
+\begin{equation}
+  M_r=\max_{\omega\ge 0}\abs{T(j\omega)}
+\end{equation}
+で定義し、dB では $20\log_{10}M_r$ と表す。$M_r=1.3$ は約 $2.3\,\mathrm{dB}$ であり、対応する周波数成分の振幅比が 1.3 であることを表す。
+
+二次標準閉ループ
+\begin{equation}
+  T_2(s)=\frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+では、$r=\omega/\omega_n$ とおくと
+\begin{align}
+  \abs{T_2(j\omega)}^2
+  &=\frac{\omega_n^4}{(\omega_n^2-\omega^2)^2+(2\zeta\omega_n\omega)^2}\\
+  &=\frac{1}{(1-r^2)^2+(2\zeta r)^2}.
+\end{align}
+分母を
+\begin{equation}
+  D(r)=(1-r^2)^2+(2\zeta r)^2
+  =1+(4\zeta^2-2)r^2+r^4
+\end{equation}
+とおく。共振ピークは $D(r)$ が最小になるところで生じるので、
+\begin{align}
+  \frac{\dd D}{\dd r}
+  &=2(4\zeta^2-2)r+4r^3\\
+  &=4r(r^2+2\zeta^2-1)
+\end{align}
+を 0 とおく。$r>0$ の解は
+\begin{equation}
+  r^2=1-2\zeta^2
+\end{equation}
+である。したがって $0<\zeta<1/\sqrt{2}$ のときだけ共振周波数
+\begin{equation}
+  \omega_r=\omega_n\sqrt{1-2\zeta^2}
+\end{equation}
+が存在し、そのピークは
+\begin{equation}
+  M_r=\frac{1}{2\zeta\sqrt{1-\zeta^2}}
+\end{equation}
+となる。$\zeta\ge 1/\sqrt{2}$ では山は低周波側の値を越えず、明確な共振ピークは現れない。
+
+同じ二次支配の閉ループを開ループの位相余裕と結びつけるには、
+\begin{equation}
+  L(s)=\frac{T_2(s)}{1-T_2(s)}
+  =\frac{\omega_n^2}{s(s+2\zeta\omega_n)}
+\end{equation}
+と見る。$x=\omega_{gc}/\omega_n$ とおくと、ゲイン交差条件は
+\begin{align}
+  1&=\abs{L(j\omega_{gc})}\\
+  &=\frac{1}{x\sqrt{x^2+4\zeta^2}}
+\end{align}
+である。よって
+\begin{equation}
+  x^4+4\zeta^2x^2-1=0
+\end{equation}
+となり、正の解は
+\begin{equation}
+  x^2=-2\zeta^2+\sqrt{4\zeta^4+1}
+\end{equation}
+である。このとき開ループ位相は
+\begin{equation}
+  \angle L(j\omega_{gc})=-\frac{\pi}{2}-\tan^{-1}\frac{x}{2\zeta}
+\end{equation}
+だから、位相余裕は
+\begin{equation}
+  \phi_m=\tan^{-1}\frac{2\zeta}{x}
+\end{equation}
+となる。この関係は、支配極が二次標準形に近く、零点やむだ時間の影響が小さい場合に成立する近似である。一般の高次系では、位相余裕と共振ピークを閉ループ減衰性の評価指標として用いる。
+
+\begin{example}[温度制御ループの周波数仕様]
+熱容量を持つ加熱対象に積分動作を含む制御をかけ、対象の主時定数とセンサ遅れをまとめた候補開ループが
+\begin{equation}
+  L(s)=\frac{K}{s(1+s)(1+0.1s)}
+\end{equation}
+で近似できるとする。時間の単位は秒で、$K$ は開ループ全体が無次元になるように正規化されたゲインである。以下では、補償器の構成ではなく、候補開ループに対応する仕様値を計算する。
+
+ゲイン交差周波数を $\omega_{gc}=0.7\,\mathrm{rad/s}$ 付近に置いた候補を考えると、
+\begin{equation}
+  K=0.7\sqrt{1+0.7^2}\sqrt{1+(0.1\cdot0.7)^2}
+  \simeq 0.857
+\end{equation}
+で $\abs{L(j0.7)}=1$ となる。この周波数での位相は
+\begin{align}
+  \angle L(j0.7)
+  &=-90^\circ-\tan^{-1}(0.7)-\tan^{-1}(0.07)\\
+  &\simeq -90^\circ-35.0^\circ-4.0^\circ\\
+  &\simeq -129^\circ
+\end{align}
+である。したがって位相余裕は
+\begin{equation}
+  \phi_m\simeq 180^\circ-129^\circ=51^\circ
+\end{equation}
+である。むだ時間余裕に換算すると
+\begin{equation}
+  \tau_{d,\max}\simeq
+  \frac{51\pi/180}{0.7}
+  \simeq 1.27\,\mathrm{s}
+\end{equation}
+である。
+
+位相交差周波数は
+\begin{equation}
+  -90^\circ-\tan^{-1}\omega-\tan^{-1}(0.1\omega)=-180^\circ
+\end{equation}
+から求まる。すなわち
+\begin{equation}
+  \tan^{-1}\omega+\tan^{-1}(0.1\omega)=90^\circ
+\end{equation}
+である。二つの正の角の和が $90^\circ$ になる条件は、正接の加法公式の分母
+\begin{equation}
+  1-0.1\omega^2
+\end{equation}
+が 0 になることである。よって
+\begin{equation}
+  \omega_{pc}=\sqrt{10}\simeq 3.16\,\mathrm{rad/s}
+\end{equation}
+である。このとき
+\begin{align}
+  \abs{L(j\omega_{pc})}
+  &=\frac{K}{\sqrt{10}\sqrt{1+10}\sqrt{1+0.1}}\\
+  &=\frac{K}{11}\\
+  &\simeq 0.0779
+\end{align}
+なので
+\begin{align}
+  g_m&\simeq 12.8,\\
+  G_{m,\mathrm{dB}}&=20\log_{10}(12.8)\simeq 22.2\,\mathrm{dB}
+\end{align}
+である。この候補では、対象ゲインの変動よりも、位相遅れおよびむだ時間が安定余裕を制限する。
+
+閉ループの相補感度は
+\begin{equation}
+  T(s)=\frac{K}{s(1+s)(1+0.1s)+K}
+\end{equation}
+である。直接代入して $\abs{T(j\omega)}=1/\sqrt{2}$ となる点を調べると、帯域幅はおよそ
+\begin{equation}
+  \omega_b\simeq 1.18\,\mathrm{rad/s}
+\end{equation}
+である。また $\abs{T(j\omega)}$ の山はおよそ
+\begin{equation}
+  M_r\simeq 1.16
+  \qquad (20\log_{10}M_r\simeq 1.3\,\mathrm{dB})
+\end{equation}
+である。この候補に対する仕様値は、帯域幅 $\omega_b\simeq1.18\,\mathrm{rad/s}$、位相余裕 $\phi_m\simeq51^\circ$、むだ時間余裕 $\tau_{d,\max}\simeq1.27\,\mathrm{s}$、共振ピーク約 $1.3\,\mathrm{dB}$ である。
+\end{example}
+
+仕様値は対象、センサノイズ、モデル誤差、むだ時間、許容振動に依存する。位相余裕、ゲイン余裕、帯域幅、共振ピークは、同一の閉ループ伝達特性から定義される指標であり、独立に指定できる量ではない。
+
+\subsection{位相補償器の仕様設計}
+
+ボード線図による古典設計では、制御器 $C(s)$ を選んで開ループ
+\begin{equation}
+  L(s)=C(s)G(s)
+\end{equation}
+のゲイン交差周波数、位相余裕、低周波ゲインを同時に調整する。ここでは単一入出力の単位負帰還系を対象とし、閉ループ安定性は最終的にナイキスト判別または閉ループ極で確認するものとする。開ループが不安定極や非最小位相零点を持つ場合、以下の設計式は候補を作るための近似であり、余裕の値だけで安定性を保証しない。
+
+定常偏差仕様は、低周波における開ループの大きさを指定する。開ループが原点極を $q$ 個持つ型 $q$ の系で、目標入力が $q$ 次までの多項式信号であるとき、対応する誤差定数は
+\begin{equation}
+  K_e=\lim_{s\to0}s^q L(s)
+\end{equation}
+で表せる。$q=0$ では位置誤差定数 $K_p$、$q=1$ では速度誤差定数 $K_v$、$q=2$ では加速度誤差定数 $K_a$ である。たとえば型 1 の系に単位傾斜入力を加えると、定常偏差は
+\begin{equation}
+  e_{ss}=\frac{1}{K_v}
+\end{equation}
+である。したがって、低周波ゲインを大きくすると定常偏差は小さくなる。一方、交差周波数付近のゲインを不用意に上げると帯域幅が増え、位相余裕が減り、高周波ノイズや未モデル化ダイナミクスの影響を受けやすくなる。位相進み補償、位相遅れ補償、遅れ進み補償は、この低周波と交差周波数の要求を分けて調整するために用いられる。
+
+\subsubsection{位相進み補償器}
+
+位相進み補償器を
+\begin{equation}
+  C_{\mathrm{lead}}(s)
+  =K_c\frac{1+Ts}{1+\alpha Ts},
+  \qquad 0<\alpha<1,\quad T>0
+\end{equation}
+とおく。零点は $\omega_z=1/T$、極は $\omega_p=1/(\alpha T)$ にあり、$\omega_z<\omega_p$ である。周波数応答の位相寄与は
+\begin{equation}
+  \phi_{\mathrm{lead}}(\omega)
+  =\tan^{-1}(\omega T)-\tan^{-1}(\alpha\omega T)
+\end{equation}
+であり、零点と極の間で正になる。$x=\omega T$ とおいて $\phi_{\mathrm{lead}}$ を $\log \omega$ で微分すると、最大位相進みは
+\begin{equation}
+  \omega_m=\frac{1}{T\sqrt{\alpha}}
+\end{equation}
+で生じる。この周波数は零点と極の幾何平均である。最大位相進みを $\phi_{\max}$ と書くと
+\begin{align}
+  \sin\phi_{\max}
+  &=\frac{1-\alpha}{1+\alpha},\\
+  \alpha
+  &=\frac{1-\sin\phi_{\max}}{1+\sin\phi_{\max}}
+\end{align}
+である。また $\omega_m$ における大きさは
+\begin{equation}
+  \abs{\frac{1+j\omega_m T}{1+j\alpha\omega_m T}}
+  =\frac{1}{\sqrt{\alpha}}
+\end{equation}
+である。したがって位相進み補償器は、交差周波数付近で正の位相を与えると同時に、同じ周波数帯のゲインも上げる。これは位相余裕と速応性の改善に有利であるが、高周波側では
+\begin{equation}
+  \lim_{\omega\to\infty}
+  \abs{\frac{1+j\omega T}{1+j\alpha\omega T}}
+  =\frac{1}{\alpha}
+\end{equation}
+となるため、測定ノイズが制御入力へ伝わりやすくなる。必要な位相進みが大きすぎる場合には、交差周波数を下げる、複数段の位相進みへ分ける、または仕様そのものを見直す。
+
+目標ゲイン交差周波数を $\omega_c^\star$、目標位相余裕を $\phi_m^\star$ とする。まず対象だけの位相
+\begin{equation}
+  \phi_G=\angle G(j\omega_c^\star)
+\end{equation}
+を計算し、補償前にその周波数で得られる位相余裕を $\pi+\phi_G$ と読む。位相遅れ補償や未モデル化遅れに対する余裕を $\delta_\phi\ge0$ と見込むと、必要な位相進みは
+\begin{equation}
+  \phi_d
+  =\phi_m^\star-\{\pi+\phi_G\}+\delta_\phi
+\end{equation}
+である。角度を度で扱う場合は、同じ式の $\pi$ を $180^\circ$ に置き換える。$0<\phi_d<\pi/2$ の範囲で $\alpha$ を
+\begin{equation}
+  \alpha=\frac{1-\sin\phi_d}{1+\sin\phi_d}
+\end{equation}
+から決め、最大位相進みが目標交差周波数に来るように
+\begin{equation}
+  T=\frac{1}{\omega_c^\star\sqrt{\alpha}}
+\end{equation}
+を選ぶ。最後にゲイン条件
+\begin{equation}
+  \abs{K_c C_{\mathrm{lead},0}(j\omega_c^\star)G(j\omega_c^\star)}=1
+\end{equation}
+から $K_c$ を定める。ここで $C_{\mathrm{lead},0}$ は $K_c$ を除いた位相進み因子である。最大位相点を交差周波数に合わせた場合、
+\begin{equation}
+  K_c
+  =\frac{\sqrt{\alpha}}{\abs{G(j\omega_c^\star)}}
+\end{equation}
+である。
+
+\subsubsection{位相遅れ補償器}
+
+位相遅れ補償器は、交差周波数を大きく動かさずに低周波ゲインを増やすために用いる。交差周波数近傍の大きさがほぼ $K_c$ になるように正規化して
+\begin{equation}
+  C_{\mathrm{lag}}(s)
+  =K_c\beta\frac{1+T_\ell s}{1+\beta T_\ell s},
+  \qquad \beta>1,\quad T_\ell>0
+\end{equation}
+と書く。極は $\omega_p=1/(\beta T_\ell)$、零点は $\omega_z=1/T_\ell$ にあり、$\omega_p<\omega_z$ である。位相寄与は
+\begin{equation}
+  \phi_{\mathrm{lag}}(\omega)
+  =\tan^{-1}(\omega T_\ell)
+  -\tan^{-1}(\beta\omega T_\ell)
+\end{equation}
+であり、極と零点の間で負になる。一方、低周波と高周波の大きさは
+\begin{align}
+  \lim_{\omega\to0}\abs{C_{\mathrm{lag}}(j\omega)}
+    &=K_c\beta,\\
+  \lim_{\omega\to\infty}\abs{C_{\mathrm{lag}}(j\omega)}
+    &=K_c
+\end{align}
+である。したがって、低周波の誤差定数を $\beta$ 倍しながら、交差周波数が零点より十分高ければ交差周波数近傍のゲインをほぼ保てる。
+
+位相遅れ補償の設計では、まず位相余裕と交差周波数の仕様を満たす候補 $L_0(s)$ を作る。そこで得られる誤差定数を
+\begin{equation}
+  K_{e0}=\lim_{s\to0}s^q L_0(s)
+\end{equation}
+とし、要求値を $K_e^\star$ とすれば、低周波ゲイン倍率は
+\begin{equation}
+  \beta\ge\frac{K_e^\star}{K_{e0}}
+\end{equation}
+から決める。位相遅れを小さくするため、零点を目標交差周波数より十分低く置く。たとえば $n=5$ から $10$ 程度を選び、
+\begin{equation}
+  \omega_z=\frac{\omega_c^\star}{n},
+  \qquad
+  \omega_p=\frac{\omega_z}{\beta}
+\end{equation}
+とすると
+\begin{equation}
+  T_\ell=\frac{1}{\omega_z}
+  =\frac{n}{\omega_c^\star}
+\end{equation}
+である。$\omega_c^\star$ における位相遅れ
+\begin{equation}
+  \tan^{-1}n-\tan^{-1}(\beta n)
+\end{equation}
+が許容できるかを確認し、必要なら $n$ を大きくする。ただし $n$ を大きくしすぎると補償の折点が非常に低くなり、定常偏差の改善が現れるまでの時間が長くなる。
+
+\subsubsection{遅れ進み補償器の設計手順}
+
+遅れ進み補償器は
+\begin{equation}
+  C_{\mathrm{leadlag}}(s)
+  =K_c
+  \frac{1+T_ds}{1+\alpha T_ds}
+  \beta\frac{1+T_\ell s}{1+\beta T_\ell s},
+  \qquad 0<\alpha<1,\quad \beta>1
+\end{equation}
+のように、位相進み因子と位相遅れ因子を直列に置いたものである。位相進み因子は主に位相余裕と交差周波数を調整し、位相遅れ因子は主に低周波誤差定数を調整する。
+
+仕様から設計する基本手順は次の通りである。第一に、時間応答とロバスト性の要求から目標交差周波数 $\omega_c^\star$ と目標位相余裕 $\phi_m^\star$ を決める。$\omega_c^\star$ は閉ループ帯域幅と同じ程度の量であり、速い応答を求めるほど大きくなるが、むだ時間余裕、ノイズ、未モデル化高周波モードに対する余裕は小さくなる。第二に、$G(j\omega_c^\star)$ の位相から必要な位相進み $\phi_d$ を求め、$\alpha$ と $T_d$ を決める。第三に、$\omega_c^\star$ で
+\begin{equation}
+  \abs{L(j\omega_c^\star)}=1
+\end{equation}
+となるように $K_c$ を定める。第四に、得られた低周波誤差定数が不足するなら $\beta$ を選び、位相遅れ因子の零点と極を $\omega_c^\star$ より十分低い周波数に置く。最後に、位相遅れ因子の実際の大きさと位相を含めて $K_c$、$\omega_{gc}$、$\phi_m$、誤差定数を再計算する。
+
+この手順は一回の計算で終わるとは限らない。位相進みを強くすると交差周波数が高くなり、閉ループ帯域幅も増える。帯域幅の増加は目標値追従と外乱抑制を速くする一方で、測定ノイズを相補感度 $T(s)$ から出力や入力へ通しやすくする。位相遅れは低周波ゲインを増やして定常偏差を減らすが、折点を交差周波数に近づけると位相余裕を削る。したがって、ボード線図上では「低周波で大きいループゲイン、交差周波数で十分な位相余裕、高周波で小さい相補感度」という三つの要求を同時に満たすように折点を配置する。
+
+\begin{example}[遅れ進み補償器による周波数仕様設計]
+正規化された位置制御対象
+\begin{equation}
+  G(s)=\frac{1}{s(s+1)}
+\end{equation}
+を単位負帰還で制御する。仕様を、速度誤差定数
+\begin{equation}
+  K_v\ge 50\,\mathrm{s^{-1}},
+\end{equation}
+目標ゲイン交差周波数
+\begin{equation}
+  \omega_c^\star=5\,\mathrm{rad/s},
+\end{equation}
+位相余裕
+\begin{equation}
+  \phi_m\ge50^\circ
+\end{equation}
+とする。この対象は型 1 なので、単位傾斜入力に対する定常偏差は $e_{ss}=1/K_v$ で評価できる。
+
+まず $\omega=5$ における対象の周波数応答を求める。
+\begin{align}
+  \abs{G(j5)}
+  &=\frac{1}{5\sqrt{1+5^2}}
+    \simeq 0.0392,\\
+  \angle G(j5)
+  &=-90^\circ-\tan^{-1}5
+    \simeq -168.7^\circ
+\end{align}
+である。交差周波数を $5\,\mathrm{rad/s}$ に置いたとき、対象だけでは位相余裕が約 $11.3^\circ$ しかない。位相遅れ補償で数度の位相損失が生じることを見込み、位相進み補償器に
+\begin{equation}
+  \phi_d=45^\circ
+\end{equation}
+を割り当てる。すると
+\begin{align}
+  \alpha
+  &=\frac{1-\sin45^\circ}{1+\sin45^\circ}
+    \simeq 0.172,\\
+  T_d
+  &=\frac{1}{5\sqrt{0.172}}
+    \simeq 0.483\,\mathrm{s}
+\end{align}
+である。位相進み因子は
+\begin{equation}
+  C_{\mathrm{lead},0}(s)
+  =\frac{1+0.483s}{1+0.0828s}
+\end{equation}
+となり、$5\,\mathrm{rad/s}$ での大きさは $1/\sqrt{\alpha}\simeq2.41$、位相は $45^\circ$ である。
+
+次に定常偏差仕様を満たす。位相進み因子だけで交差周波数を合わせると、必要ゲインはおよそ
+\begin{equation}
+  K_c\simeq
+  \frac{1}{0.0392\cdot2.41}
+  \simeq 10.6
+\end{equation}
+である。この段階の速度誤差定数は、$\lim_{s\to0}sK_cC_{\mathrm{lead},0}(s)G(s)=K_c$ より約 $10.6\,\mathrm{s^{-1}}$ であり、要求値 $50\,\mathrm{s^{-1}}$ に届かない。したがって位相遅れ補償で低周波ゲインを約 5 倍にする。$\beta=5$ とし、零点を交差周波数の 1 decade 下に置いて
+\begin{equation}
+  \omega_z=0.5\,\mathrm{rad/s},
+  \qquad
+  \omega_p=0.1\,\mathrm{rad/s}
+\end{equation}
+とする。これは $T_\ell=2\,\mathrm{s}$ に対応し、
+\begin{equation}
+  C_{\mathrm{lag},0}(s)
+  =5\frac{1+2s}{1+10s}
+\end{equation}
+である。
+
+$5\,\mathrm{rad/s}$ における位相遅れ因子の大きさと位相は
+\begin{align}
+  \abs{C_{\mathrm{lag},0}(j5)}
+  &=5\frac{\sqrt{1+10^2}}{\sqrt{1+50^2}}
+    \simeq 1.005,\\
+  \angle C_{\mathrm{lag},0}(j5)
+  &=\tan^{-1}10-\tan^{-1}50
+    \simeq -4.6^\circ
+\end{align}
+である。したがって、両方の補償因子を含めたゲイン条件から
+\begin{equation}
+  K_c=
+  \frac{1}
+  {0.0392\cdot2.41\cdot1.005}
+  \simeq 10.5
+\end{equation}
+を得る。設計された制御器は
+\begin{equation}
+  C(s)=10.5
+  \frac{1+0.483s}{1+0.0828s}
+  \;5\frac{1+2s}{1+10s}
+\end{equation}
+である。
+
+この制御器に対して、$5\,\mathrm{rad/s}$ での開ループ位相は
+\begin{align}
+  \angle L(j5)
+  &\simeq -168.7^\circ+45.0^\circ-4.6^\circ\\
+  &\simeq -128.3^\circ
+\end{align}
+である。したがって位相余裕は
+\begin{equation}
+  \phi_m\simeq 180^\circ-128.3^\circ=51.7^\circ
+\end{equation}
+となり、仕様を満たす。速度誤差定数は
+\begin{align}
+  K_v
+  &=\lim_{s\to0}sC(s)G(s)\\
+  &=10.5\cdot5\\
+  &\simeq52.6\,\mathrm{s^{-1}}
+\end{align}
+であり、単位傾斜入力に対する定常偏差は $e_{ss}\simeq0.019$ である。
+
+ボード線図上では、位相進み因子が $5\,\mathrm{rad/s}$ 付近で位相余裕を増やし、位相遅れ因子が $0.1$ から $0.5\,\mathrm{rad/s}$ の低周波側でループゲインを持ち上げている。位相遅れ因子は交差周波数でほぼ $0\,\mathrm{dB}$ なので帯域幅を大きく変えない。一方、位相進み因子の高周波ゲインは $1/\alpha\simeq5.8$ 倍であるため、センサノイズが大きい系では入力の高周波成分を別途確認する必要がある。この例の設計値は、位相余裕、交差周波数、定常偏差を同時に満たす候補であり、最終的には閉ループ極、相補感度、入力振幅制限を合わせて評価する。
+\end{example}
+
+\subsection{ナイキスト線図}
+
+単位負帰還系の閉ループ伝達関数は
+\begin{equation}
+  T(s)=\frac{L(s)}{1+L(s)}
+\end{equation}
+である。したがって閉ループの安定性は、特性方程式
 \begin{equation}
   1+L(s)=0
 \end{equation}
-の根が右半平面にあるかで決まる。ナイキスト判別は、開ループ $L(s)$ の右半平面極の数 $P$ と、ナイキスト線図が点 $-1$ を時計回りに囲む回数 $N$ から、閉ループ右半平面極の数 $Z$ を
+の根が右半平面に存在するかどうかで決まる。ボード線図の安定余裕は、点 $-1$ への近さを周波数ごとに評価する指標であった。ナイキスト線図はさらに一歩進めて、複素平面上の曲線が点 $-1$ を何回囲むかから、閉ループ右半平面極の個数そのものを数える。
+
+以下では $L(s)$ を実係数の有理関数とし、虚軸上に開ループ極を持たず、調べる閉ループがちょうど安定限界にない、すなわち $1+L(j\omega)\ne0$ であると仮定する。虚軸上に積分器や共振極がある場合には、虚軸を小半円で避ける修正版のナイキスト経路を使う。本書では、右半平面を囲むナイキスト経路を、虚軸上で $-jR$ から $jR$ へ進み、右半平面の大半円で $jR$ から $-jR$ へ戻る向きに取る。この向きは右半平面を時計回りに囲む向きである。
+
+\begin{definition}[囲み数の符号規約]
+開ループ $L(s)$ の右半平面極の個数を $P$、閉ループ特性方程式 $1+L(s)=0$ の右半平面根の個数を $Z$ とする。ナイキスト線図が点 $-1$ を時計回りに囲む回数を $N$ と数える。反時計回りの囲みは負として数える。したがって、点 $-1$ を反時計回りに 1 回囲む場合は $N=-1$ である。
+\end{definition}
+
+この符号規約の下で、ナイキスト安定判別は
 \begin{equation}
   Z=N+P
 \end{equation}
-として数える。
+と書ける。閉ループ安定性には $Z=0$ が必要十分であるから、開ループが安定で $P=0$ なら $N=0$、すなわち点 $-1$ を囲まないことが必要である。一方、開ループに右半平面極があるときは違う。たとえば $P=1$ なら、閉ループを安定にするには $N=-1$、すなわち点 $-1$ を反時計回りに 1 回囲む必要がある。
 
-この判別の強みは、むだ時間や高次系でも周波数応答から安定余裕を読めることである。むだ時間 $e^{-Ls}$ はゲインを変えず、位相だけを
+\begin{derivation}
+偏角原理の考え方を、閉ループ特性関数
+\begin{equation}
+  F(s)=1+L(s)
+\end{equation}
+へ適用する。$F(s)$ の零点は閉ループ特性方程式の根であり、$F(s)$ の極は、約分で隠れていない開ループ $L(s)$ の極である。右半平面を時計回りに囲むナイキスト経路を $\Gamma$ とすると、$s$ が $\Gamma$ を一周するときの $F(s)$ の偏角変化は
+\begin{equation}
+  \Delta_\Gamma \arg F(s)=-2\pi(Z-P)
+\end{equation}
+である。右半平面内の零点は時計回り経路に対して $-2\pi$ の寄与を持ち、極は符号が反対になるためである。
+
+ここで $F(s)=1+L(s)$ は、$L(s)$ のナイキスト線図を複素平面で右へ 1 だけ平行移動したものである。したがって、$F(s)$ が原点を囲む回数は、$L(s)$ が点 $-1$ を囲む回数と等しい。時計回りの囲み数を
+\begin{equation}
+  N=-\frac{1}{2\pi}\Delta_\Gamma \arg F(s)
+\end{equation}
+と定義したので
+\begin{equation}
+  N=Z-P
+\end{equation}
+であり、整理すると $Z=N+P$ を得る。
+\end{derivation}
+
+実係数の伝達関数では $L(-j\omega)=\overline{L(j\omega)}$ であるため、負の周波数側のナイキスト線図は正の周波数側の鏡映になる。ただし安定判別で数えるのは、正の周波数だけの曲線ではなく、負の周波数、正の周波数、大半円の像を合わせた閉じた曲線である。
+
+\begin{example}[不安定開ループ極を持つナイキスト判別]
+開ループを
+\begin{equation}
+  L(s)=\frac{2}{s-1}
+\end{equation}
+とする。これは $s=1$ に右半平面極を 1 個持つので
+\begin{equation}
+  P=1
+\end{equation}
+である。虚軸上では
+\begin{align}
+  L(j\omega)
+  &=\frac{2}{-1+j\omega}\\
+  &=\frac{2(-1-j\omega)}{1+\omega^2}\\
+  &=-\frac{2}{1+\omega^2}
+    -j\frac{2\omega}{1+\omega^2}
+\end{align}
+である。$L(j\omega)=x(\omega)+jy(\omega)$ とおくと
+\begin{equation}
+  x(\omega)=-\frac{2}{1+\omega^2},
+  \qquad
+  y(\omega)=-\frac{2\omega}{1+\omega^2}
+\end{equation}
+であり、
+\begin{align}
+  \{x(\omega)+1\}^2+y(\omega)^2
+  &=
+  \left(\frac{\omega^2-1}{1+\omega^2}\right)^2
+  +
+  \left(\frac{2\omega}{1+\omega^2}\right)^2\\
+  &=1
+\end{align}
+を満たす。したがって虚軸部分の像は、中心 $-1$、半径 1 の円である。
+
+$\omega$ を $-\infty$ から $+\infty$ へ増やすと、$L(j\omega)$ は原点近くの上側から出発し、$\omega=0$ で $-2$ を通り、原点近くの下側へ戻る。中心 $-1$ から見た偏角は $0$ から $\pi$ を通って $2\pi$ へ増えるので、点 $-1$ を反時計回りに 1 回囲む。大半円上では $L(s)\to0$ であり、その像は原点近くに縮むため、点 $-1$ の囲み数を変えない。よって本書の符号規約では
+\begin{equation}
+  N=-1
+\end{equation}
+である。
+
+ナイキスト判別から
+\begin{equation}
+  Z=N+P=-1+1=0
+\end{equation}
+となる。閉ループ右半平面極は存在せず、閉ループは安定である。実際に直接計算しても
+\begin{align}
+  1+\frac{2}{s-1}&=0,\\
+  \frac{s+1}{s-1}&=0
+\end{align}
+より閉ループ極は $s=-1$ であり、右半平面にはない。
+
+同じ形を
+\begin{equation}
+  L_K(s)=\frac{K}{s-1}
+\end{equation}
+として見ると、閉ループ極は $s=1-K$ である。$K=1$ では $s=0$ となり、ナイキスト線図は $\omega=0$ でちょうど点 $-1$ を通る。$K>1$ では点 $-1$ を反時計回りに 1 回囲み、$Z=0$ で安定である。$0<K<1$ では点 $-1$ を囲まず、$N=0$、$Z=1$ となって不安定である。不安定な開ループ極がある場合、「点 $-1$ を囲まない」ことは安定条件ではなく、必要な反時計回りの囲みを失っていることを意味する。
+\end{example}
+
+\wfig{frequency-design-examples} 上左は、この不安定開ループ極を持つ一次例でゲインだけを変えたナイキスト線図である。$K=0.6$ の曲線は点 $-1$ を囲まず、$K=1$ では曲線が点 $-1$ を通って安定限界に乗る。$K=2$ では負の周波数から正の周波数へ進む向きで点 $-1$ を反時計回りに 1 回囲むので、本書の符号規約では $N=-1$ となり、$P=1$ と合わせて $Z=0$ が得られる。囲み数は曲線の形だけでなく、開ループ不安定極の個数と向きの規約を同時に読んで決まる。
+
+この例は、ゲイン余裕と位相余裕の読み方にも注意を与える。$L(s)=2/(s-1)$ では
+\begin{equation}
+  \abs{L(j\omega)}=\frac{2}{\sqrt{1+\omega^2}}
+\end{equation}
+なので、ゲイン交差周波数は
+\begin{equation}
+  \omega_{gc}=\sqrt{3}
+\end{equation}
+である。このとき位相は $-120^\circ$ であり、形式的な位相余裕は $60^\circ$ である。一方、位相が $-180^\circ$ となるのは $\omega=0$ で、そのとき $\abs{L(j0)}=2$ である。境界に達するゲイン倍率は $1/2$ であり、この系ではゲインを 2 倍まで増やせるという意味ではなく、ゲインが半分に低下すると安定限界へ落ちるという意味になる。
+
+一般のロバスト設計では、まず $P,N,Z$ により閉ループ安定性を確認し、そのうえでナイキスト線図が点 $-1$ へどれだけ接近するかを見る。感度関数は
+\begin{equation}
+  S(s)=\frac{1}{1+L(s)}
+\end{equation}
+であるから、$\abs{1+L(j\omega)}$ が小さい周波数では $\abs{S(j\omega)}$ が大きくなり、モデル誤差や外乱に対する余裕が小さくなる。ゲイン余裕と位相余裕はこの接近の一部を低次元の数値で要約する指標であり、特に不安定開ループ極がある場合には、ナイキスト判別の囲み数を置き換えるものではない。
+
+ナイキスト判別は、むだ時間や高次系を含む場合にも周波数応答から閉ループ右半平面極の個数を評価する。むだ時間 $e^{-Ls}$ はゲインを変えず、位相だけを
 \begin{equation}
   \angle e^{-j\omega L}=-\omega L
 \end{equation}
 だけ遅らせる。高周波ほど位相遅れが増えるため、むだ時間はフィードバックの帯域を強く制限する。
 
-\section{根軌跡}
+\subsection{根軌跡}
 
 制御器を単純なゲイン $K$ として $L(s)=KG(s)$ と書くと、閉ループ極は
 \begin{equation}
   1+KG(s)=0
 \end{equation}
-を満たす。$K$ を $0$ から大きくしたとき極が複素平面上をどう動くかを根軌跡と呼ぶ。
+を満たす。$K$ を非負実数として変化させたときの閉ループ極の軌跡を根軌跡と呼ぶ。
 
-根軌跡は開ループ極から出発し、開ループ零点または無限遠へ向かう。実軸上では、右側にある実極・実零点の数が奇数の区間に軌跡が存在する。設計者は軌跡を見ながら、応答を速くする極配置と、振動を増やしすぎない減衰の妥協点を探す。
+根軌跡は開ループ極から出発し、開ループ零点または無限遠へ向かう。実軸上では、右側にある実極・実零点の数が奇数の区間に軌跡が存在する。根軌跡上の閉ループ極位置から、指数減衰率および振動周波数を評価する。
 
 二次標準形と対応させると、望ましい極は
 \begin{equation}
   s=-\zeta\omega_n\pm j\omega_n\sqrt{1-\zeta^2}
 \end{equation}
-である。根軌跡がこの近くを通るなら、ゲイン調整で目標応答に近づけることができる。通らないなら、零点や極を持つ補償器を加え、軌跡そのものを変える必要がある。
+である。根軌跡がこの近傍を通る場合、ゲイン調整により対応する二次近似の極を実現できる。通らない場合には、零点または極を持つ補償器により根軌跡を変更する。
 
-\section{感度と相補感度}
+\wfig{frequency-design-examples} 上右は、三次の標準例
+\begin{equation}
+  G_3(s)=\frac{1}{s(s+2)(s+4)}
+\end{equation}
+に対する根軌跡である。閉ループ特性多項式は
+\begin{equation}
+  s^3+6s^2+8s+K
+\end{equation}
+となり、Routh--Hurwitz 判別法から安定範囲は $0<K<48$ である。図では $K$ を増やすと二本の枝が実軸上で合流して複素平面へ出て、$K=48$ で虚軸を横切る。したがって、根軌跡は「ゲインを上げると極がどちらへ動くか」を示すだけでなく、ゲイン調整だけで満たせる安定範囲と、補償器で軌跡そのものを変える必要がある範囲を分ける図である。
 
-閉ループ \weq{closed-loop} の開ループを $L(s)=C(s)G(s)$ とおくと、目標値から出力への伝達は
+\subsubsection{特性方程式から導く作図規則}
+
+開ループを、互いに共通因子を持たない多項式 $A(s)$、$B(s)$ により
+\begin{equation}
+  G(s)=\frac{B(s)}{A(s)}
+  =\frac{\prod_{j=1}^{m}(s-z_j)}
+  {\prod_{i=1}^{n}(s-p_i)}
+\end{equation}
+と書く。$p_i$ は開ループ極、$z_j$ は開ループ零点であり、$n\ge m$ とする。単位負帰還で比例ゲイン $K$ を掛けると、閉ループ特性方程式は
+\begin{equation}
+  1+KG(s)=0
+\end{equation}
+である。分母を払うと
+\begin{equation}
+  A(s)+K B(s)=0
+\end{equation}
+となる。したがって根軌跡は、$K\ge0$ に対する多項式 $A(s)+K B(s)$ の根の集合である。$K$ の単位は $KG(s)$ が無次元になるように決まり、以下の幾何的規則では $K$ を正の実数として扱う。
+
+\begin{formula}[根軌跡の角度条件と大きさ条件]
+$K>0$ の根軌跡上の点 $s$ は
+\begin{align}
+  \angle G(s)&=(2\ell+1)\pi,\qquad \ell\in\mathbb{Z},\\
+  K&=\frac{1}{\abs{G(s)}}
+\end{align}
+を満たす。
+\end{formula}
+
+\begin{derivation}
+$1+KG(s)=0$ は
+\begin{equation}
+  KG(s)=-1
+\end{equation}
+と同値である。$K$ は正の実数なので偏角を変えない。右辺 $-1$ の偏角は奇数倍の $\pi$ であるから、根軌跡上では
+\begin{equation}
+  \angle G(s)=(2\ell+1)\pi
+\end{equation}
+でなければならない。大きさを比較すると
+\begin{equation}
+  K\abs{G(s)}=1
+\end{equation}
+であり、$K=1/\abs{G(s)}$ を得る。
+\end{derivation}
+
+この二つの条件から、手作図で使う規則が得られる。まず $K=0$ では特性方程式が $A(s)=0$ となるため、根軌跡は開ループ極 $p_i$ から出発する。$K$ を大きくすると、$m$ 本の枝は有限零点 $z_j$ へ向かい、残りの $n-m$ 本は無限遠へ向かう。したがって根軌跡の枝の本数は開ループ極の個数 $n$ である。
+
+実軸上の点 $\sigma$ を考える。実係数系では、実軸上の点から共役複素極・零点へ引いた角度は互いに打ち消し合う。したがって角度条件に寄与するのは、実軸上にある極・零点だけである。$\sigma$ より右側に存在する実極と実零点の総数を数え、その数が奇数なら
+\begin{equation}
+  \angle G(\sigma)=(2\ell+1)\pi
+\end{equation}
+となる。偶数なら角度は偶数倍の $\pi$ となり、$K>0$ の根軌跡には含まれない。
+
+有限零点より開ループ極の方が多い場合、無限遠へ向かう枝は直線漸近線に近づく。$n-m$ 本の漸近線の交点を重心と呼び、
+\begin{equation}
+  \sigma_a=
+  \frac{\sum_{i=1}^{n}p_i-\sum_{j=1}^{m}z_j}{n-m}
+\end{equation}
+で与えられる。漸近線の角度は
+\begin{equation}
+  \theta_q=\frac{(2q+1)\pi}{n-m},
+  \qquad q=0,1,\ldots,n-m-1
+\end{equation}
+である。実係数系では複素極と複素零点が共役対で現れるため、重心 $\sigma_a$ は実数になる。
+
+実軸上で二本の枝が合流して複素平面へ出る点を分岐点、複素平面から実軸へ戻る点を合流点と呼ぶ。実軸上で
+\begin{equation}
+  K(s)=-\frac{A(s)}{B(s)}
+\end{equation}
+とおくと、分岐点または合流点の候補は
+\begin{equation}
+  \frac{\dd K}{\dd s}=0
+\end{equation}
+を満たす。すなわち
+\begin{equation}
+  A'(s)B(s)-A(s)B'(s)=0
+\end{equation}
+である。ただし、この方程式の解がすべて根軌跡上の分岐点になるわけではない。候補点が実軸上の根軌跡区間にあり、さらに $K(s)>0$ を満たすことを確認する必要がある。
+
+根軌跡が虚軸を横切るゲインは、閉ループ特性多項式 $A(s)+KB(s)$ に Routh--Hurwitz 判別法を適用して求める。$K$ を含む Routh 表を作り、第 1 列の符号が変わる値または行が 0 になる値を調べる。行が 0 になる場合には、その一つ上の行から補助多項式を作り、$s=j\omega$ 上の交点を求める。この計算により、根軌跡の図だけでは読みにくい安定限界ゲインを代数的に得られる。
+
+複素極から根軌跡が出発する角度も角度条件から決まる。複素極 $p_k$ の近くで
+\begin{equation}
+  s=p_k+\rho e^{j\theta_d},
+  \qquad \rho>0
+\end{equation}
+とおくと、$s-p_k$ の偏角だけが未知の出発角 $\theta_d$ である。$\rho\to0$ の極限で角度条件を使うと
+\begin{equation}
+  \theta_d
+  =\pi
+  +\sum_{j=1}^{m}\angle(p_k-z_j)
+  -\sum_{\substack{i=1\\i\ne k}}^{n}\angle(p_k-p_i)
+  \pmod{2\pi}
+\end{equation}
+を得る。角度は正の実軸から反時計回りを正として測る。共役な下側の極では、実係数系なら出発角も共役対称になる。
+
+\begin{example}[複素極を含む四次系の根軌跡]
+無次元化された開ループ
+\begin{equation}
+  G(s)=\frac{1}{s(s+4)(s^2+2s+5)}
+\end{equation}
+を考える。実機のゲインには単位が付くが、ここでは根軌跡の幾何を示すため、時間とゲインを正規化して扱う。開ループ極は
+\begin{equation}
+  0,\qquad -4,\qquad -1+2j,\qquad -1-2j
+\end{equation}
+であり、有限零点はない。閉ループ特性方程式は
+\begin{align}
+  1+KG(s)&=0,\\
+  s(s+4)(s^2+2s+5)+K&=0
+\end{align}
+である。多項式を展開すると
+\begin{equation}
+  s^4+6s^3+13s^2+20s+K=0
+\end{equation}
+となる。
+
+実軸上では、区間 $(-4,0)$ にある点の右側には実極 $0$ が 1 個あるため、この区間に根軌跡が存在する。$0$ より右側では右側の実極・実零点の数が 0 個、$-4$ より左側では 2 個なので、どちらも根軌跡ではない。
+
+有限零点がないので、4 本すべての枝が無限遠へ向かう。漸近線の重心は
+\begin{equation}
+  \sigma_a=
+  \frac{0+(-4)+(-1+2j)+(-1-2j)}{4}
+  =-\frac{3}{2}
+\end{equation}
+である。漸近線の角度は
+\begin{equation}
+  45^\circ,\quad 135^\circ,\quad 225^\circ,\quad 315^\circ
+\end{equation}
+である。したがって十分大きい $K$ では、二本の枝は右半平面へ向かう漸近線に近づく。
+
+分岐点候補は
+\begin{equation}
+  K(s)=-(s^4+6s^3+13s^2+20s)
+\end{equation}
+の停留点から求める。
+\begin{align}
+  \frac{\dd K}{\dd s}
+  &=-(4s^3+18s^2+26s+20)=0,\\
+  4s^3+18s^2+26s+20&=0
+\end{align}
+である。この三次方程式の実根のうち、根軌跡区間 $(-4,0)$ にあるものは
+\begin{equation}
+  s_b\simeq -2.826
+\end{equation}
+であり、このとき
+\begin{equation}
+  K_b=K(s_b)\simeq 24.33
+\end{equation}
+である。したがって実極 $0$ と $-4$ から出発した二本の枝は、$K\simeq24.33$ で実軸上の $s\simeq-2.826$ に集まってから複素平面へ出る。
+
+虚軸交差を求めるため、特性多項式
+\begin{equation}
+  s^4+6s^3+13s^2+20s+K
+\end{equation}
+の Routh 表を作る。
+\begin{equation}
+\begin{array}{c|ccc}
+s^4 & 1 & 13 & K\\
+s^3 & 6 & 20 & 0\\
+s^2 & 29/3 & K & 0\\
+s^1 & 20-\dfrac{18K}{29} & 0 & 0\\
+s^0 & K & 0 & 0
+\end{array}
+\end{equation}
+第 1 列が正である条件は
+\begin{equation}
+  K>0,\qquad 20-\frac{18K}{29}>0
+\end{equation}
+である。よって閉ループは
+\begin{equation}
+  0<K<\frac{290}{9}
+\end{equation}
+で安定であり、$K=290/9$ で虚軸を横切る。このとき $s^1$ 行が 0 になるので、$s^2$ 行から補助多項式
+\begin{equation}
+  \frac{29}{3}s^2+K=0
+\end{equation}
+を作る。$K=290/9$ を代入すると
+\begin{equation}
+  s^2=-\frac{10}{3}
+\end{equation}
+であり、交点は
+\begin{equation}
+  s=\pm j\sqrt{\frac{10}{3}}
+\end{equation}
+である。
+
+最後に、上側の複素極 $p_k=-1+2j$ からの出発角を求める。零点はない。ほかの極から $p_k$ へ向かうベクトルの角度は
+\begin{align}
+  \angle\{(-1+2j)-0\}&\simeq116.6^\circ,\\
+  \angle\{(-1+2j)-(-4)\}&\simeq33.7^\circ,\\
+  \angle\{(-1+2j)-(-1-2j)\}&=90^\circ
+\end{align}
+である。これらの和は約 $240.3^\circ$ であるから
+\begin{equation}
+  \theta_d
+  =180^\circ-240.3^\circ
+  \simeq -60.3^\circ
+\end{equation}
+となる。上側の複素極から出る枝は正の実軸から見て約 $-60^\circ$ の方向へ出発し、下側の複素極から出る枝はその共役対称として約 $+60^\circ$ の方向へ出発する。
+
+この例では、$K=0$ の極配置、実軸区間、漸近線、分岐点、虚軸交差、複素極の出発角がすべて同じ特性方程式から計算できる。特に Routh 表から $K=290/9$ を越えると閉ループ極が右半平面へ入ることが分かるため、根軌跡の作図結果は安定なゲイン範囲の計算と合わせて読む。
+\end{example}
+
+\subsection{感度と相補感度}
+
+閉ループ \weq{closed-loop} の開ループを $L(s)=C(s)G(s)$ とおく。単位負帰還の式
+\begin{equation}
+  u=C(r-y)
+\end{equation}
+と対象の式 $y=Gu$ を組み合わせると、
+\begin{align}
+  y&=GC(r-y),\\
+  (1+GC)y&=GC\,r
+\end{align}
+である。したがって目標値から出力への伝達は
 \begin{equation}
   T(s)=\frac{L(s)}{1+L(s)}
 \end{equation}
-であり、感度関数は
+である。この $T(s)$ を相補感度関数という。感度関数は
 \begin{equation}
   S(s)=\frac{1}{1+L(s)}
 \end{equation}
@@ -87,21 +1066,195 @@
 \end{equation}
 を満たす。
 
-出力側外乱が加わると、その影響はおおむね $S(s)$ を通る。低周波で外乱を消したければ $\abs{S(j\omega)}$ を小さくしたい。そのためには $\abs{L(j\omega)}$ を大きくする。一方、測定ノイズは $T(s)$ を通って出力や入力へ入るため、高周波では $\abs{T(j\omega)}$ を小さくしたい。低周波で大きな $L$、高周波で小さな $L$ という形が望まれる理由はここにある。
+\subsubsection{目標値・外乱・測定ノイズの伝達経路}
 
-モデル誤差を乗法的不確かさとして
+感度関数と相補感度関数は、単なる記号ではなく、閉ループ内の信号経路を分けるための基本量である。入力側外乱 $d_u$、出力側外乱 $d_y$、測定ノイズ $n$ を
+\begin{align}
+  y&=G(u+d_u)+d_y,\\
+  y_m&=y+n,\\
+  u&=C(r-y_m)
+\end{align}
+で定義する。ここで $y_m$ は制御器に戻される測定値であり、$r$ は目標値である。上式を消去すると
+\begin{align}
+  y&=T r+G S d_u+S d_y-T n,\\
+  e_y&=r-y=S r-G S d_u-S d_y+T n,\\
+  u&=C S r-T d_u-C S d_y-C S n
+\end{align}
+を得る。符号は加え方の規約に依存するが、振幅の議論では $\abs{S}$、$\abs{T}$、$\abs{GS}$、$\abs{CS}$ が重要である。
+
+低周波で $\abs{L(j\omega)}\gg1$ なら
 \begin{equation}
-  G_{real}(s)=G(s)\{1+W(s)\Delta(s)\},\qquad \abs{\Delta(j\omega)}\le 1
+  S(j\omega)\simeq \frac{1}{L(j\omega)},\qquad
+  T(j\omega)\simeq 1
 \end{equation}
-と書くと、ロバスト安定性の典型的な条件は
+である。したがって目標値は出力へよく伝わり、出力側外乱は $S$ により抑制される。一方、測定ノイズは出力へ $-T$ を通って現れるため、測定ノイズが大きい周波数帯で $T\simeq1$ にしておくと出力が測定ノイズを追いやすい。高周波で $\abs{L(j\omega)}\ll1$ なら
 \begin{equation}
-  \abs{W(j\omega)T(j\omega)}<1
+  S(j\omega)\simeq1,\qquad
+  T(j\omega)\simeq L(j\omega)
 \end{equation}
-である。速くしたいからといって帯域を上げ続けると、高周波の未モデル dynamics やむだ時間にぶつかる。よい制御は、強く押す周波数と引く周波数を選ぶ技術である。
+であり、測定ノイズから出力への伝達は小さくなるが、出力側外乱の抑制は弱くなる。ループ整形では、外乱や目標値の主成分がある低周波で $\abs{S}$ を下げ、測定ノイズや未モデル化共振がある高周波で $\abs{T}$ を下げるように $L$ の大きさと位相を選ぶ。
 
-\section{外乱抑制とフィードフォワード}
+\subsubsection{モデル不確かさとロバスト安定性}
 
-フィードバックは偏差が出てから動く。もし外乱や目標値の変化を事前に測れるなら、フィードフォワードを加えることで偏差を小さくできる。対象が $Y=G U+G_dD$ と書け、外乱 $D$ が測れるなら
+モデル $G(s)$ と実対象 $G_{\mathrm{p}}(s)$ が完全には一致しないとき、閉ループ安定性は名目モデルだけでは判断できない。乗法的不確かさは
+\begin{equation}
+  G_{\mathrm{p}}(s)=G(s)\{1+W_m(s)\Delta_m(s)\},
+  \qquad
+  \abs{\Delta_m(j\omega)}\le 1
+\end{equation}
+と表す。$W_m$ は周波数ごとの相対誤差の上限を表す重みであり、無次元である。このとき実対象を含む閉ループ特性方程式は
+\begin{align}
+  1+C(s)G_{\mathrm{p}}(s)
+  &=1+L(s)+L(s)W_m(s)\Delta_m(s)\\
+  &=(1+L(s))
+    \{1+W_m(s)T(s)\Delta_m(s)\}
+\end{align}
+である。名目閉ループが安定であり、すべての周波数で
+\begin{equation}
+  \abs{W_m(j\omega)T(j\omega)}<1
+\end{equation}
+が成り立つなら、$\abs{\Delta_m}\le1$ の範囲で第 2 因子は 0 にならない。これは小ゲイン定理に基づく十分条件であり、入門的には「相対モデル誤差が大きい周波数では相補感度 $T$ を小さく保つ」という設計指針として読める。ナイキスト線図でいえば、モデル誤差によって開ループ点が動いても、点 $-1$ に届かないだけの距離を保つ条件である。
+
+加法的不確かさは、絶対誤差を直接
+\begin{equation}
+  G_{\mathrm{p}}(s)=G(s)+W_a(s)\Delta_a(s),
+  \qquad
+  \abs{\Delta_a(j\omega)}\le1
+\end{equation}
+と書く。$W_a$ は対象の伝達関数と同じ単位を持つ。特性方程式は
+\begin{align}
+  1+C(s)G_{\mathrm{p}}(s)
+  &=1+L(s)+C(s)W_a(s)\Delta_a(s)\\
+  &=(1+L(s))
+    \{1+C(s)S(s)W_a(s)\Delta_a(s)\}
+\end{align}
+であるから、対応する十分条件は
+\begin{equation}
+  \abs{C(j\omega)S(j\omega)W_a(j\omega)}<1
+\end{equation}
+である。乗法的不確かさは高周波の未モデル化極、柔軟モード、むだ時間のような相対誤差を扱いやすく、加法的不確かさは低周波のゲイン誤差や未測定の並列経路を絶対誤差として扱いやすい。
+
+\subsubsection{Bode の感度積分とウォーターベッド効果}
+
+$S+T=1$ であるため、同じ周波数で $S$ と $T$ を同時に任意に小さくすることはできない。さらに安定なフィードバックには、周波数全体にわたる制約がある。たとえば、閉ループが安定で、開ループが有理関数で、感度積分の標準的な仮定を満たすとき、Bode の感度積分は概略
+\begin{equation}
+  \int_0^\infty \log\abs{S(j\omega)}\,\dd\omega
+  =\pi\sum_{p_i\in\mathbb{C}_+}\operatorname{Re}p_i
+\end{equation}
+と書ける。和は開ループの右半平面極 $p_i$ について取る。開ループが安定で右半平面極を持たない場合、右辺は 0 になる。したがって、ある周波数帯で $\abs{S}<1$ として外乱を抑えると、別の周波数帯では $\abs{S}>1$ となる領域が生じる。この性質をウォーターベッド効果という。不安定極がある場合には右辺が正になり、感度の盛り上がりをより強く要求する。
+
+この積分式は、入門段階では厳密な設計公式というより、ループ整形の限界を示す原理として使う。低周波で外乱抑制を強めるほど、交差周波数付近の感度ピーク
+\begin{equation}
+  M_s=\max_{\omega\ge0}\abs{S(j\omega)}
+\end{equation}
+が大きくなりやすい。$M_s$ が大きいことは、ナイキスト線図が点 $-1$ に近づくことと同じ意味を持ち、モデル誤差、外乱、パラメータ変動に対する余裕が小さいことを表す。
+
+\wfig{frequency-design-examples} 下段は、開ループ
+\begin{equation}
+  L_K(s)=\frac{K}{s(s+1)}
+\end{equation}
+で $K=0.3,1,3$ を比較したものである。$K$ を大きくすると低周波の $\abs{S}$ は下がり、出力側外乱や低周波の追従誤差は抑えやすくなる。一方で、交差周波数付近の $M_s$ は大きくなり、$\abs{T}$ が $0\,\mathrm{dB}$ 近くに残る帯域も高周波側へ広がる。測定ノイズや未モデル化の高周波モードがその帯域にある場合、低周波の性能改善がロバスト性やノイズ感度の悪化として戻ってくる。
+
+\begin{figure}[tbp]
+\centering
+\includegraphics[width=0.96\linewidth,bb=0 0 1296 1224]{figures/frequency_design_examples.png}
+\caption{ナイキスト線図、根軌跡、感度関数を同じ周波数設計の確認図として並べた例。上左は不安定開ループ極 $P=1$ を持つ $L_K(s)=K/(s-1)$ のゲイン変化で、$K>1$ だけが点 $-1$ を反時計回りに 1 回囲み閉ループが安定になる。上右は三次開ループ $G(s)=1/\{s(s+2)(s+4)\}$ の根軌跡で、$0<K<48$ が安定範囲、$K=48$ で虚軸を横切る。下は $L_K(s)=K/\{s(s+1)\}$ の $S$ と $T$ で、ゲインを上げるほど低周波の外乱抑制は強くなるが、感度ピークと相補感度の通過帯域が増える。}
+\label{fig:frequency-design-examples}
+\end{figure}
+
+\begin{practice}[周波数設計図による安定性と感度の確認]
+\wfig{frequency-design-examples} を用いる。上左で $K=0.6,1,2$ の各曲線について $N$、$P$、$Z$ を対応させ、上右で $K=48$ が安定限界になることを Routh 表の第一列と結びつけよ。最後に、下段の $K=0.3,1,3$ を比べ、低周波の $\abs{S}$、感度ピーク $M_s$、高周波側の $\abs{T}$ のどれが改善し、どれが悪化するかを一文ずつ述べよ。
+\end{practice}
+
+\subsubsection{むだ時間による位相損失}
+
+むだ時間 $\tau_d$ を含む対象は、名目対象に $e^{-s\tau_d}$ が掛かった形で表される。周波数応答では
+\begin{equation}
+  \abs{e^{-j\omega\tau_d}}=1,\qquad
+  \angle e^{-j\omega\tau_d}=-\omega\tau_d
+\end{equation}
+であり、ゲインを変えずに位相だけを遅らせる。ゲイン交差周波数 $\omega_{gc}$ の近くで安定余裕が決まる場合、位相余裕 $\phi_m$ をラジアンで表せば、むだ時間余裕の近似は
+\begin{equation}
+  \tau_{d,\max}\simeq\frac{\phi_m}{\omega_{gc}}
+\end{equation}
+である。交差周波数を高くして速い応答を得るほど、同じ位相余裕から得られるむだ時間余裕は短くなる。
+
+むだ時間は乗法的不確かさとしても読める。むだ時間を無視した名目モデル $G(s)$ に対し、実対象が $G(s)e^{-s\tau_d}$ であるなら
+\begin{equation}
+  G(s)e^{-s\tau_d}
+  =G(s)\{1+(e^{-s\tau_d}-1)\}
+\end{equation}
+である。したがって乗法誤差の大きさは
+\begin{equation}
+  \abs{e^{-j\omega\tau_d}-1}
+  =2\abs{\sin\frac{\omega\tau_d}{2}}
+  \simeq \omega\tau_d
+  \qquad (\omega\tau_d\ll1)
+\end{equation}
+となる。高周波ほどむだ時間の相対誤差は大きくなるため、ロバスト安定条件 $\abs{W_mT}<1$ は高周波で $T$ を小さくする必要を与える。複数のゲイン交差や大きな共振ピークがある場合には、上の近似式だけでなくナイキスト線図または閉ループ極で確認する。
+
+\begin{example}[一次対象の感度とむだ時間余裕]
+一次対象
+\begin{equation}
+  G(s)=\frac{1}{s+1}
+\end{equation}
+を積分器 $C(s)=1/s$ で単位負帰還制御する。開ループは
+\begin{equation}
+  L(s)=\frac{1}{s(s+1)}
+\end{equation}
+であり、
+\begin{equation}
+  S(s)=\frac{s(s+1)}{s(s+1)+1},
+  \qquad
+  T(s)=\frac{1}{s(s+1)+1}
+\end{equation}
+である。低周波 $\omega=0.1\,\mathrm{rad/s}$ では $\abs{L(j\omega)}\simeq9.95$ なので、$\abs{S(j\omega)}$ はおよそ $0.1$、$\abs{T(j\omega)}$ はおよそ 1 である。目標値追従と低周波外乱抑制はよいが、同じ低周波に含まれる測定ノイズは出力へ通りやすい。
+
+交差周波数は
+\begin{equation}
+  \frac{1}{\omega\sqrt{1+\omega^2}}=1
+\end{equation}
+から
+\begin{equation}
+  \omega_{gc}
+  =\sqrt{\frac{\sqrt{5}-1}{2}}
+  \simeq0.786\,\mathrm{rad/s}
+\end{equation}
+である。このとき開ループ位相は
+\begin{equation}
+  \angle L(j\omega_{gc})
+  =-90^\circ-\tan^{-1}(0.786)
+  \simeq-128.2^\circ
+\end{equation}
+なので、位相余裕は
+\begin{equation}
+  \phi_m\simeq51.8^\circ
+  =0.904\,\mathrm{rad}
+\end{equation}
+である。むだ時間余裕の近似は
+\begin{equation}
+  \tau_{d,\max}\simeq\frac{0.904}{0.786}
+  \simeq1.15\,\mathrm{s}
+\end{equation}
+となる。
+
+交差周波数付近では感度が盛り上がる。たとえば $\omega=1\,\mathrm{rad/s}$ では
+\begin{equation}
+  L(j)=\frac{1}{j(1+j)}=-\frac{1}{2}-\frac{1}{2}j
+\end{equation}
+であるから
+\begin{equation}
+  \abs{S(j)}
+  =\frac{1}{\abs{1+L(j)}}
+  =\sqrt{2},\qquad
+  \abs{T(j)}=1
+\end{equation}
+となる。低周波で $\abs{S}$ を下げた代償として、交差周波数付近に $\abs{S}>1$ の帯域が現れている。乗法誤差の上限がこの周波数帯で $\abs{W_m}\le0.3$ なら、少なくともこの点では $\abs{W_mT}\le0.3<1$ であり、乗法誤差だけから見ると余裕がある。一方、むだ時間が $1\,\mathrm{s}$ に近づくと交差周波数で約 $45^\circ$ の位相を失い、残りの位相余裕は小さい。応答を速くするためにゲインを上げれば $\omega_{gc}$ が上がり、同じむだ時間に対する位相損失はさらに大きくなる。
+\end{example}
+
+\subsection{外乱抑制とフィードフォワード}
+
+外乱または目標値の変化が測定可能である場合、フィードフォワードを加えることで偏差伝達を低減できる。対象が $Y=G U+G_dD$ と書け、外乱 $D$ が測定可能であるなら
 \begin{equation}
   U=C(R-Y)+F_dD
 \end{equation}
@@ -109,17 +1262,17 @@
 \begin{equation}
   F_d(s)=-G(s)^{-1}G_d(s)
 \end{equation}
-を選ぶ。ただし $G^{-1}$ が不安定、非プロパー、または不確かな場合はそのまま使えない。実際には低周波成分だけを補償したり、飽和を考えて大きさを制限したりする。
+を選ぶ。ただし $G^{-1}$ が不安定、非プロパー、または不確かな場合は直接実装できない。その場合には、低周波成分のみを補償する近似や入力制限を含む定式化を用いる。
 
 目標値フィードフォワードも同じ考え方である。位置制御で目標軌道 $r(t)$ の速度や加速度が分かっていれば、必要な力を
 \begin{equation}
   u_{ff}=m\ddot{r}+c\dot{r}+kr
 \end{equation}
-として先に入れ、フィードバックはモデル誤差と外乱を補う役に回せる。制御器は一つの大きな公式ではなく、モデルに基づく先回りと、誤差に基づく修正の組み合わせとして考えると見通しがよい。
+として与え、フィードバックでモデル誤差と外乱に起因する偏差を補償する。
 
-\section{周波数領域を支える定理}
+\subsection{周波数領域を支える定理}
 
-周波数応答の説明で最も省略されやすいのは、「なぜ $s=j\omega$ を代入してよいのか」である。ここではその点を名前付きの事実として確認する。
+以下では、正弦波定常応答において伝達関数へ $s=j\omega$ を代入する根拠を示す。
 
 \begin{theorem}[正弦波定常応答の定理]
 安定な線形時不変系の伝達関数を $G(s)$ とする。入力 $u(t)=\operatorname{Re}\{Ue^{j\omega t}\}$ を加えると、過渡応答が消えた後の出力は
@@ -180,14 +1333,14 @@
 \end{derivation}
 
 \begin{theorem}[ナイキスト安定判別]
-開ループ $L(s)$ の右半平面極の数を $P$、ナイキスト線図が点 $-1$ を時計回りに囲む回数を $N$ とする。このとき閉ループ特性方程式 $1+L(s)=0$ の右半平面根の数 $Z$ は
+単位負帰還系の開ループ $L(s)$ が虚軸上に極を持たず、$1+L(j\omega)\ne0$ であるとする。右半平面を時計回りに囲むナイキスト経路を用い、開ループ $L(s)$ の右半平面極の数を $P$、ナイキスト線図が点 $-1$ を時計回りに囲む回数を $N$ と数える。このとき閉ループ特性方程式 $1+L(s)=0$ の右半平面根の数 $Z$ は
 \begin{equation}
   Z=N+P
 \end{equation}
 である。閉ループ安定性には $Z=0$ が必要十分である。
 \end{theorem}
 
-この定理は複素解析の偏角原理を使う。本文で重要なのは、ナイキスト線図が単なる図ではなく、閉ループ極の個数を数えるための図だということである。
+この定理は複素解析の偏角原理に基づく。反時計回りの囲みを正に数える流儀では符号が変わるため、ナイキスト判別を使うときは $N$ の符号規約を必ず明示する。ナイキスト線図は、閉ループ極の個数を周波数応答から決定するために用いられる。
 
 \begin{formula}[根軌跡の角度条件と大きさ条件]
 閉ループ特性方程式を $1+KG(s)=0$ とする。$K>0$ の根軌跡上の点 $s$ は

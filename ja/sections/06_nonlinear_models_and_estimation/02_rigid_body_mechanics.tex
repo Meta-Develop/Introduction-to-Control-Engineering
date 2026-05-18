@@ -1,0 +1,931 @@
+\subsection{ニュートン・オイラー法}
+
+ニュートン・オイラー法は、運動量と角運動量の収支から運動方程式を作る方法である。力が質点の並進運動を変え、モーメントが剛体の回転運動を変える、という二つの事実を同じ座標規約のもとで書く。制御でこの方法を使うときに重要なのは、公式の形そのものよりも、力、モーメント、速度、角速度をどの座標系の成分で表しているかをそろえることである。
+
+\subsubsection{質点の運動量方程式}
+
+質量 $m>0$ [kg] の質点を考える。慣性座標系 $\{I\}$ で表した位置を $p^I$ [m]、速度を
+\begin{equation}
+  v^I=\dot{p}^I
+\end{equation}
+とする。質量が時間で変わらず、相対論的な速度ではなく、$\{I\}$ が十分よい慣性系として扱えると仮定すれば、線形運動量は
+\begin{equation}
+  \ell^I=mv^I
+\end{equation}
+である。ニュートンの第二法則は
+\begin{equation}
+  \dot{\ell}^I=F^I
+\end{equation}
+なので、質量一定では
+\begin{equation}
+  m\dot{v}^I=F^I,\qquad
+  \dot{p}^I=v^I
+\end{equation}
+となる。ここで $F^I$ [N] は慣性座標系成分で表した合力であり、$1\,\mathrm{N}=1\,\mathrm{kg\,m/s^2}$ である。
+
+重力加速度を $g^I$ [m/s$^2$]、重力以外の外力を $f^I$ [N] と分けるなら
+\begin{equation}
+  m\dot{v}^I=mg^I+f^I
+\end{equation}
+である。外力が物体固定座標系 $\{B\}$ の成分 $f^B$ として与えられるなら、前節の座標変換を使って
+\begin{equation}
+  f^I=R^I_B f^B
+\end{equation}
+と変換してから並進方程式へ入れる。$m\dot{v}^I=mg^I+f^B$ と書くと、慣性座標系の加速度と物体固定座標系の力を混ぜることになり、次元は合っていても座標成分としては誤りである。
+
+\subsubsection{重心並進と剛体の仮定}
+
+剛体は、質点の集まりの相対位置が変わらない理想化である。剛体全体の並進運動は重心で代表させる。重心位置を $p^I$、重心速度を $v^I$ とすれば、重心に関する並進方程式は質点と同じ形で
+\begin{equation}
+  m\dot{v}^I=F^I
+\end{equation}
+である。ただし $F^I$ は剛体に作用するすべての外力の合力であり、重心まわりの内力は打ち消し合うと仮定している。
+
+この単純な形は、原点を重心に置いていることに依存する。重心以外の点まわりに角運動量や運動エネルギーを書くと、並進速度と角速度の交差項が現れる。以下では、まず重心 $C$ に固定した物体固定座標系 $\{B\}$ を使い、質量分布が剛体内で変化せず、$\{B\}$ が剛体と一緒に回ると仮定する。
+
+\subsubsection{慣性テンソル、角運動量、回転エネルギー}
+
+剛体の回転しにくさは、質量だけでは決まらない。重心から遠い場所に質量があるほど、同じ角加速度を作るために大きなモーメントが必要になる。重心から微小質量要素への位置を
+\begin{equation}
+  r^B=
+  \begin{bmatrix}
+    x&y&z
+  \end{bmatrix}^\T
+\end{equation}
+とし、単位行列を $I_3$ と書く。角速度を $\omega^B$ [rad/s] とすると、重心に対する微小質量要素の相対速度は $\omega^B\times r^B$ である。したがって、重心まわり角運動量の微小成分は
+\begin{equation}
+  \dd h_C^B
+  =
+  r^B\times\left((\omega^B\times r^B)\,\dd m\right)
+\end{equation}
+である。ベクトル三重積
+\begin{equation}
+  r\times(\omega\times r)
+  =
+  \left((r^\T r)I_3-rr^\T\right)\omega
+\end{equation}
+を用いると、剛体全体の角運動量は
+\begin{align}
+  h_C^B
+  &=
+  \int_{\mathcal{B}}
+    r^B\times(\omega^B\times r^B)\,\dd m\\
+  &=
+  \left[
+  \int_{\mathcal{B}}
+    \left((r^B)^\T r^B\,I_3-r^B(r^B)^\T\right)\,\dd m
+  \right]\omega^B
+\end{align}
+となる。ここで
+\begin{equation}
+  J_C^B
+  =
+  \int_{\mathcal{B}}
+    \left((r^B)^\T r^B\,I_3-r^B(r^B)^\T\right)\,\dd m
+\end{equation}
+を重心まわり慣性テンソルという。慣性テンソルを一般記号 $I$ で書けば、角運動量と角速度の関係は
+\begin{equation}
+  h=I\omega
+\end{equation}
+であり、本節の座標付き記号では
+\begin{equation}
+  h_C^B=J_C^B\omega^B
+\end{equation}
+である。$J_C^B$ の単位は [kg\,m$^2$]、$h_C^B$ の単位は [kg\,m$^2$/s]、モーメント $\tau^B$ の単位は [N\,m]$=$[kg\,m$^2$/s$^2$] である。rad は無次元として扱うため、$\omega^B$ の次元は $1/\mathrm{s}$ である。
+
+成分表示を使うと、慣性テンソルは
+\begin{equation}
+  J_C^B=
+  \begin{bmatrix}
+    \displaystyle\int(y^2+z^2)\,\dd m&
+    \displaystyle-\int xy\,\dd m&
+    \displaystyle-\int xz\,\dd m\\[1.0ex]
+    \displaystyle-\int xy\,\dd m&
+    \displaystyle\int(x^2+z^2)\,\dd m&
+    \displaystyle-\int yz\,\dd m\\[1.0ex]
+    \displaystyle-\int xz\,\dd m&
+    \displaystyle-\int yz\,\dd m&
+    \displaystyle\int(x^2+y^2)\,\dd m
+  \end{bmatrix}
+\end{equation}
+である。対角成分は各軸まわりの慣性モーメントであり、非対角成分に現れる
+\begin{equation}
+  P_{xy}=\int xy\,\dd m,\qquad
+  P_{xz}=\int xz\,\dd m,\qquad
+  P_{yz}=\int yz\,\dd m
+\end{equation}
+を慣性乗積という。ここでは慣性乗積を正の積分量として定義したので、慣性テンソルの非対角成分は $-P_{xy}$、$-P_{xz}$、$-P_{yz}$ になる。慣性乗積は、選んだ座標軸に対して質量分布が斜めに偏っていることを表す。対称面が座標平面と一致すれば対応する慣性乗積は 0 になり、角速度の各成分と角運動量の各成分が混ざりにくくなる。
+
+$J_C^B$ は実対称行列である。質量が一つの直線上だけに集中する退化的な場合を除けば正定値であり、任意の $\omega^B\ne0$ に対して
+\begin{equation}
+  (\omega^B)^\T J_C^B\omega^B>0
+\end{equation}
+を満たす。実対称行列のスペクトル分解により、直交行列 $Q$ を選んで
+\begin{equation}
+  Q^\T J_C^B Q
+  =
+  \operatorname{diag}(J_1,J_2,J_3)
+\end{equation}
+と対角化できる。$Q$ の列ベクトルは慣性主軸、$J_1,J_2,J_3$ は主慣性モーメントである。物体固定座標系を主軸に合わせれば慣性乗積は 0 になり、
+\begin{equation}
+  h_i=J_i\omega_i,\qquad i=1,2,3
+\end{equation}
+と成分ごとに読める。ただし、二つの主慣性モーメントが等しい場合、その二次元部分空間内の主軸の取り方は一意でない。
+
+同じ定義から回転運動エネルギーも得られる。重心まわりの回転だけを見れば
+\begin{align}
+  T_\mathrm{rot}
+  &=
+  \frac{1}{2}
+  \int_{\mathcal{B}}
+    \norm{\omega^B\times r^B}^2\,\dd m\\
+  &=
+  \frac{1}{2}(\omega^B)^\T J_C^B\omega^B\\
+  &=
+  \frac{1}{2}(\omega^B)^\T h_C^B
+\end{align}
+である。単位は [J]$=$[kg\,m$^2$/s$^2$] である。重心の並進速度を $v_C^I$ とすれば、剛体全体の運動エネルギーは
+\begin{equation}
+  T=
+  \frac{1}{2}m\norm{v_C^I}^2
+  +
+  \frac{1}{2}(\omega^B)^\T J_C^B\omega^B
+\end{equation}
+となる。重心を原点に取ったため、並進と回転の交差項は現れない。
+
+慣性テンソルを重心以外の点 $O$ まわりで使いたい場合は、平行軸の定理を用いる。重心 $C$ から点 $O$ へのベクトルを $d^B$ [m] とし、座標軸の向きは変えないとする。このとき
+\begin{equation}
+  J_O^B
+  =
+  J_C^B
+  +
+  m\left((d^B)^\T d^B\,I_3-d^B(d^B)^\T\right)
+\end{equation}
+である。点 $O$ が重心から離れるほど、その点まわりの慣性テンソルは大きくなる。これは、同じ角速度でも質量中心が点 $O$ のまわりを並進するためである。
+
+物体固定座標系 $\{B\}$ が剛体に固定されていれば、$J_C^B$ は時間で変わらない。以後、重心まわりであることが明らかなときは $J_C^B$ を $J^B$ と略記する。慣性座標系で見た角運動量の時間微分は外モーメントに等しいので、
+\begin{equation}
+  \left(\frac{\dd h}{\dd t}\right)^I=\tau^I
+\end{equation}
+である。これを回転する $\{B\}$ 成分で表すと、輸送定理により
+\begin{equation}
+  \left(\frac{\dd h}{\dd t}\right)^B
+  =\dot{h}^B+\omega^B\times h^B
+\end{equation}
+となる。したがって、外モーメントを $\{B\}$ 成分 $\tau^B$ [N\,m] で表せば
+\begin{align}
+  \tau^B
+  &=\dot{h}^B+\omega^B\times h^B\\
+  &=J^B\dot{\omega}^B+\omega^B\times J^B\omega^B
+\end{align}
+を得る。これが物体固定座標系で書いた剛体回転のオイラー方程式である。第二項 $\omega^B\times J^B\omega^B$ は、回転する座標系で角運動量ベクトルの向きが変わることから現れる。$J^B$ が単位行列の定数倍である球対称剛体なら、この項は $\omega^B\times c\omega^B=0$ となるが、一般の剛体では角速度と角運動量が平行とは限らない。
+
+主軸座標で $J^B=\operatorname{diag}(J_1,J_2,J_3)$ と書ける場合、オイラー方程式は
+\begin{align}
+  J_1\dot{\omega}_1+(J_3-J_2)\omega_2\omega_3&=\tau_1,\\
+  J_2\dot{\omega}_2+(J_1-J_3)\omega_3\omega_1&=\tau_2,\\
+  J_3\dot{\omega}_3+(J_2-J_1)\omega_1\omega_2&=\tau_3
+\end{align}
+となる。主軸を使うと慣性テンソルは対角化されるが、角速度成分の積による結合は残る。この結合が、姿勢制御、ジャイロ効果、回転体の安定性解析で重要になる。
+
+\begin{example}[主軸からずれた座標系での角運動量と回転エネルギー]
+重心まわりの主軸座標系 $\{P\}$ で
+\begin{equation}
+  J^P=\operatorname{diag}(0.02,\ 0.08,\ 0.10)\ \mathrm{kg\,m^2}
+\end{equation}
+である剛体を考える。物体固定座標系 $\{B\}$ の $x$ 軸と $y$ 軸が、主軸から $45^\circ$ 回転しているとする。このとき $\{B\}$ 成分の慣性テンソルは
+\begin{equation}
+  J^B=
+  \begin{bmatrix}
+    0.05&-0.03&0\\
+    -0.03&0.05&0\\
+    0&0&0.10
+  \end{bmatrix}
+  \ \mathrm{kg\,m^2}
+\end{equation}
+であり、$xy$ 慣性乗積は $P_{xy}=0.03$ [kg\,m$^2$] である。角速度が
+\begin{equation}
+  \omega^B=
+  \begin{bmatrix}
+    10\\0\\0
+  \end{bmatrix}
+  \ \mathrm{rad/s}
+\end{equation}
+なら、角運動量は
+\begin{equation}
+  h^B=J^B\omega^B
+  =
+  \begin{bmatrix}
+    0.50\\-0.30\\0
+  \end{bmatrix}
+  \ \mathrm{kg\,m^2/s}
+\end{equation}
+である。角速度は $\{B\}$ の $x$ 軸方向だけを向いているが、角運動量には $y$ 成分が現れる。これは、$\{B\}$ の $x$ 軸が慣性主軸でないためである。
+
+同じ瞬間の回転運動エネルギーは
+\begin{equation}
+  T_\mathrm{rot}
+  =
+  \frac{1}{2}(\omega^B)^\T J^B\omega^B
+  =
+  \frac{1}{2}\cdot 10\cdot0.50
+  =
+  2.5\ \mathrm{J}
+\end{equation}
+である。主軸に沿って座標を取り直せば慣性テンソルは対角行列に戻り、同じ物理量を混合成分なしで表せる。したがって、慣性乗積は剛体そのものだけでなく、選んだ座標軸にも依存する量である。
+\end{example}
+
+\subsubsection{座標系を明示した6自由度状態方程式}
+
+空間剛体の 6 自由度とは、三つの並進自由度と三つの姿勢自由度を合わせた自由度数である。状態ベクトルの成分数が 6 という意味ではない。速度と角速度も状態に含めるので、回転行列で姿勢を表すなら
+\begin{equation}
+  x=\left(p^I,\ v^I,\ R^I_B,\ \omega^B\right)
+\end{equation}
+を状態として扱う。四元数を使う実装では
+\begin{equation}
+  x=
+  \begin{bmatrix}
+    (p^I)^\T&(v^I)^\T&(q^I_B)^\T&(\omega^B)^\T
+  \end{bmatrix}^\T,
+  \qquad
+  \norm{q^I_B}=1
+\end{equation}
+のように書く。これは数値上は 13 成分を持つが、四元数には単位制約があるため、姿勢の独立自由度は 3 である。
+
+重力以外の合力を物体固定座標系成分 $f^B$ [N]、重心まわり合モーメントを $\tau^B$ [N\,m] とする。重力加速度 $g^I$ [m/s$^2$] を含めた 6 自由度剛体モデルは
+\begin{align}
+  \dot{p}^I&=v^I,\\
+  m\dot{v}^I&=mg^I+R^I_B f^B,\\
+  \dot{R}^I_B&=R^I_B[\omega^B]_\times,\\
+  J^B\dot{\omega}^B+\omega^B\times J^B\omega^B&=\tau^B
+  \label{eq:euler-rigid}
+\end{align}
+である。第一式と第二式は慣性座標系での位置と速度の運動、第三式と第四式は物体固定座標系角速度を使った姿勢と回転運動である。$R^I_B f^B$ は、物体固定座標系で作られた合力を慣性座標系へ変換している。一方、回転方程式は $J^B$ が定数として使えるように物体固定座標系で書いている。このように、並進は $\{I\}$、回転は $\{B\}$ で書く混合表現がよく使われるが、各項の成分表示は必ず式ごとに一致させる。
+
+入力 $u$ がそのまま力やモーメントであるとは限らない。アクチュエータの推力、接触力、ばね力、空気抵抗、拘束反力などを合成して $f^B(u,x,t)$ と $\tau^B(u,x,t)$ が作られる。したがって 6 自由度モデルは
+\begin{equation}
+  \dot{x}=f_\mathrm{6dof}(x,u,t)
+\end{equation}
+という非線形状態方程式であり、姿勢による座標変換、角速度の積、入力から力・モーメントへの写像が非線形性の主な発生源になる。
+
+\subsubsection{力とモーメントの入力写像}
+
+複数の外力が作用する場合、各作用点の重心からの位置を $r_i^B$ [m]、その点での力を $f_i^B$ [N]、力以外に直接加わるモーメントを $\tau_i^B$ [N\,m] とする。重心まわりの合力と合モーメントは
+\begin{align}
+  f^B&=\sum_{i=1}^{N_f} f_i^B,\\
+  \tau^B&=\sum_{i=1}^{N_f} r_i^B\times f_i^B
+          +\sum_{i=1}^{N_\tau}\tau_i^B
+\end{align}
+である。力の作用線が重心を通れば $r_i^B\times f_i^B=0$ であり、その力は重心まわりの回転を直接は作らない。反対に、同じ力でも作用点が重心から離れていればモーメントを生む。推力の大きさや向きが入力で変わる場合、$u\mapsto(f^B,\tau^B)$ は一般に非線形写像になる。後で扱う制御配分は、この写像を使って、望ましい合力・合モーメントを複数アクチュエータの入力へ分配する問題である。
+
+\subsubsection{再帰的 Newton-Euler 法の解釈}
+
+多関節機構では、各リンクについて同じ運動量収支を一つずつ書くと式が長くなる。再帰的 Newton-Euler 法は、リンク列に沿って二つの計算を行う。外向き計算では、根元から先端へ角速度、角加速度、重心加速度を伝搬する。内向き計算では、先端から根元へ力とモーメントを戻し、各関節が負担すべき一般化力やトルクを求める。
+
+この方法は、6 自由度剛体方程式と別の物理法則ではない。各リンクに対して
+\begin{equation}
+  F=m a,\qquad
+  \tau=J\dot{\omega}+\omega\times J\omega
+\end{equation}
+を座標変換と作用反作用を保ちながら順に適用している。したがって、単一剛体の 6 自由度モデルを理解しておくと、多リンク機構の再帰計算も、速度・加速度を前へ送り、力・モーメントを後ろへ戻す整理として解釈できる。
+
+\begin{example}[偏心した力を受ける剛体の瞬間加速度]
+質量 $m=2$ [kg] の剛体を考える。姿勢は水平面内のヨー角 $\psi=\pi/6$ [rad] だけ回転しており、$R^I_B=R_z(\psi)$ とする。物体固定座標系で、重心から
+\begin{equation}
+  r^B=
+  \begin{bmatrix}0\\0.2\\0\end{bmatrix}\ \mathrm{m}
+\end{equation}
+の位置に
+\begin{equation}
+  f^B=
+  \begin{bmatrix}4\\0\\0\end{bmatrix}\ \mathrm{N}
+\end{equation}
+の力が作用する。ここでは重力は別途つり合っているか、水平面内の運動だけを見ているとして、$g^I=0$ とおく。
+
+慣性座標系で見た合力は
+\begin{equation}
+  f^I=R_z(\pi/6)f^B
+  =
+  \begin{bmatrix}
+    2\sqrt{3}\\2\\0
+  \end{bmatrix}\ \mathrm{N}
+\end{equation}
+である。したがって重心加速度は
+\begin{equation}
+  \dot{v}^I=\frac{1}{m}f^I
+  =
+  \begin{bmatrix}
+    \sqrt{3}\\1\\0
+  \end{bmatrix}\ \mathrm{m/s^2}
+\end{equation}
+となる。同じ力を $f^B=[4\ 0\ 0]^\T$ のまま $\dot{v}^I$ に代入すると、物体の向きによる加速度方向の変化を失う。
+
+重心まわりのモーメントは
+\begin{equation}
+  \tau^B=r^B\times f^B
+  =
+  \begin{bmatrix}0\\0.2\\0\end{bmatrix}
+  \times
+  \begin{bmatrix}4\\0\\0\end{bmatrix}
+  =
+  \begin{bmatrix}0\\0\\-0.8\end{bmatrix}\ \mathrm{N\,m}
+\end{equation}
+である。慣性テンソルを
+\begin{equation}
+  J^B=\operatorname{diag}(0.1,\ 0.2,\ 0.3)\ \mathrm{kg\,m^2}
+\end{equation}
+とし、その瞬間の角速度が $\omega^B=0$ なら、ジャイロ項は 0 なので
+\begin{equation}
+  \dot{\omega}^B=(J^B)^{-1}\tau^B
+  =
+  \begin{bmatrix}
+    0\\0\\-0.8/0.3
+  \end{bmatrix}\ \mathrm{rad/s^2}
+\end{equation}
+である。この計算から、同じ外力が並進加速度と回転加速度の両方を作り、並進では座標変換 $R^I_B$、回転では作用点の腕 $r^B$ と慣性テンソル $J^B$ が必要になることが分かる。
+\end{example}
+
+\subsection{オイラー・ラグランジュ法}
+
+ニュートン・オイラー法は、力とモーメントを座標軸に分解し、運動量と角運動量の収支から式を作る方法であった。これに対して、拘束の多い機械では、拘束を満たす座標を先に選び、エネルギーと仮想仕事から運動方程式を作る方が短くなることが多い。オイラー・ラグランジュ法は、この目的のための標準的な定式化である。
+
+まず、質点や剛体上の代表点の位置をまとめて $r_1,\ldots,r_N$ とする。各 $r_j$ は三次元なら $\R^3$ のベクトルであり、単位は [m] である。すべての位置成分をそのまま座標にすると自由度は大きいが、棒の長さ、レール、関節、回転軸のような幾何拘束があると、実際に独立に動ける方向は少なくなる。たとえば平面内の単振子では、質点の位置 $(x,y)$ は
+\begin{equation}
+  x^2+y^2=l^2
+\end{equation}
+を満たすため、二つの座標 $(x,y)$ を独立には選べない。この拘束を角度 $\theta$ で解けば
+\begin{equation}
+  x=l\sin\theta,\qquad
+  y=-l\cos\theta
+\end{equation}
+となり、必要な座標は一つになる。このように、拘束を満たす運動を
+\begin{equation}
+  r_j=r_j(q,t),\qquad
+  q=
+  \begin{bmatrix}
+    q_1&\cdots&q_n
+  \end{bmatrix}^\T
+\end{equation}
+と表すとき、$q\in\R^n$ を一般化座標という。$q_i$ の単位は、長さ [m]、角度 [rad]、無次元量など、選んだ座標に依存する。対応する時間微分 $\dot{q}$ を一般化速度という。ここでは、拘束が位置と時間の関係として表され、上のように $q$ で解ける場合を考える。拘束を明示的に解けない場合や接触反力を知りたい場合は、ラグランジュ未定乗数を使う定式化が必要になる。
+
+仮想変位は、時刻 $t$ を固定したまま、拘束を破らない範囲で位置を少しだけ動かす変位である。$q_i$ を $\delta q_i$ だけ変えると、代表点の仮想変位は
+\begin{equation}
+  \delta r_j
+  =
+  \sum_{i=1}^n
+  \frac{\pp r_j}{\pp q_i}\delta q_i
+\end{equation}
+である。実際の時間変化 $\dd r_j$ ではなく、同じ時刻における許される方向だけを見る点が重要である。力 $F_j$ [N] が代表点 $r_j$ に作用すると、仮想仕事は
+\begin{align}
+  \delta W
+  &=
+  \sum_{j=1}^N F_j^\T\delta r_j\\
+  &=
+  \sum_{j=1}^N
+  F_j^\T
+  \left(
+    \sum_{i=1}^n
+    \frac{\pp r_j}{\pp q_i}\delta q_i
+  \right)\\
+  &=
+  \sum_{i=1}^n
+  \left(
+    \sum_{j=1}^N
+    F_j^\T\frac{\pp r_j}{\pp q_i}
+  \right)\delta q_i
+\end{align}
+となる。この係数
+\begin{equation}
+  Q_i=
+  \sum_{j=1}^N
+  F_j^\T\frac{\pp r_j}{\pp q_i}
+\end{equation}
+を $q_i$ に対応する一般化力という。$q_i$ が長さなら $Q_i$ の単位は [N]、$q_i$ が角度なら $Q_i$ の単位は [N\,m] であり、$Q_i\delta q_i$ が仕事 [J] になるように決まる。理想的な拘束反力は、許される仮想変位に対して仕事をしないため、一般化力の式から消える。これが、拘束反力を一つずつ解かずに運動方程式を作れる理由である。
+
+運動エネルギーは、質点であれば
+\begin{equation}
+  T(q,\dot{q},t)
+  =
+  \frac{1}{2}
+  \sum_{j=1}^N
+  m_j\dot{r}_j^\T\dot{r}_j
+\end{equation}
+である。剛体を含む場合は、各剛体について並進の運動エネルギーに加えて、前に導入した角速度と慣性テンソルによる回転エネルギー
+\begin{equation}
+  \frac{1}{2}\omega^\T J\omega
+\end{equation}
+を足せばよい。重力やばねのようにポテンシャルエネルギーで表せる保存力については
+\begin{equation}
+  V=V(q,t)
+\end{equation}
+を定める。ラグランジアンを
+\begin{equation}
+  L(q,\dot{q},t)=T(q,\dot{q},t)-V(q,t)
+\end{equation}
+と定義する。
+
+\begin{derivation}
+拘束を満たす仮想変位に対して、ダランベールの原理は
+\begin{equation}
+  \sum_{j=1}^N
+  \left(F_j-m_j\ddot{r}_j\right)^\T\delta r_j=0
+\end{equation}
+と書ける。これは、力 $F_j$ に慣性力 $-m_j\ddot{r}_j$ を加えると、許される仮想変位に対する仮想仕事が 0 になる、という形でニュートンの運動方程式を書き直したものである。仮想変位の式を代入すると、任意の $\delta q_i$ に対して
+\begin{equation}
+  \sum_{j=1}^N
+  F_j^\T\frac{\pp r_j}{\pp q_i}
+  -
+  \sum_{j=1}^N
+  m_j\ddot{r}_j^\T\frac{\pp r_j}{\pp q_i}
+  =0
+\end{equation}
+が成り立つ。
+
+ここで、運動エネルギーから生じる恒等式を確認する。$r_j=r_j(q,t)$ であるから
+\begin{equation}
+  \frac{\pp \dot{r}_j}{\pp \dot{q}_i}
+  =
+  \frac{\pp r_j}{\pp q_i}
+\end{equation}
+である。したがって
+\begin{equation}
+  \frac{\pp T}{\pp \dot{q}_i}
+  =
+  \sum_{j=1}^N
+  m_j\dot{r}_j^\T
+  \frac{\pp r_j}{\pp q_i}
+\end{equation}
+となる。両辺を時間微分すると
+\begin{equation}
+  \frac{\dd}{\dd t}
+  \frac{\pp T}{\pp \dot{q}_i}
+  =
+  \sum_{j=1}^N
+  m_j\ddot{r}_j^\T
+  \frac{\pp r_j}{\pp q_i}
+  +
+  \sum_{j=1}^N
+  m_j\dot{r}_j^\T
+  \frac{\dd}{\dd t}
+  \left(
+    \frac{\pp r_j}{\pp q_i}
+  \right)
+\end{equation}
+である。一方、滑らかな座標変換では偏微分と時間微分が交換できるので
+\begin{equation}
+  \frac{\pp \dot{r}_j}{\pp q_i}
+  =
+  \frac{\dd}{\dd t}
+  \left(
+    \frac{\pp r_j}{\pp q_i}
+  \right)
+\end{equation}
+であり、
+\begin{equation}
+  \frac{\pp T}{\pp q_i}
+  =
+  \sum_{j=1}^N
+  m_j\dot{r}_j^\T
+  \frac{\dd}{\dd t}
+  \left(
+    \frac{\pp r_j}{\pp q_i}
+  \right)
+\end{equation}
+となる。よって
+\begin{equation}
+  \frac{\dd}{\dd t}
+  \frac{\pp T}{\pp \dot{q}_i}
+  -
+  \frac{\pp T}{\pp q_i}
+  =
+  \sum_{j=1}^N
+  m_j\ddot{r}_j^\T
+  \frac{\pp r_j}{\pp q_i}
+\end{equation}
+が得られる。
+
+保存力がポテンシャル $V(q,t)$ から来るとき、その一般化力は
+\begin{equation}
+  Q_i^\mathrm{c}=-\frac{\pp V}{\pp q_i}
+\end{equation}
+である。保存力以外の力、たとえば入力トルク、モータ力、粘性摩擦、空気抵抗をまとめて $Q_i^\mathrm{nc}$ と書くと
+\begin{equation}
+  \frac{\dd}{\dd t}
+  \frac{\pp T}{\pp \dot{q}_i}
+  -
+  \frac{\pp T}{\pp q_i}
+  =
+  -\frac{\pp V}{\pp q_i}+Q_i^\mathrm{nc}
+\end{equation}
+である。$L=T-V$ かつ $V$ が $\dot{q}$ に依存しないことから
+\begin{equation}
+  \frac{\dd}{\dd t}
+  \frac{\pp L}{\pp \dot{q}_i}
+  -
+  \frac{\pp L}{\pp q_i}
+  =
+  Q_i^\mathrm{nc},
+  \qquad i=1,\ldots,n
+\end{equation}
+を得る。これがオイラー・ラグランジュ方程式である。
+\end{derivation}
+
+保存力だけが作用する自由運動では右辺は 0 になる。制御入力や摩擦がある制御対象では、右辺に一般化された非保存力を入れる。入力 $u\in\R^m$ が一般化座標へ行列 $B(q)$ を通じて作用するなら
+\begin{equation}
+  Q^\mathrm{nc}=B(q)u-D(q,\dot{q})
+\end{equation}
+のように書ける。ここで $D$ は粘性摩擦や抵抗を含む項である。機械系の多くは、整理すると
+\begin{equation}
+  M(q)\ddot{q}+c(q,\dot{q})+g(q)=Q^\mathrm{nc}
+\end{equation}
+の形になる。$M(q)$ は一般化座標で見た慣性行列、$c(q,\dot{q})$ は速度に依存する遠心力・コリオリ力・抵抗の項、$g(q)$ はポテンシャル勾配から来る項である。
+
+\begin{example}[単振子の一般化座標による導出]
+質量 $m>0$ [kg] の質点が長さ $l>0$ [m] の質量のない棒または糸で支えられ、鉛直下向きを $\theta=0$ とする。直交座標 $(x,y)$ を使うと拘束 $x^2+y^2=l^2$ があるが、一般化座標を角度 $\theta$ [rad] とすれば
+\begin{equation}
+  x=l\sin\theta,\qquad
+  y=-l\cos\theta
+\end{equation}
+で拘束を自動的に満たす。速度は
+\begin{equation}
+  \dot{x}=l\cos\theta\,\dot{\theta},
+  \qquad
+  \dot{y}=l\sin\theta\,\dot{\theta}
+\end{equation}
+なので
+\begin{equation}
+  T=\frac{1}{2}ml^2\dot{\theta}^2,
+  \qquad
+  V=mgl(1-\cos\theta)
+\end{equation}
+である。したがって
+\begin{equation}
+  L
+  =
+  \frac{1}{2}ml^2\dot{\theta}^2
+  -
+  mgl(1-\cos\theta)
+\end{equation}
+となる。各項を計算すると
+\begin{align}
+  \frac{\pp L}{\pp\dot{\theta}}
+  &=
+  ml^2\dot{\theta},&
+  \frac{\dd}{\dd t}
+  \frac{\pp L}{\pp\dot{\theta}}
+  &=
+  ml^2\ddot{\theta},\\
+  \frac{\pp L}{\pp\theta}
+  &=
+  -mgl\sin\theta
+\end{align}
+である。支点まわりの入力トルクを $\tau$ [N\,m]、粘性摩擦を $b\dot{\theta}$ [N\,m] とすれば、非保存一般化力は
+\begin{equation}
+  Q^\mathrm{nc}=\tau-b\dot{\theta}
+\end{equation}
+である。オイラー・ラグランジュ方程式より
+\begin{equation}
+  ml^2\ddot{\theta}+mgl\sin\theta=\tau-b\dot{\theta}
+\end{equation}
+を得る。小角近似で $\sin\theta\simeq\theta$ とすれば
+\begin{equation}
+  ml^2\ddot{\theta}+b\dot{\theta}+mgl\theta=\tau
+\end{equation}
+という線形二次系になる。一方、大きな角度では $\sin\theta$ の非線形性が残る。この例では、棒または糸の張力を未知の拘束反力として求めなくても、角度という一般化座標を選ぶだけで運動方程式を得られる。
+\end{example}
+
+\subsubsection{拘束ヤコビアンとラグランジュ未定乗数}
+
+一般化座標を選ぶだけで拘束を消去できる場合でも、拘束反力そのものを知りたい、または接触が成立したり離れたりする状況を扱いたい場合には、拘束を式として残した方がよい。位置と時間だけで書ける等式拘束
+\begin{equation}
+  \phi(q,t)=0,\qquad
+  \phi:\R^n\times\R\to\R^k
+\end{equation}
+をホロノミック拘束という。棒の長さ、レール上の運動、回転軸、平面接触が保たれている間の法線方向位置などは、典型的なホロノミック拘束である。拘束の一次感度
+\begin{equation}
+  J_c(q,t)=\frac{\pp \phi}{\pp q}(q,t)\in\R^{k\times n}
+\end{equation}
+を拘束ヤコビアンという。拘束を時間微分すると
+\begin{equation}
+  J_c(q,t)\dot{q}+\frac{\pp \phi}{\pp t}(q,t)=0
+\end{equation}
+となるため、許される速度は拘束ヤコビアンの零空間に制限される。時間に陽に依存しない拘束なら、式は単に $J_c(q)\dot{q}=0$ である。
+
+一方、拘束が速度の関係として与えられ、一般には位置だけの等式へ積分できない場合を非ホロノミック拘束という。基本形は
+\begin{equation}
+  A_c(q,t)\dot{q}=b_c(q,t)
+\end{equation}
+である。車輪が横滑りしない条件のように、瞬間的に許される速度方向は制限されるが、位置だけで到達可能な集合を一つの面として表せない拘束がこれに当たる。非ホロノミック拘束は、座標を減らす通常のホロノミック拘束とは異なり、運動方程式と速度拘束を同時に解く問題として扱う。線形な速度拘束に対する工学的なラグランジュ・ダランベールの扱いでは、拘束力は $A_c(q,t)^\T\lambda$ の形で一般化力に現れる。
+
+ホロノミック拘束に戻り、理想拘束を仮定する。理想拘束とは、拘束を破らない仮想変位 $\delta q$ に対して拘束反力が仕事をしない拘束である。許される仮想変位は
+\begin{equation}
+  J_c(q,t)\delta q=0
+\end{equation}
+を満たす。拘束反力の一般化力 $Q_c$ がすべての許される $\delta q$ に対して $Q_c^\T\delta q=0$ を満たすなら、$Q_c$ は $J_c$ の行空間に属する。したがって、ある $\lambda\in\R^k$ を用いて
+\begin{equation}
+  Q_c=J_c(q,t)^\T\lambda
+\end{equation}
+と書ける。この $\lambda$ をラグランジュ未定乗数という。未定乗数は単なる計算上の係数ではなく、拘束式の単位で測った拘束反力である。たとえば $\phi(q)=y$ が床からの高さ [m] を表すなら、$\lambda$ の単位は [N] であり、接触法線力そのものになる。$\phi(q)=x^2+y^2-l^2$ のように [m$^2$] の拘束を使うと、$\lambda$ の単位は変わるが、実際の一般化力 $J_c^\T\lambda$ は同じ物理量を表す。
+
+拘束を残したオイラー・ラグランジュ方程式は
+\begin{align}
+  M(q)\ddot{q}+c(q,\dot{q})+g(q)
+  &=Q^\mathrm{nc}+J_c(q,t)^\T\lambda,\\
+  \phi(q,t)&=0
+\end{align}
+である。加速度レベルで拘束を満たすには、速度拘束をさらに微分して
+\begin{equation}
+  J_c(q,t)\ddot{q}
+  +\dot{J}_c(q,t)\dot{q}
+  +\frac{\dd}{\dd t}
+    \left(\frac{\pp \phi}{\pp t}(q,t)\right)
+  =0
+\end{equation}
+を課す。右辺をまとめて
+\begin{equation}
+  \gamma_c(q,\dot{q},t)
+  =
+  \dot{J}_c(q,t)\dot{q}
+  +\frac{\dd}{\dd t}
+    \left(\frac{\pp \phi}{\pp t}(q,t)\right)
+\end{equation}
+と書けば、$\ddot{q}$ と $\lambda$ は鞍点型の線形方程式
+\begin{equation}
+  \begin{bmatrix}
+    M(q)&-J_c(q,t)^\T\\
+    J_c(q,t)&0
+  \end{bmatrix}
+  \begin{bmatrix}
+    \ddot{q}\\
+    \lambda
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    Q^\mathrm{nc}-c(q,\dot{q})-g(q)\\
+    -\gamma_c(q,\dot{q},t)
+  \end{bmatrix}
+\end{equation}
+から同時に求められる。この形は、拘束を満たす加速度と、その加速度を実現するために必要な拘束反力を同時に計算する式である。数値計算では $M(q)$ が正定値で、拘束ヤコビアンの行が独立であることが、未定乗数の一意性に関係する。
+
+\subsubsection{片側接触とクーロン摩擦}
+
+接触は、等式拘束だけでは表しきれない。床や壁は物体を押すことはできるが、引っ張ることはできないためである。接触候補点のすき間を
+\begin{equation}
+  \phi_n(q)\ge0
+\end{equation}
+と定義する。$\phi_n(q)>0$ なら物体は離れており、法線接触力は 0 である。$\phi_n(q)=0$ のときだけ、押し返す法線力 $\lambda_n\ge0$ が発生できる。この直感を相補性条件として書くと
+\begin{equation}
+  \phi_n(q)\ge0,\qquad
+  \lambda_n\ge0,\qquad
+  \lambda_n\phi_n(q)=0
+\end{equation}
+である。最後の式は、すき間が正なら法線力が 0 であり、法線力が正ならすき間が 0 であることを表す。接触が保たれている区間では、$J_n=\pp\phi_n/\pp q$ を法線方向の拘束ヤコビアンとして、法線接触力の一般化力は $J_n(q)^\T\lambda_n$ になる。
+
+接触点に接線方向の相対速度 $v_t$ があると、摩擦力 $f_t$ が接線方向に働く。クーロン摩擦では、法線力を $\lambda_n$、摩擦係数を $\mu\ge0$ として
+\begin{equation}
+  \norm{f_t}\le\mu\lambda_n
+\end{equation}
+を満たす力の集合を摩擦円錐という。接触が滑っているとき、摩擦力は滑り速度と逆向きで、円錐の境界に乗る：
+\begin{equation}
+  f_t=-\mu\lambda_n\frac{v_t}{\norm{v_t}},
+  \qquad v_t\ne0.
+\end{equation}
+接触が固着しているときは $v_t=0$ であり、摩擦力は一意には決まらない。必要な接線力が
+\begin{equation}
+  \norm{f_t}<\mu\lambda_n
+\end{equation}
+の内側に収まるなら固着を保てるが、必要な力が境界を超えると滑りへ移る。したがって静止摩擦は「大きさが常に $\mu\lambda_n$ の力」ではなく、固着を保つために円錐内で値が選ばれる拘束力である。
+
+摩擦を含むモデルには、滑りと固着の切替、速度 0 での不連続、接触の発生と消失、衝突時の速度跳躍がある。滑らかな通常の状態方程式だけで全てを表すと、接触直前や停止直前で数値的に不安定になることがある。実装では、摩擦円錐を多面体で近似する、微小速度で正則化する、時間離散化した相補性問題として解く、衝突をインパルスとして別に扱う、といった選択が必要になる。制御設計で摩擦を「粘性抵抗」として単純化する場合も、低速での固着、最大静止摩擦、法線力の変化が無視されていることを明示しておく。
+
+\begin{example}[水平床上の質点に働く法線力と摩擦]
+質量 $m$ の質点が水平床の上を動く。座標を $q=[x\ y]^\T$ とし、$y$ 軸を上向き、床を $y=0$ とする。重力は $[0\ -mg]^\T$、水平方向の入力は $[u\ 0]^\T$ である。床とのすき間は
+\begin{equation}
+  \phi_n(q)=y\ge0,
+  \qquad
+  J_n=\frac{\pp \phi_n}{\pp q}
+  =
+  \begin{bmatrix}0&1\end{bmatrix}
+\end{equation}
+である。接触が保たれている間は $y=0$、$\dot{y}=0$、$\ddot{y}=0$ であり、運動方程式は
+\begin{equation}
+  m
+  \begin{bmatrix}
+    \ddot{x}\\
+    \ddot{y}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    u+f_t\\
+    -mg+\lambda_n
+  \end{bmatrix}
+\end{equation}
+となる。鉛直方向の拘束加速度 $\ddot{y}=0$ から
+\begin{equation}
+  -mg+\lambda_n=0,
+  \qquad
+  \lambda_n=mg
+\end{equation}
+を得る。すなわち、この単純な状況では、未定乗数は床が質点を押し返す法線力であり、重力と釣り合う。
+
+水平方向の相対速度は $v_t=\dot{x}$ である。滑っているときは
+\begin{equation}
+  f_t=-\mu mg\,\operatorname{sgn}(\dot{x}),
+  \qquad
+  \dot{x}\ne0
+\end{equation}
+であり、
+\begin{equation}
+  m\ddot{x}=u-\mu mg\,\operatorname{sgn}(\dot{x})
+\end{equation}
+となる。静止して固着している候補では $\dot{x}=0$、$\ddot{x}=0$ なので、水平式から $f_t=-u$ が必要である。これが摩擦円錐の一次元版
+\begin{equation}
+  \abs{f_t}\le\mu mg
+\end{equation}
+を満たす条件は
+\begin{equation}
+  \abs{u}\le\mu mg
+\end{equation}
+である。したがって、入力が最大静止摩擦以下なら質点は床に固着して動かず、入力がそれを超えると滑りが始まる。この例は、法線方向では片側拘束と未定乗数、接線方向では摩擦円錐と滑り・固着の切替が同時に現れる最小の接触モデルである。
+\end{example}
+
+ニュートン・オイラー法とオイラー・ラグランジュ法は競合する公式ではなく、同じ物理を別の座標で表す二つの方法である。拘束反力や接触力そのものを知りたい場合、または作用点ごとの力の流れを追いたい場合はニュートン・オイラー法が直接的である。独立自由度が少なく、エネルギーが簡潔に書ける場合は、オイラー・ラグランジュ法が運動方程式の導出を短くする。
+
+\subsection{標準例による力学モデルの構成}
+
+力学モデルを制御へ使うときは、座標を選び、状態を決め、力またはエネルギーから運動方程式を作り、入力と出力を明示する。この手順は、対象が質点でも、多リンク機構でも同じである。以下では、同じ記号の流れで四つの標準例を整理する。各例で得られる式は、シミュレーション、線形化、状態推定、フィードバック設計に渡すための非線形状態方程式である。
+
+\subsubsection{力入力を受ける質点}
+
+質量 $m>0$ [kg] の質点が $r$ 次元空間を動くとする。位置を $q\in\R^r$ [m]、速度を $v=\dot{q}$ [m/s] とし、状態を
+\begin{equation}
+  x=
+  \begin{bmatrix}
+    q^\T&v^\T
+  \end{bmatrix}^\T
+\end{equation}
+に選ぶ。質点は大きさを持たず、回転エネルギー、姿勢、変形を無視できると仮定する。保存力がポテンシャル $V(q)$ [J] から生じ、粘性抵抗を $D v$、入力力を $u\in\R^r$ [N]、外乱力を $d$ [N] とすれば、
+\begin{equation}
+  T=\frac{1}{2}m v^\T v,
+  \qquad
+  F=-\nabla V(q)-Dv+u+d
+\end{equation}
+である。ニュートンの第二法則より
+\begin{align}
+  \dot{q}&=v,\\
+  m\dot{v}&=-\nabla V(q)-Dv+u+d
+\end{align}
+を得る。出力は、位置制御なら $y=q$、速度も測るなら $y=[q^\T\ v^\T]^\T$ と置く。$V(q)=0$、$D=0$、$d=0$ なら
+\begin{equation}
+  \ddot{q}=\frac{1}{m}u
+\end{equation}
+となり、二重積分器である。したがって質点モデルは、加速度入力近似、外乱オブザーバ、PID、状態フィードバックの基準例になる。一方、ポテンシャルや抵抗を入れると、平衡点、減衰、外乱感度が変わるため、同じ位置決め問題でも線形化点とバイアス入力を明示する必要がある。
+
+\subsubsection{支点トルクをもつ単振子}
+
+長さ $l>0$ [m]、質量 $m>0$ [kg] の質点が、質量のない剛な棒で支えられて鉛直面内を動くとする。鉛直下向きを $\theta=0$ とし、角速度を $\omega=\dot{\theta}$ とする。支点は固定され、棒の伸び、支点のがた、空気抵抗の高次項を無視し、粘性摩擦だけを $b\omega$ [N\,m] で近似する。一般化座標は $q=\theta$、状態は
+\begin{equation}
+  x=
+  \begin{bmatrix}
+    \theta&\omega
+  \end{bmatrix}^\T
+\end{equation}
+である。運動エネルギーとポテンシャルエネルギーは
+\begin{equation}
+  T=\frac{1}{2}ml^2\omega^2,
+  \qquad
+  V=mgl(1-\cos\theta)
+\end{equation}
+であり、入力トルクを $\tau$ [N\,m] とすれば
+\begin{equation}
+  ml^2\ddot{\theta}+b\dot{\theta}+mgl\sin\theta=\tau
+\end{equation}
+となる。状態方程式は
+\begin{align}
+  \dot{\theta}&=\omega,\\
+  \dot{\omega}&=-\frac{g}{l}\sin\theta-\frac{b}{ml^2}\omega+\frac{1}{ml^2}\tau
+\end{align}
+である。出力は角度センサだけなら $y=\theta$、エンコーダ差分やジャイロで角速度も使うなら $y=[\theta\ \omega]^\T$ とする。
+
+このモデルの制御上の要点は、重力項が $\theta$ に対して線形でなく、平衡角によって線形化の剛性が変わることである。下向き平衡点の近くでは $\sin\theta\simeq\theta$ により安定な二次系に近いが、上向き平衡点の近くでは接線モデルの符号が反転する。したがって、単振子は局所線形化、エネルギー整形、ゲインスケジューリング、EKF の角度推定で、局所性と周期性を同時に確認するための最小例である。
+
+\subsubsection{自由空間の剛体}
+
+剛体の重心位置を $p^I\in\R^3$ [m]、速度を $v^I$ [m/s]、姿勢を $R^I_B\in\SO(3)$、物体固定座標系の角速度を $\omega^B$ [rad/s] とする。状態は
+\begin{equation}
+  x=\left(p^I,\ v^I,\ R^I_B,\ \omega^B\right)
+\end{equation}
+である。質量 $m$ と重心まわり慣性テンソル $J^B$ は一定で、物体は変形せず、原点を重心に置くと仮定する。重力以外の合力を $f^B$ [N]、重心まわりモーメントを $\tau^B$ [N\,m] とすれば、入力はレンチ
+\begin{equation}
+  u=
+  \begin{bmatrix}
+    (f^B)^\T&(\tau^B)^\T
+  \end{bmatrix}^\T
+\end{equation}
+である。運動エネルギーと重力ポテンシャルは
+\begin{equation}
+  T=\frac{1}{2}m(v^I)^\T v^I
+    +\frac{1}{2}(\omega^B)^\T J^B\omega^B,
+  \qquad
+  V=-m(g^I)^\T p^I
+\end{equation}
+と書ける。運動量と角運動量の収支から
+\begin{align}
+  \dot{p}^I&=v^I,\\
+  m\dot{v}^I&=mg^I+R^I_B f^B,\\
+  \dot{R}^I_B&=R^I_B[\omega^B]_\times,\\
+  J^B\dot{\omega}^B+\omega^B\times J^B\omega^B&=\tau^B
+\end{align}
+を得る。出力は、位置と姿勢を制御するなら $y=(p^I,R^I_B)$、センサ構成を表すなら加速度計、ジャイロ、位置センサなどの測定写像 $y=h(x,u)$ として書く。
+
+この例では、入力力 $f^B$ が姿勢 $R^I_B$ を通じて並進加速度へ入り、角速度積 $\omega^B\times J^B\omega^B$ が回転方程式を結合する。したがって、剛体モデルは、姿勢制御、レンチ配分、座標特異点のない推定、6 自由度シミュレーションの基準形である。線形化では、姿勢を直接ベクトルとして引くのではなく、小角度誤差や四元数誤差を状態偏差として使う必要がある。
+
+\subsubsection{平面二リンク機構}
+
+二つの回転関節をもつ平面機構を考える。第 1 関節角を $q_1$ [rad]、第 2 関節の相対角を $q_2$ [rad] とし、
+\begin{equation}
+  q=
+  \begin{bmatrix}
+    q_1&q_2
+  \end{bmatrix}^\T,
+  \qquad
+  x=
+  \begin{bmatrix}
+    q^\T&\dot{q}^\T
+  \end{bmatrix}^\T
+\end{equation}
+を状態にする。リンク長を $l_1,l_2$、各リンク重心までの距離を $l_{c1},l_{c2}$、質量を $m_1,m_2$、重心まわり慣性モーメントを $J_1,J_2$ とする。リンクは剛体、関節は理想的な回転対偶、入力は関節トルク
+\begin{equation}
+  \tau=
+  \begin{bmatrix}
+    \tau_1&\tau_2
+  \end{bmatrix}^\T
+\end{equation}
+であり、必要に応じて粘性摩擦 $B_v\dot{q}$ を加える。鉛直上向きを $y$ 軸とし、$q_1$ を水平軸からの角度、$q_2$ を第 1 リンクに対する相対角とすれば、重心位置は
+\begin{align}
+  r_1&=
+  \begin{bmatrix}
+    l_{c1}\cos q_1\\
+    l_{c1}\sin q_1
+  \end{bmatrix},\\
+  r_2&=
+  \begin{bmatrix}
+    l_1\cos q_1+l_{c2}\cos(q_1+q_2)\\
+    l_1\sin q_1+l_{c2}\sin(q_1+q_2)
+  \end{bmatrix}
+\end{align}
+である。エネルギーは
+\begin{equation}
+  T=\frac{1}{2}\dot{q}^\T M(q)\dot{q},
+  \qquad
+  V=m_1g\,r_{1y}+m_2g\,r_{2y}
+\end{equation}
+とまとめられる。慣性行列の成分は
+\begin{align}
+  M_{11}
+  &=J_1+J_2+m_1l_{c1}^2
+    +m_2\left(l_1^2+l_{c2}^2+2l_1l_{c2}\cos q_2\right),\\
+  M_{12}
+  &=M_{21}
+  =J_2+m_2\left(l_{c2}^2+l_1l_{c2}\cos q_2\right),\\
+  M_{22}
+  &=J_2+m_2l_{c2}^2
+\end{align}
+である。$h=-m_2l_1l_{c2}\sin q_2$ と置くと、遠心力とコリオリ力を
+\begin{equation}
+  c(q,\dot{q})=
+  \begin{bmatrix}
+    h(2\dot{q}_1\dot{q}_2+\dot{q}_2^2)\\
+    -h\dot{q}_1^2
+  \end{bmatrix}
+\end{equation}
+と書ける。重力項は
+\begin{equation}
+  g(q)=
+  \begin{bmatrix}
+    (m_1l_{c1}+m_2l_1)g\cos q_1
+    +m_2l_{c2}g\cos(q_1+q_2)\\
+    m_2l_{c2}g\cos(q_1+q_2)
+  \end{bmatrix}
+\end{equation}
+である。したがって運動方程式は
+\begin{equation}
+  M(q)\ddot{q}+c(q,\dot{q})+g(q)+B_v\dot{q}=\tau
+\end{equation}
+となり、状態方程式は
+\begin{align}
+  \dot{x}_1&=x_2,\\
+  \dot{x}_2&=M(x_1)^{-1}
+  \left(\tau-c(x_1,x_2)-g(x_1)-B_vx_2\right)
+\end{align}
+と読める。ただしここでは $x_1=q$、$x_2=\dot{q}$ と分けて書いた。
+
+出力は関節角制御なら $y=q$、手先位置制御なら
+\begin{equation}
+  y=
+  \begin{bmatrix}
+    l_1\cos q_1+l_2\cos(q_1+q_2)\\
+    l_1\sin q_1+l_2\sin(q_1+q_2)
+  \end{bmatrix}
+\end{equation}
+である。このモデルでは、慣性行列、速度二次項、重力項がすべて姿勢に依存する。関節空間制御では重力補償や計算トルク法が自然に現れ、手先空間制御ではヤコビアンの特異姿勢が入力と出力の関係を悪くする。したがって二リンク機構は、多自由度機械の非線形結合、線形化、可操作性、推定モデルの構造を学ぶ最小の標準例である。

@@ -1,0 +1,399 @@
+\subsection{制約付き最適化}
+
+台車の位置を壁の手前で止める、温度を上限以下に保ちながら目標値へ近づける、速度を滑らかに変えながらモータ電流を越えないようにする、という要求では、望ましい未来応答と許される操作範囲を同時に扱わなければならない。現在の誤差だけに基づいて入力を一つ返す制御則では、次の数サンプル後に状態制約へ近づくこと、アクチュエータが上限で飽和すること、計算遅れやサンプリング周期のために入力変更が一制御周期分遅れることを、設計式の中で直接比較しにくい。
+
+そこで各サンプリング時刻で、現在の測定値または推定値から未来の位置、温度、速度などを予測し、入力上限、入力変化率、状態上限、安全余裕、終端条件を満たす入力列を選ぶ。目標への近さ、入力の大きさ、入力変化の滑らかさを二次評価で測り、予測モデルと制約を線形等式・線形不等式として書ける場合、この実装上の要求は二次計画問題として整理できる。予測入力列、状態列、スラック変数などをまとめた決定変数を $z$ とすると、二次評価関数と線形制約を持つ標準形は
+\begin{align}
+  \min_z\quad &\frac{1}{2}z^\T H z+g^\T z,\\
+  \text{subject to}\quad &Az=b,\\
+  &Cz\le d
+\end{align}
+である。$H>0$ なら凸二次計画問題であり、局所最適解が大域最適解になる。
+
+等式制約だけなら、ラグランジュ乗数 $\lambda$ を使って
+\begin{equation}
+  \mathcal{L}(z,\lambda)=\frac{1}{2}z^\T Hz+g^\T z+\lambda^\T(Az-b)
+\end{equation}
+を作る。最適性条件は
+\begin{equation}
+  \begin{bmatrix}H&A^\T\\ A&0\end{bmatrix}
+  \begin{bmatrix}z\\ \lambda\end{bmatrix}
+  =
+  \begin{bmatrix}-g\\ b\end{bmatrix}
+\end{equation}
+である。不等式制約が入ると、KKT 条件には相補性
+\begin{equation}
+  \mu_i(Cz-d)_i=0,
+  \qquad
+  \mu_i\ge0
+\end{equation}
+が加わる。制約が効いている成分だけに乗数が現れる。
+
+\subsection{凸集合、凸関数、KKT 条件、双対性}
+
+制約付き最適化で最初に区別すべきことは、見つけた停留点が「近くでだけ最良」なのか、「許された範囲全体で最良」なのかである。この違いを消すために凸性を使う。集合 $\mathcal{C}\subset\R^n$ が凸集合であるとは、任意の二点 $z_1,z_2\in\mathcal{C}$ と任意の $\theta\in[0,1]$ について
+\begin{equation}
+  \theta z_1+(1-\theta)z_2\in\mathcal{C}
+\end{equation}
+が成り立つことである。二点を結ぶ線分が集合の外へ出ない、と言い換えてよい。等式制約
+\begin{equation}
+  Az=b
+\end{equation}
+はアフィン集合を作る。実際、$Az_1=b$、$Az_2=b$ なら
+\begin{align}
+  A\{\theta z_1+(1-\theta)z_2\}
+  &=\theta Az_1+(1-\theta)Az_2\\
+  &=\theta b+(1-\theta)b=b
+\end{align}
+である。不等式制約の一行
+\begin{equation}
+  c_i^\T z\le d_i
+\end{equation}
+は半空間を作る。$c_i^\T z_1\le d_i$、$c_i^\T z_2\le d_i$ なら
+\begin{align}
+  c_i^\T\{\theta z_1+(1-\theta)z_2\}
+  &=\theta c_i^\T z_1+(1-\theta)c_i^\T z_2\\
+  &\le\theta d_i+(1-\theta)d_i=d_i
+\end{align}
+である。有限個の凸集合の共通部分は凸集合なので、$Az=b$ と $Cz\le d$ で表される可行集合は凸である。この性質が、線形 MPC の状態制約、入力制約、制御配分の上下限制約を QP として扱える理由である。
+
+関数 $J:\mathcal{C}\to\R$ が凸関数であるとは、凸集合 $\mathcal{C}$ 上の任意の $z_1,z_2$ と $\theta\in[0,1]$ について
+\begin{equation}
+  J(\theta z_1+(1-\theta)z_2)
+  \le
+  \theta J(z_1)+(1-\theta)J(z_2)
+\end{equation}
+が成り立つことである。グラフ上の二点を結ぶ弦が、関数値の上側に来るという条件である。微分可能な凸関数では、任意の $z,y\in\mathcal{C}$ に対して一次近似が大域的な下界になる。
+\begin{equation}
+  J(y)\ge J(z)+\nabla J(z)^\T(y-z)
+\end{equation}
+二階微分可能なら、ヘッセ行列が半正定値であること、すなわち任意の方向 $p$ に対して
+\begin{equation}
+  p^\T\nabla^2J(z)p\ge0
+\end{equation}
+であることが凸性の判定になる。二次関数
+\begin{equation}
+  J(z)=\frac{1}{2}z^\T Hz+g^\T z+r,
+  \qquad H=H^\T
+\end{equation}
+では $\nabla^2J(z)=H$ なので、$H\ge0$ なら凸、$H>0$ なら狭義凸である。狭義凸な目的関数を凸な可行集合上で最小化すると、最適解は高々一つになる。
+
+不等式制約には、効いているものと余っているものがある。点 $z$ におけるアクティブ制約集合を
+\begin{equation}
+  \mathcal{A}(z)=\{i\mid c_i^\T z=d_i\}
+\end{equation}
+と定義する。$i\in\mathcal{A}(z)$ なら制約境界に接しており、微小に動く方向を制限する。$c_i^\T z<d_i$ なら非アクティブ制約であり、その点の近くでは最適性条件へ直接現れない。MPC では入力が上限に張り付いた成分、制御配分では飽和したアクチュエータが、典型的なアクティブ制約である。
+
+二次計画問題のラグランジアンは、不等式乗数 $\mu\ge0$ も含めて
+\begin{equation}
+  \mathcal{L}(z,\lambda,\mu)
+  =\frac{1}{2}z^\T Hz+g^\T z
+  +\lambda^\T(Az-b)+\mu^\T(Cz-d)
+\end{equation}
+である。$Az=b$ は等式なので $\lambda$ の符号は自由である。一方、$Cz-d\le0$ に対する乗数 $\mu$ は非負でなければならない。可行点 $z$ では $\mu^\T(Cz-d)\le0$ だから、ラグランジアンは目的関数を下から押さえる量になる。最適点 $z^*$ と乗数 $\lambda^*,\mu^*$ が満たす KKT 条件は
+\begin{align}
+  Hz^*+g+A^\T\lambda^*+C^\T\mu^*&=0,\\
+  Az^*-b&=0,\\
+  Cz^*-d&\le0,\\
+  \mu^*&\ge0,\\
+  \mu_i^*(Cz^*-d)_i&=0\qquad (i=1,\ldots,m)
+\end{align}
+である。順に、停留条件、主問題の実行可能性、双対実行可能性、相補性を表している。相補性は、非アクティブ制約では $(Cz^*-d)_i<0$ だから $\mu_i^*=0$、アクティブ制約では乗数が正になり得る、という事実を一つの式で書いたものである。
+
+KKT 条件を必要条件として使うには、制約の正則性が必要である。代表的な条件の一つは LICQ、すなわちアクティブな不等式制約の勾配と等式制約の勾配
+\begin{equation}
+  A,\qquad C_{\mathcal{A}(z^*)}
+\end{equation}
+の行が一次独立であるという条件である。LICQ が成り立つと乗数が局所的に一意になり、アクティブ集合を固定した線形方程式がよく定まる。凸最適化では Slater 条件もよく使われる。アフィン等式を満たし、すべての凸不等式を厳密に満たす点、ここでは
+\begin{equation}
+  Az=b,
+  \qquad
+  Cz<d
+\end{equation}
+を満たす点が存在すれば、強双対性が成り立つ。実際の QP では等式や上下限制約のために厳密内点をそのまま持たない場合もあるので、相対内部で Slater 条件を見る。これらの条件が壊れると、最適解が存在しても乗数が存在しない、乗数が一意でない、あるいはアクティブ集合を使う数値解法が極端に悪条件になることがある。
+
+双対性は、制約付き問題に下界を与える考え方である。任意の $\lambda$ と $\mu\ge0$ に対し、双対関数を
+\begin{equation}
+  q(\lambda,\mu)=\inf_z\mathcal{L}(z,\lambda,\mu)
+\end{equation}
+と定義する。任意の可行点 $z$ について $Az-b=0$、$Cz-d\le0$ だから
+\begin{align}
+  q(\lambda,\mu)
+  &\le \mathcal{L}(z,\lambda,\mu)\\
+  &=J(z)+\mu^\T(Cz-d)\\
+  &\le J(z)
+\end{align}
+である。したがって、双対関数は主問題の最適値を下から押さえる。これを弱双対性という。双対問題は
+\begin{equation}
+  \max_{\lambda,\mu}\quad q(\lambda,\mu),
+  \qquad
+  \text{subject to}\quad \mu\ge0
+\end{equation}
+である。$H>0$ の QP では、ラグランジアンを $z$ で最小化する停留条件から
+\begin{equation}
+  z(\lambda,\mu)
+  =-H^{-1}(g+A^\T\lambda+C^\T\mu)
+\end{equation}
+が得られ、これを $\mathcal{L}$ へ戻すと $\lambda,\mu$ だけの凹な最大化問題になる。凸 QP で Slater 条件のような制約想定が満たされれば、主問題の最適値と双対問題の最適値は一致する。これを強双対性という。幾何学的には、凸目的関数の一次下界とアクティブ制約の法線錐を組み合わせた支持超平面が最適点で目的関数に接し、双対下界が主問題の最適値に一致することを意味する。
+
+一次元の例で、アクティブ制約と乗数を見る。
+\begin{align}
+  \min_z\quad &\frac{1}{2}(z-2)^2,\\
+  \text{subject to}\quad &0\le z\le1
+\end{align}
+を考える。制約を $g_1(z)=-z\le0$、$g_2(z)=z-1\le0$ と書くと、ラグランジアンは
+\begin{equation}
+  \mathcal{L}(z,\mu_1,\mu_2)
+  =\frac{1}{2}(z-2)^2+\mu_1(-z)+\mu_2(z-1)
+\end{equation}
+である。制約がなければ最小点は $z=2$ だが、可行区間は $[0,1]$ なので最適解は $z^*=1$ である。この点では
+\begin{equation}
+  g_1(1)=-1<0,
+  \qquad
+  g_2(1)=0
+\end{equation}
+だから、下限は非アクティブ、上限はアクティブである。停留条件は
+\begin{equation}
+  \frac{\dd\mathcal{L}}{\dd z}
+  =(z-2)-\mu_1+\mu_2=0
+\end{equation}
+であり、相補性より $\mu_1g_1(1)=0$ から $\mu_1=0$ である。したがって
+\begin{equation}
+  (1-2)+\mu_2=0,
+  \qquad
+  \mu_2=1
+\end{equation}
+となる。乗数 $\mu_2$ は、上限制約を少し緩めたときに目的関数の最適値がどれだけ改善し得るかを表す感度でもある。MPC で入力上限の乗数が大きいときは、性能劣化の主因が入力飽和にあると解釈できる。制御配分で特定アクチュエータの上下限制約の乗数が大きいときは、そのアクチュエータ余裕が一般化力の実現を強く制限している。
+
+線形 MPC の QP では、最適化変数を予測入力列 $U$ または状態入力列 $(X,U)$ とし、評価関数のヘッセ行列は $Q$、$R$、終端重みから作られる。$R>0$ なら入力方向の曲率があり、縮約形式の QP は多くの場合 $H>0$ になる。状態制約と入力制約は、予測モデルを通して
+\begin{equation}
+  C_UU\le d_U
+\end{equation}
+のような線形不等式になる。アクティブ集合は、現在の予測で実際に効いている入力飽和、状態上限、終端制約を示す。アクティブセット法は、この集合を仮定して等式制約付き KKT 連立方程式を解き、負の乗数や破れた制約があれば集合を更新する。内点法は非アクティブ制約にも小さなバリアを置き、解に近づくにつれて相補性を満たす。どちらの方法でも、KKT 条件は、ソルバが解いている連立条件を記述する共通言語になる。
+
+制御配分でも同じ構造が現れる。望ましい一般化力 $w$ を $Bu=w$ で実現したいが、アクチュエータには $u_{min}\le u\le u_{max}$ がある。制約がなければ擬似逆行列が最小ノルム解を与えるが、上下限制約がアクティブになると、許された面の上で二次関数を最小にする QP へ変わる。非アクティブなアクチュエータはヌル空間の自由度で負担を調整でき、アクティブなアクチュエータは境界に固定される。したがって、KKT 乗数は単なる計算途中の変数ではなく、MPC と配分のどの制約が性能を決めているかを診断する量でもある。
+
+\subsection{二次計画問題の解法と数値条件}
+
+二次計画問題、すなわち QP は、目的関数が二次式で制約がアフィン式である最適化問題である。以後は標準形を
+\begin{align}
+  \min_z\quad &
+  J(z)=\frac{1}{2}z^\T Hz+g^\T z,\\
+  \text{subject to}\quad &
+  A_{\mathrm{eq}}z=b_{\mathrm{eq}},\\
+  &Gz\le h,\\
+  &z_{\min}\le z\le z_{\max}
+\end{align}
+と書く。$H=H^\T\ge0$、$A_{\mathrm{eq}}$、$G$ は既知の行列であり、$z$ は MPC の入力列、状態列、スラック変数、または制御配分のアクチュエータ入力をまとめた決定変数である。上下限制約は、$Gz\le h$ の一部として
+\begin{equation}
+  z\le z_{\max},
+  \qquad
+  -z\le -z_{\min}
+\end{equation}
+と書いてもよい。$H>0$ なら目的関数は狭義凸であり、可行集合が空でなければ最適解は一意である。$H\ge0$ だけの場合にも凸 QP であるが、最適解が複数存在したり、拘束されていない平坦な方向で解が有界でなくなったりすることがある。
+
+等式制約だけの QP は、KKT 連立方程式そのもので解ける。
+\begin{align}
+  \min_z\quad &
+  \frac{1}{2}z^\T Hz+g^\T z,\\
+  \text{subject to}\quad &
+  A_{\mathrm{eq}}z=b_{\mathrm{eq}}
+\end{align}
+のラグランジアンを
+\begin{equation}
+  \mathcal{L}(z,\lambda)
+  =\frac{1}{2}z^\T Hz+g^\T z
+  +\lambda^\T(A_{\mathrm{eq}}z-b_{\mathrm{eq}})
+\end{equation}
+とおくと、停留条件と等式制約から
+\begin{equation}
+  \begin{bmatrix}
+    H&A_{\mathrm{eq}}^\T\\
+    A_{\mathrm{eq}}&0
+  \end{bmatrix}
+  \begin{bmatrix}
+    z\\\lambda
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    -g\\b_{\mathrm{eq}}
+  \end{bmatrix}
+\end{equation}
+を得る。この行列は鞍点行列と呼ばれる。$A_{\mathrm{eq}}$ が行フルランクで、$A_{\mathrm{eq}}p=0$ を満たす任意の $p\ne0$ に対して $p^\T Hp>0$ であれば、この連立方程式は一意解を持つ。これは、制約面の中で動ける方向に沿って目的関数が正の曲率を持つ、という条件である。特に $H>0$ なら、Schur 補行列を用いて
+\begin{align}
+  z&=-H^{-1}(g+A_{\mathrm{eq}}^\T\lambda),\\
+  A_{\mathrm{eq}}H^{-1}A_{\mathrm{eq}}^\T\lambda
+  &=-b_{\mathrm{eq}}-A_{\mathrm{eq}}H^{-1}g
+\end{align}
+と解ける。ただし数値計算では、$H^{-1}$ を明示的に作るのではなく、分解済みの線形方程式として解く。
+
+不等式制約付き QP では、最適解でどの不等式が等号になるかが未知である。アクティブセット法は、アクティブ集合 $\mathcal{A}$ を仮定し、
+\begin{equation}
+  G_{\mathcal{A}}z=h_{\mathcal{A}}
+\end{equation}
+を等式制約に加えた QP を解く。得られた候補 $z$ がすべての非アクティブ制約
+\begin{equation}
+  G_i z<h_i
+  \qquad (i\notin\mathcal{A})
+\end{equation}
+を満たし、アクティブ制約の乗数が
+\begin{equation}
+  \mu_{\mathcal{A}}\ge0
+\end{equation}
+であれば、KKT 条件を満たすので最適解である。破れた不等式があればその制約を集合へ加え、負の乗数を持つアクティブ制約があれば集合から外す。幾何的には、制約多面体の面、辺、頂点を移りながら、二次関数が最小になる面を探している。MPC では隣り合うサンプル時刻で有効な入力飽和や状態制約が大きく変わらないことが多いため、前回のアクティブ集合を初期値にすると少ない更新で解けることがある。
+
+内点法は、制約境界の外へ出ないように、可行集合の内部でバリア付き問題を解く方法である。$Gz<h$ を満たす点から始めるとし、スラックを
+\begin{equation}
+  s=h-Gz,
+  \qquad s>0
+\end{equation}
+と定義する。等式制約を満たしたまま
+\begin{equation}
+  \min_z\quad
+  \frac{1}{2}z^\T Hz+g^\T z
+  -\tau\sum_i\log s_i,
+  \qquad
+  A_{\mathrm{eq}}z=b_{\mathrm{eq}}
+\end{equation}
+を解くと、$s_i$ が 0 に近づくほど $-\log s_i$ が大きくなり、反復点は境界の内側に保たれる。バリア係数 $\tau>0$ を小さくしていくと、バリア解は元の QP の解へ近づく。主双対内点法では、KKT 条件を
+\begin{align}
+  Hz+g+A_{\mathrm{eq}}^\T\lambda+G^\T\mu&=0,\\
+  A_{\mathrm{eq}}z-b_{\mathrm{eq}}&=0,\\
+  Gz+s-h&=0,\\
+  S\mu&=\tau\mathbf{1},\\
+  s&>0,\qquad \mu>0
+\end{align}
+の形で扱う。ここで $S=\operatorname{diag}(s)$ である。元の相補性 $S\mu=0$ を、$\tau\mathbf{1}$ だけ緩めた中心経路に置き換えている。内点法はアクティブ集合を明示的に推測しないため、大きな疎 QP で安定に働きやすい。一方、厳しいハード制約の近くでは、スケーリング、可行初期点、終了判定が閉ループの制約余裕に直接影響する。
+
+上下限制約だけ、または箱型制約が主である場合には、射影を使った解法が有効である。箱
+\begin{equation}
+  \mathcal{B}=\{z\mid z_{\min}\le z\le z_{\max}\}
+\end{equation}
+へのユークリッド射影は成分ごとに
+\begin{equation}
+  \Pi_{\mathcal{B}}(v)_i
+  =
+  \min\{\max\{v_i,z_{\min,i}\},z_{\max,i}\}
+\end{equation}
+である。$H=\alpha I$、$\alpha>0$ の単純な場合、制約なし最小点は $z_{\mathrm{free}}=-g/\alpha$ なので、箱制約付き解は
+\begin{equation}
+  z^*=\Pi_{\mathcal{B}}(z_{\mathrm{free}})
+\end{equation}
+となる。一般の $H>0$ では、この単純な切り詰めだけでは正しい解にならないが、射影勾配法
+\begin{equation}
+  z^{r+1}
+  =
+  \Pi_{\mathcal{B}}\{z^r-\alpha_r(Hz^r+g)\}
+\end{equation}
+や、その加速版を使える。入力上下限とレート制限だけが支配的な制御配分では、この構造を利用した高速な反復解法が有効である。ただし、状態制約や等式力学制約が強く効く MPC では、単なる成分ごとの切り詰めは予測モデルを満たさないので、KKT 条件を満たす QP として解く必要がある。
+
+可行性は、最適性より前に確認すべき性質である。等式制約だけなら、
+\begin{equation}
+  \operatorname{rank}(A_{\mathrm{eq}})
+  =
+  \operatorname{rank}
+  \begin{bmatrix}
+    A_{\mathrm{eq}}&b_{\mathrm{eq}}
+  \end{bmatrix}
+\end{equation}
+が可解性の必要十分条件である。不等式を含む場合、可行集合
+\begin{equation}
+  \mathcal{F}
+  =
+  \{z\mid A_{\mathrm{eq}}z=b_{\mathrm{eq}},\ Gz\le h,\ z_{\min}\le z\le z_{\max}\}
+\end{equation}
+が空なら、どれほど評価関数を調整してもハード制約をすべて満たす解は存在しない。実装では、スラックを用いた Phase I 問題
+\begin{align}
+  \min_{z,s}\quad &\mathbf{1}^\T s,\\
+  \text{subject to}\quad &
+  A_{\mathrm{eq}}z=b_{\mathrm{eq}},\\
+  &Gz\le h+s,\qquad s\ge0
+\end{align}
+を解き、最適値が 0 であれば元の不等式は可行であると判定できる。最適値が正なら、どの制約にスラックが残るかを見て、参照値、ホライズン、入力制限、安全余裕、またはモデル化された遅れのどれが矛盾を作っているかを調べる。MPC では、物理入力上限や安全上の不可侵制約をソフト化して閉ループを続けるのではなく、低優先度の追従制約だけを緩和し、ハード制約が可行でない場合には安全側制御へ切り替える設計が必要である。
+
+数値条件も解の信頼性を左右する。状態 $x$ が [m]、角度が [rad]、入力が [N]、スラックが無次元量のように異なる単位を持つと、$H$、$A_{\mathrm{eq}}$、$G$ の列の大きさが大きく異なる。これは KKT 行列の条件数を悪化させ、同じ残差許容値でも一部の変数だけ大きな誤差を持つ原因になる。変数スケーリング
+\begin{equation}
+  z=D_z\tilde{z}+z_c
+\end{equation}
+を入れると、QP は
+\begin{align}
+  \min_{\tilde{z}}\quad &
+  \frac{1}{2}\tilde{z}^\T(D_z^\T HD_z)\tilde{z}
+  +(D_z^\T(H z_c+g))^\T\tilde{z},\\
+  \text{subject to}\quad &
+  A_{\mathrm{eq}}D_z\tilde{z}=b_{\mathrm{eq}}-A_{\mathrm{eq}}z_c,\\
+  &GD_z\tilde{z}\le h-Gz_c
+\end{align}
+へ変わる。$D_z$ は、代表的な状態範囲や入力範囲で各成分が同程度の大きさになるように選ぶ。制約行も、行ごとの代表値で割って、右辺と係数が極端に小さくならないようにする。$H$ が半正定値で、自由方向の曲率が不足する場合には
+\begin{equation}
+  H_\epsilon=H+\epsilon I,
+  \qquad
+  \epsilon>0
+\end{equation}
+のような小さな正則化を加えることがある。ただし正則化は問題そのものを変えるので、入力平滑化、スラック罰則、終端コストの物理的意味と整合させる必要がある。
+
+MPC の中で QP ソルバを使う手順は、オフライン準備とオンライン更新に分けられる。オフラインでは、離散モデル、ホライズン、重み、制約の形から、$H$、制約行列、疎構造、スケーリングを作る。オンラインでは、各サンプル時刻で状態推定値、参照、過去入力、遅れ状態から一次項と右辺だけを更新し、ウォームスタートされた QP を時間制限内で解く。ソルバは最適解だけでなく、終了状態、KKT 残差、最大制約違反、反復回数、アクティブ制約または乗数も返すべきである。制限時間で完全収束しない場合でも、現在の反復点がハード制約を満たすか、前回入力を保持すべきか、安全側入力へ切り替えるべきかを、制御周期の一部として決めておく。
+
+最後に、二つのアクチュエータへ総入力を配分する小さな QP を計算する。望ましい入力を
+\begin{equation}
+  r=
+  \begin{bmatrix}
+    1\\3
+  \end{bmatrix}
+\end{equation}
+とし、実際には総入力が 2、各入力が $0\le u_i\le1.5$ に制限されるとする。
+\begin{align}
+  \min_{u_1,u_2}\quad &
+  \frac{1}{2}(u_1-1)^2+\frac{1}{2}(u_2-3)^2,\\
+  \text{subject to}\quad &
+  u_1+u_2=2,\\
+  &0\le u_1\le1.5,\qquad 0\le u_2\le1.5
+\end{align}
+まず上下限を無視して等式制約だけを考えると、$r$ を直線 $u_1+u_2=2$ へ射影するので
+\begin{equation}
+  u=r-\frac{\mathbf{1}^\T r-2}{\mathbf{1}^\T\mathbf{1}}\mathbf{1}
+  =
+  \begin{bmatrix}
+    1\\3
+  \end{bmatrix}
+  -\frac{4-2}{2}
+  \begin{bmatrix}
+    1\\1
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    0\\2
+  \end{bmatrix}
+\end{equation}
+となる。しかし $u_2=2$ は上限を破るので、上限制約 $u_2=1.5$ をアクティブと仮定する。等式制約から $u_1=0.5$ である。ラグランジアンを
+\begin{equation}
+  \mathcal{L}
+  =
+  \frac{1}{2}(u_1-1)^2+\frac{1}{2}(u_2-3)^2
+  +\lambda(u_1+u_2-2)+\mu(u_2-1.5)
+\end{equation}
+とおくと、停留条件は
+\begin{align}
+  u_1-1+\lambda&=0,\\
+  u_2-3+\lambda+\mu&=0
+\end{align}
+である。$u_1=0.5$、$u_2=1.5$ を代入すると
+\begin{equation}
+  \lambda=0.5,
+  \qquad
+  \mu=1
+\end{equation}
+を得る。$\mu\ge0$ であり、非アクティブな下限制約も破っていないので、
+\begin{equation}
+  u^*=
+  \begin{bmatrix}
+    0.5\\1.5
+  \end{bmatrix}
+\end{equation}
+が最適解である。この例では、制約なしの希望値は第二入力を強く使いたいが、上限がアクティブになるため、残りの総入力を第一入力へ配分している。MPC の入力列でも同じように、目標追従だけで決まる入力が制約を破ると、ソルバはアクティブ制約を満たす面の上で最も評価関数が小さい入力列を選ぶ。
+
+この QP の解法は、以後の MPC、NMPC、制御配分の共通の検査点になる。ソルバが返すべき情報は、最適入力だけではなく、能動制約、乗数、最大制約違反、KKT 残差である。後の \wfig{mpc-constraint-examples} では、この情報が可行集合上のどの境界で読めるかを確認する。
+
+\begin{practice}[QP 解法ログと能動制約の確認]
+二アクチュエータ配分例で、等式制約だけの射影解 $[0\ 2]^\T$ と、上限制約を含む最適解 $[0.5\ 1.5]^\T$ を比較する。どの制約が新たに能動になり、どの乗数が正になったかを答えよ。さらに、同じ QP を MPC の一サンプルで解いたとみなし、ログに残すべき量として、最大制約違反、能動制約集合、KKT 残差、適用入力のうち三つを選び、それぞれが \wfig{mpc-architecture} のどの信号経路の異常検出に対応するかを説明せよ。
+\end{practice}

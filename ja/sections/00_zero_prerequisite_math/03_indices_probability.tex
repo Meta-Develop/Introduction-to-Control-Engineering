@@ -1,0 +1,261 @@
+\subsection{添字と総和記号}
+
+制御器を一定周期で動かすと、測定値は一つではなく、時刻 $t_0,t_1,t_2,\ldots$ に並んだ列として得られる。各時刻で目標値 $r$、測定出力 $y$、入力 $u$、偏差 $e=r-y$ を記録すると、偏差を単に $e$ と書くだけでは、どの時刻の偏差を使っているのか分からない。有限時間の制御計算では、
+\begin{equation}
+  e_0^2+e_1^2+\cdots+e_N^2
+\end{equation}
+のように、同じ形の項を何度も足して評価することも多い。
+
+同じ問題は、状態ベクトルの成分を扱うときにも現れる。位置、速度、温度、電圧のような複数の量を一つの記号 $x$ でまとめる場合でも、その 1 番目の成分と 2 番目の成分を区別できなければ、式の意味が定まらない。このため、列の何番目か、ベクトルの何番目の成分かを表す番号を文字に添える。
+
+\begin{definition}[添字]
+同じ種類の量を区別するために、文字の右下につける番号を添字という。$x_1,x_2,x_3$ は、ベクトル $x$ の 1 番目、2 番目、3 番目の成分を表す。
+\end{definition}
+
+ベクトル
+\begin{equation}
+  x=\begin{bmatrix}x_1\\x_2\\x_3\end{bmatrix}
+\end{equation}
+の成分をすべて足すと
+\begin{equation}
+  x_1+x_2+x_3
+\end{equation}
+である。有限個の成分和は、総和記号を用いて表せる。
+
+\begin{definition}[総和記号]
+記号
+\begin{equation}
+  \sum_{i=1}^{n}x_i
+\end{equation}
+は、$i$ を 1 から $n$ まで動かして $x_i$ を足すことを表す。
+\end{definition}
+
+たとえば $n=3$ なら
+\begin{equation}
+  \sum_{i=1}^{3}x_i=x_1+x_2+x_3
+\end{equation}
+である。サンプルされた偏差と入力を用いる有限時間の評価は、たとえば重み $\rho>0$ を用いて
+\begin{equation}
+  J=\sum_{k=0}^{N}e_k^2+\rho\sum_{k=0}^{N-1}u_k^2
+\end{equation}
+と書ける。これは偏差を小さくしつつ入力の大きさも抑えたいという制御計算を、同じ形の項の和として表したものである。内積、ノルム、評価関数、確率の期待値は、総和記号により表される。
+
+\subsection{確率、期待値、分散、共分散、正規分布}
+
+測定値、外乱、摩擦、モデル化していない熱流、量子化誤差は、毎回同じ値になるとは限らない。決定論的なモデルでは、初期値と入力を決めれば状態の時間変化が一つに定まる。一方、推定問題では、測定値が真値からどれだけずれるか、モデル式に入れていない揺らぎがどの程度あるかを、完全な値ではなく不確かさの大きさとして扱う。この不確かさを数式で表すために確率を用いる。
+
+\begin{definition}[確率モデルと確率変数]
+起こり得る結果の集合を考え、各結果または各範囲に $0$ 以上 $1$ 以下の数を割り当て、全体の確率が $1$ になるようにしたものを確率モデルという。結果に応じて値が決まる量を確率変数という。
+\end{definition}
+
+確率変数は大文字 $X,Y,V$ などで表し、その実現値を小文字 $x,y,v$ で表すことが多い。たとえば温度センサの読み取り誤差を $V$ と書くと、実際に一回測ったときに得られる値 $v$ は $-0.02\,^\circ\mathrm{C}$ かもしれないし、$0.05\,^\circ\mathrm{C}$ かもしれない。確率変数 $V$ は、そのような実現値を生む量全体を表す。
+
+有限個の値 $x_1,\ldots,x_n$ を取る確率変数 $X$ について、
+\begin{equation}
+  \mathbb{P}(X=x_i)=p_i,
+  \qquad
+  p_i\ge0,
+  \qquad
+  \sum_{i=1}^{n}p_i=1
+\end{equation}
+とする。このとき $p_i$ は、$X$ が $x_i$ を取る確率である。確率の総和が $1$ であることは、どれか一つの結果が必ず起こることを表す。
+
+\begin{definition}[期待値]
+有限個の値 $x_i$ を確率 $p_i$ で取る確率変数 $X$ に対して、
+\begin{equation}
+  E[X]=\sum_{i=1}^{n}x_i p_i
+\end{equation}
+を $X$ の期待値または平均という。
+\end{definition}
+
+期待値は、同じ条件で多数回測った値の中心を表す。$X$ が長さを表すなら $E[X]$ の単位も m であり、$X$ が電圧を表すなら V である。連続値を取る確率変数では、確率密度関数 $p(x)$ を用いて
+\begin{equation}
+  E[X]=\int_{-\infty}^{\infty}x p(x)\,\dd x
+\end{equation}
+と書く。ここで $p(x)\,\dd x$ は、$x$ の近くの幅 $\dd x$ に値が入る確率を表す。
+
+期待値だけでは、値がどれだけ散らばるかは分からない。平均が 0 の測定誤差でも、毎回 $0.001$ 程度しかずれないセンサと、毎回 $1$ 程度ずれるセンサでは、推定での信頼度がまったく異なる。この散らばりを二乗で測る量が分散である。
+
+\begin{definition}[分散と標準偏差]
+確率変数 $X$ の平均を $\mu=E[X]$ とする。このとき
+\begin{equation}
+  \operatorname{Var}(X)=E[(X-\mu)^2]
+\end{equation}
+を $X$ の分散という。分散の平方根
+\begin{equation}
+  \sigma=\sqrt{\operatorname{Var}(X)}
+\end{equation}
+を標準偏差という。
+\end{definition}
+
+分散の単位は $X$ の単位の二乗である。位置誤差の単位が m なら分散の単位は $\mathrm{m^2}$、標準偏差の単位は m である。計算では
+\begin{align}
+  \operatorname{Var}(X)
+  &=E[(X-\mu)^2]\\
+  &=E[X^2-2\mu X+\mu^2]\\
+  &=E[X^2]-2\mu E[X]+\mu^2\\
+  &=E[X^2]-\mu^2
+\end{align}
+もよく用いる。最後の式では $\mu=E[X]$ を使った。
+
+二つの誤差が同時に動くかどうかも、推定では重要である。たとえば位置の誤差が正のとき速度の誤差も正になりやすいなら、二つの誤差は独立に扱えない。この同時変動を表す量が共分散である。
+
+\begin{definition}[共分散]
+確率変数 $X,Y$ の平均を $\mu_X=E[X]$、$\mu_Y=E[Y]$ とする。このとき
+\begin{equation}
+  \operatorname{Cov}(X,Y)
+  =E[(X-\mu_X)(Y-\mu_Y)]
+\end{equation}
+を $X$ と $Y$ の共分散という。
+\end{definition}
+
+共分散が正なら、$X$ が平均より大きいとき $Y$ も平均より大きくなりやすい。共分散が負なら、一方が大きいとき他方が小さくなりやすい。共分散が 0 なら、二つの量の一次的な同時変動はない。この状態を無相関という。ただし、無相関は独立と同じではない。
+
+\begin{definition}[独立と無相関]
+任意の値の範囲 $A,B$ について
+\begin{equation}
+  \mathbb{P}(X\in A,\;Y\in B)
+  =\mathbb{P}(X\in A)\mathbb{P}(Y\in B)
+\end{equation}
+が成り立つとき、$X$ と $Y$ は独立であるという。有限の分散を持つ $X,Y$ について
+\begin{equation}
+  \operatorname{Cov}(X,Y)=0
+\end{equation}
+が成り立つとき、$X$ と $Y$ は無相関であるという。
+\end{definition}
+
+独立なら無相関である。実際、独立なら $E[XY]=E[X]E[Y]$ なので
+\begin{align}
+  \operatorname{Cov}(X,Y)
+  &=E[(X-\mu_X)(Y-\mu_Y)]\\
+  &=E[XY]-\mu_X\mu_Y\\
+  &=0
+\end{align}
+となる。一方、無相関でも独立とは限らない。非線形な関係を持つ二つの量では、一次的な共分散が 0 でも依存が残る場合がある。ただし、二つの量が同時正規分布に従う場合には、無相関と独立が同値になる。この性質は、線形ガウスモデルでカルマンフィルタの式が平均と共分散だけで閉じる理由の一部である。
+
+複数の確率変数をまとめた確率ベクトル
+\begin{equation}
+  x=
+  \begin{bmatrix}
+    X_1\\
+    \vdots\\
+    X_n
+  \end{bmatrix}
+\end{equation}
+を考える。平均ベクトルは
+\begin{equation}
+  \mu=E[x]
+  =
+  \begin{bmatrix}
+    E[X_1]\\
+    \vdots\\
+    E[X_n]
+  \end{bmatrix}
+\end{equation}
+であり、共分散行列は
+\begin{equation}
+  P=E[(x-\mu)(x-\mu)^\T]
+\end{equation}
+で定義される。$P$ の $(i,j)$ 成分は
+\begin{equation}
+  P_{ij}=\operatorname{Cov}(X_i,X_j)
+\end{equation}
+である。対角成分 $P_{ii}$ は $X_i$ の分散、非対角成分 $P_{ij}$ は $X_i$ と $X_j$ の共分散である。任意のベクトル $a\in\R^n$ について
+\begin{align}
+  a^\T Pa
+  &=a^\T E[(x-\mu)(x-\mu)^\T]a\\
+  &=E[a^\T(x-\mu)(x-\mu)^\T a]\\
+  &=E[\{a^\T(x-\mu)\}^2]\\
+  &\ge0
+\end{align}
+なので、共分散行列は対称な半正定値行列である。成分の単位が異なる場合、共分散行列の各成分の単位も異なる。位置と速度を並べた状態では、位置分散は $\mathrm{m^2}$、速度分散は $\mathrm{m^2/s^2}$、位置と速度の共分散は $\mathrm{m^2/s}$ である。
+
+\begin{definition}[正規分布]
+平均 $\mu$、分散 $\sigma^2>0$ を持つ実数値確率変数 $X$ が、確率密度
+\begin{equation}
+  p(x)=\frac{1}{\sqrt{2\pi\sigma^2}}
+  \exp\left\{-\frac{(x-\mu)^2}{2\sigma^2}\right\}
+\end{equation}
+を持つとき、$X$ は正規分布に従うといい、
+\begin{equation}
+  X\sim\mathcal{N}(\mu,\sigma^2)
+\end{equation}
+と書く。
+\end{definition}
+
+正規分布はガウス分布とも呼ばれる。平均 $\mu$ が中心を決め、標準偏差 $\sigma$ が広がりを決める。多次元では、平均ベクトル $\mu\in\R^n$ と正定値共分散行列 $P\in\R^{n\times n}$ に対して
+\begin{equation}
+  p(x)=
+  \frac{1}{\sqrt{(2\pi)^n\det P}}
+  \exp\left\{
+    -\frac{1}{2}(x-\mu)^\T P^{-1}(x-\mu)
+  \right\}
+\end{equation}
+と書ける分布を多変量正規分布といい、
+\begin{equation}
+  x\sim\mathcal{N}(\mu,P)
+\end{equation}
+と表す。指数部の二次形式 $(x-\mu)^\T P^{-1}(x-\mu)$ は、平均からの距離を共分散で重み付けして測っている。$P$ が大きい方向では同じずれでも起こりやすく、$P$ が小さい方向では同じずれが起こりにくい。
+
+\begin{example}[センサ平均と相関ノイズ]
+真の温度が $\theta=25\,^\circ\mathrm{C}$ で一定であり、温度センサの誤差 $V$ が
+\begin{equation}
+  \mathbb{P}(V=-0.2)=0.25,\qquad
+  \mathbb{P}(V=0)=0.50,\qquad
+  \mathbb{P}(V=0.2)=0.25
+\end{equation}
+に従うとする。測定値は $Y=\theta+V$ である。このとき
+\begin{align}
+  E[V]
+  &=(-0.2)\cdot0.25+0\cdot0.50+0.2\cdot0.25\\
+  &=0,\\
+  \operatorname{Var}(V)
+  &=(-0.2)^2\cdot0.25+0^2\cdot0.50+0.2^2\cdot0.25\\
+  &=0.02
+\end{align}
+である。したがって
+\begin{equation}
+  E[Y]=25\,^\circ\mathrm{C},
+  \qquad
+  \operatorname{Var}(Y)=0.02\,^\circ\mathrm{C}^2
+\end{equation}
+となる。
+
+同じセンサで連続して二回測り、誤差を $V_1,V_2$ とする。二つの誤差が独立なら $\operatorname{Cov}(V_1,V_2)=0$ であり、平均値
+\begin{equation}
+  \bar{Y}=\frac{Y_1+Y_2}{2}
+\end{equation}
+の分散は
+\begin{align}
+  \operatorname{Var}(\bar{Y})
+  &=\operatorname{Var}\left(\frac{V_1+V_2}{2}\right)\\
+  &=\frac{1}{4}\{\operatorname{Var}(V_1)+\operatorname{Var}(V_2)
+    +2\operatorname{Cov}(V_1,V_2)\}\\
+  &=\frac{1}{4}(0.02+0.02)\\
+  &=0.01
+\end{align}
+になる。一方、センサの遅いドリフトにより $\operatorname{Cov}(V_1,V_2)=0.01$ なら
+\begin{equation}
+  \operatorname{Var}(\bar{Y})
+  =\frac{1}{4}(0.02+0.02+2\cdot0.01)
+  =0.015
+\end{equation}
+である。平均を取っても、相関したノイズは独立なノイズほど速く減らない。この差を表すために、分散だけでなく共分散が必要になる。
+\end{example}
+
+カルマンフィルタへ進むときは、確率変数を時刻付きで書く。離散時間の状態モデルを
+\begin{align}
+  x_{k+1}&=Ax_k+Bu_k+w_k,\\
+  y_k&=Cx_k+v_k
+\end{align}
+とする。$w_k$ はプロセスノイズ、$v_k$ は測定ノイズである。典型的には
+\begin{align}
+  E[w_k]&=0,&
+  E[v_k]&=0,\\
+  E[w_k w_\ell^\T]&=Q_w\delta_{k\ell},&
+  E[v_k v_\ell^\T]&=R_v\delta_{k\ell},\\
+  E[w_k v_\ell^\T]&=0
+\end{align}
+を仮定する。ここで $\delta_{k\ell}$ は $k=\ell$ なら $1$、それ以外なら $0$ である。$Q_w$ はプロセスノイズ共分散、$R_v$ は測定ノイズ共分散である。時刻の異なるノイズが無相関であるという仮定は、離散時間の白色ノイズ仮定である。
+
+線形ガウスのカルマンフィルタでは、初期状態、プロセスノイズ、測定ノイズを正規分布で表し、互いに独立または必要な交差共分散が 0 であると仮定する。このとき、線形変換と和を通して分布は正規分布のまま保たれ、推定に必要な情報は平均ベクトルと共分散行列に集約される。ガウス性を仮定しない場合でも、平均と共分散を用いた線形最小平均二乗推定として同じ形の式を解釈できるが、条件付き分布全体を平均と共分散だけで完全に表せるとは限らない。したがって、カルマンフィルタの仮定を確認するとは、単に $Q_w$ と $R_v$ の数値を置くことではなく、ノイズの平均、分散、共分散、時刻間の相関、正規分布近似の妥当性を確認することである。

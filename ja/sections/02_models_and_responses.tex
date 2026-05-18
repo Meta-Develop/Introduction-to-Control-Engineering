@@ -1,6 +1,14 @@
-\section{一次遅れと二次遅れ}
+\section{古典制御と時間応答}
 
-前節では、動く対象を状態方程式として書く方法を見た。ここでは、入力に対する出力の形を読み取る。制御器を設計する前に、「対象は速いのか遅いのか」「振動するのか」「落ち着くのか」を言葉と式の両方で説明できるようにする。
+\subsection{一次遅れと二次遅れ}
+
+白線に沿って走る車輪型ロボットでは、カメラで読んだ横ずれに応じて操舵角を変える。台車を目標位置へ戻すモータでは、位置のずれに応じて力や電圧を変える。サーモスタットや水槽の水位制御でも、測定値が目標から外れた分だけ加熱量や流入量を変える。いずれの例でも、目標値、測定値、その差、入力、出力を時間のグラフとして記録できる。
+
+ON--OFF の切替だけで操作すると、誤差が小さくなった後も入力が急に変わるため、温度や水位は目標のまわりを往復しやすい。誤差に比例した入力へ置き換えても、比例係数が小さければ戻りが遅く、比例係数が大きければ行き過ぎや振動が現れる場合がある。したがって、制御器の式を書く前に、応答の速さ、目標値を越える量、振動の残り方、最後に残るずれを同じ尺度で測れる形にする必要がある。
+
+この目的に対して、すべての物理機構を最初から詳細に書く必要はない。出力が一つの蓄積量で決まり、入力を変えると指数関数的に新しい値へ近づく対象は、一次遅れによって応答の遅れと定常値を表せる。慣性やばねのように位置と速度の二つの量が関与し、目標値を越えたり振動したりする対象は、二次遅れによって減衰、収束、振動を表せる。
+
+以下では、一次遅れと二次遅れを線形時不変系の最小の時間応答モデルとして定式化する。一次遅れでは時定数と静的ゲイン、二次遅れでは減衰比と固有角周波数を導入し、ステップ入力に対して応答速度、オーバーシュート、整定、定常偏差がどのように式とグラフに現れるかを確認する。
 
 \begin{definition}[一次遅れ]
 入力 $u(t)$ と出力 $y(t)$ が
@@ -38,9 +46,16 @@
 \end{equation}
 を得る。
 
-\begin{lecturepoint}
-時定数 $\tau$ は「指数関数の肩の時間」である。$t=\tau$ を代入すると、ずれは $e^{-1}\simeq0.368$ 倍になる。これは経験則ではなく、\weq{first-order-step} へ $t=\tau$ を代入した結果である。
-\end{lecturepoint}
+時定数 $\tau$ は、偏差が初期偏差の $e^{-1}\simeq0.368$ 倍になる時刻である。この値は、\weq{first-order-step} に $t=\tau$ を代入して得られる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.92\linewidth,bb=0 0 1296 756]{figures/time_response_examples.png}
+\caption{正規化した一次遅れ応答と二次遅れ応答の比較。左は $y/(Ku_0)=1-e^{-t/\tau}$ において時定数 $\tau$ だけを変えたステップ応答であり、各曲線は $t=\tau$ で $1-e^{-1}$ に達する。右は $\omega_n=2\,\mathrm{rad/s}$ を固定し、減衰比 $\zeta$ を変えた標準二次系の単位ステップ応答である。}
+\label{fig:time-response-examples}
+\end{figure}
+
+図\ref{fig:time-response-examples} の左図は、同じ静的ゲイン $K$ と同じステップ入力 $u_0$ に対して、時定数だけを変えた応答を正規化して示している。$\tau$ が小さいほど極 $-1/\tau$ は複素平面の左側へ移り、指数項 $e^{-t/\tau}$ が速く消えるため、定常値への接近も速くなる。一方、最終値 $Ku_0$ は時定数ではなく静的ゲインで決まる。同じ図の右側では、二次遅れ系の固有角周波数を固定し、減衰比 $\zeta$ だけを変えている。$\zeta<1$ では複素共役極が現れて振動とオーバーシュートが生じ、$\zeta=1$ は振動しない応答と振動応答の境界になり、$\zeta>1$ では二つの実極のうち遅い極が整定速度を支配する。
 
 \begin{definition}[二次遅れの標準形]
 出力 $y$ が
@@ -51,38 +66,411 @@
 を満たすとき、これを二次遅れ系の標準形という。$\omega_n$ を固有角周波数、$\zeta$ を減衰比という。
 \end{definition}
 
-入力を 0 とした自然応答を見ると、特性方程式は
+以後、この標準形では $\omega_n>0$、$\zeta\ge0$ とする。$\omega_n$ の単位は $\mathrm{rad/s}$ であり、$\zeta$ は無次元である。入力を一定値 $u(t)=u_0$ に保つと、定常値は $\dot{y}=\ddot{y}=0$ から
+\begin{equation}
+  y_\infty=K u_0
+\end{equation}
+である。偏差
+\begin{equation}
+  x(t)=y(t)-y_\infty
+\end{equation}
+を置くと、$u_0$ は相殺されて
+\begin{equation}
+  \ddot{x}+2\zeta\omega_n\dot{x}+\omega_n^2x=0
+  \label{eq:second-order-deviation}
+\end{equation}
+となる。したがって二次系の形は、定常値そのものではなく、定常値からの偏差がどのように消えるかで決まる。入力を 0 とした自然応答は $u_0=0$ の特別な場合である。
+
+\subsubsection{二次標準形の特性根}
+
+\weq{second-order-deviation} に指数関数形 $x(t)=e^{st}$ を代入する。$e^{st}\ne0$ なので
 \begin{equation}
   s^2+2\zeta\omega_n s+\omega_n^2=0
 \end{equation}
-である。二次方程式の解の公式より
+を得る。これを二次系の特性方程式という。二次方程式の解の公式より
 \begin{align}
   s&=\frac{-2\zeta\omega_n\pm
   \sqrt{(2\zeta\omega_n)^2-4\omega_n^2}}{2}\\
   &=-\zeta\omega_n\pm\omega_n\sqrt{\zeta^2-1}.
+  \label{eq:second-order-characteristic-roots}
 \end{align}
-$0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}$ と書ける。したがって極は
+根の形は判別式、すなわち $\zeta^2-1$ の符号で三つに分かれる。この分類が、不足減衰、臨界減衰、過減衰である。
+
+\subsubsection{不足減衰の応答}
+$0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}$ と書ける。ここで
 \begin{equation}
-  s=-\zeta\omega_n\pm j\omega_n\sqrt{1-\zeta^2}
+  \sigma=\zeta\omega_n,\qquad
+  \omega_d=\omega_n\sqrt{1-\zeta^2}
+\end{equation}
+とおく。$\sigma$ は減衰係数、$\omega_d$ は減衰固有角周波数である。二つの極は
+\begin{equation}
+  s_{1,2}=-\sigma\pm j\omega_d
   \label{eq:second-order-poles}
 \end{equation}
-である。実部 $-\zeta\omega_n$ が減衰の速さ、虚部 $\omega_n\sqrt{1-\zeta^2}$ が振動の速さを表す。
+である。偏差応答は実関数として
+\begin{equation}
+  x(t)=e^{-\sigma t}
+  \left(A\cos\omega_d t+B\sin\omega_d t\right)
+  \label{eq:second-order-underdamped-free}
+\end{equation}
+と書ける。初期偏差を $x(0)=x_0$、初期速度を $\dot{x}(0)=v_0$ とすると
+\begin{align}
+  x(0)&=A=x_0,\\
+  \dot{x}(0)&=-\sigma A+B\omega_d=v_0
+\end{align}
+だから
+\begin{equation}
+  A=x_0,\qquad
+  B=\frac{v_0+\sigma x_0}{\omega_d}
+  \label{eq:second-order-underdamped-constants}
+\end{equation}
+である。したがって $y(t)=K u_0+x(t)$ である。
 
-\section{ラプラス変換と伝達関数}
+初期静止 $y(0)=0$、$\dot{y}(0)=0$ から一定入力 $u(t)=u_0$ を加えるステップ応答では、$x_0=-K u_0$、$v_0=0$ である。これを \weq{second-order-underdamped-free} に代入して
+\begin{equation}
+  y(t)=K u_0\left[
+    1-e^{-\sigma t}\left\{
+      \cos\omega_d t+\frac{\sigma}{\omega_d}\sin\omega_d t
+    \right\}
+  \right]
+  \label{eq:second-order-underdamped-step-general}
+\end{equation}
+を得る。不足減衰では、極の実部 $-\sigma=-\zeta\omega_n$ が包絡線 $e^{-\sigma t}$ の消え方を決め、虚部 $\omega_d$ が振動の角周波数を決める。$\zeta$ が小さいほど振動は強く残り、$\zeta$ が 1 に近づくほど $\omega_d$ は小さくなる。$\zeta=0$ は減衰を持たない境界であり、極は $\pm j\omega_n$ となって振幅が減衰しない。
+
+\subsubsection{臨界減衰の応答}
+$\zeta=1$ なら特性方程式は
+\begin{equation}
+  s^2+2\omega_n s+\omega_n^2=(s+\omega_n)^2=0
+\end{equation}
+となり、極は
+\begin{equation}
+  s=-\omega_n
+\end{equation}
+の重根である。重根では、指数関数 $e^{-\omega_n t}$ だけでは二階微分方程式の二つの初期条件を満たせないため、もう一つの独立解として $t e^{-\omega_n t}$ が現れる。偏差応答は
+\begin{equation}
+  x(t)=(A+Bt)e^{-\omega_n t}
+  \label{eq:second-order-critical-free}
+\end{equation}
+である。初期値を代入すると
+\begin{align}
+  x(0)&=A=x_0,\\
+  \dot{x}(0)&=B-\omega_n A=v_0
+\end{align}
+だから
+\begin{equation}
+  A=x_0,\qquad
+  B=v_0+\omega_n x_0
+  \label{eq:second-order-critical-constants}
+\end{equation}
+である。
+
+初期静止から一定入力 $u_0$ を加えると、$x_0=-K u_0$、$v_0=0$ なので
+\begin{equation}
+  y(t)=K u_0\left\{1-(1+\omega_n t)e^{-\omega_n t}\right\}
+  \label{eq:second-order-critical-step}
+\end{equation}
+となる。臨界減衰は、振動を伴わない応答と振動を伴う応答の境界である。初期静止からの正のステップ応答では、出力は振動せず単調に定常値へ近づく。同じ $\omega_n$ のもとで、$\zeta<1$ では複素共役極により振動が現れ、$\zeta>1$ では二つの実極に分かれて遅い実指数モードが支配的になる。
+
+\subsubsection{過減衰の応答}
+$\zeta>1$ なら二つの極は相異なる負の実数である。便宜上
+\begin{align}
+  p_1&=-\omega_n\left(\zeta-\sqrt{\zeta^2-1}\right),\\
+  p_2&=-\omega_n\left(\zeta+\sqrt{\zeta^2-1}\right)
+\end{align}
+とおくと、$p_2<p_1<0$ である。偏差応答は
+\begin{equation}
+  x(t)=A e^{p_1t}+B e^{p_2t}
+  \label{eq:second-order-overdamped-free}
+\end{equation}
+であり、初期条件から
+\begin{align}
+  A+B&=x_0,\\
+  p_1A+p_2B&=v_0
+\end{align}
+を満たす。これを解くと
+\begin{equation}
+  A=\frac{v_0-p_2x_0}{p_1-p_2},\qquad
+  B=\frac{p_1x_0-v_0}{p_1-p_2}
+  \label{eq:second-order-overdamped-constants}
+\end{equation}
+である。
+
+初期静止から一定入力 $u_0$ を加えるステップ応答では
+\begin{equation}
+  y(t)=K u_0\left[
+    1+\frac{p_2}{p_1-p_2}e^{p_1t}
+      -\frac{p_1}{p_1-p_2}e^{p_2t}
+  \right]
+  \label{eq:second-order-overdamped-step}
+\end{equation}
+となる。二つの指数はいずれも減衰するが、長時間では絶対値の小さい極 $p_1$ に対応する $e^{p_1t}$ が残る。$\zeta$ を非常に大きくすると $p_2$ は大きな負値へ移る一方で、$p_1$ は原点に近づくため、減衰を増やせば常に応答が速くなるわけではない。
+
+図\ref{fig:time-response-examples} の右図は、この三つの減衰分類を同じ時間軸で比較している。$\zeta=0.2$ の曲線は実部 $-\zeta\omega_n$ が小さいため包絡線の減衰が遅く、虚部に対応する振動が定常値を大きく超える。$\zeta=0.5$ では振動とオーバーシュートは残るが、包絡線は速く縮む。$\zeta=1$ は重根に対応し、初期静止からのステップ応答では定常値を越えずに近づく。$\zeta=1.8$ は過減衰であり、振動しないが遅い実極が原点に近いため、臨界減衰よりも整定が遅くなる。
+
+\begin{practice}[応答図による時定数と減衰比の確認]
+図\ref{fig:time-response-examples} の左図で、$\tau=0.5\,\mathrm{s}$、$1.0\,\mathrm{s}$、$2.0\,\mathrm{s}$ の各曲線が $y/(Ku_0)=1-e^{-1}$ に達する時刻を読み取り、極 $-1/\tau$ の位置と応答速度を対応づけよ。右図では $\zeta=0.2$、$0.5$、$1.0$、$1.8$ の各曲線について、振動の有無、オーバーシュートの有無、整定の速さを比較し、同じ $\omega_n$ でも減衰比を大きくしすぎると応答が遅くなる理由を極の位置から説明せよ。
+\end{practice}
+
+\subsubsection{ステップ応答の過渡仕様}
+
+制御系の時間応答は、式全体だけでなく、グラフから算出できる少数の仕様値でも評価する。ここでは、時刻 $0$ で入力または目標値が一定値へ変わり、出力 $y(t)$ が有限な定常値へ収束する場合を考える。初期値を $y_0=y(0+)$、定常値を
+\begin{equation}
+  y_\infty=\lim_{t\to\infty}y(t)
+\end{equation}
+とし、応答の大きさを
+\begin{equation}
+  \Delta y=y_\infty-y_0
+\end{equation}
+で表す。以下の定義では $\Delta y>0$ の上向きステップを基準に書く。下向きステップでは、$y-y_0$ を $\Delta y$ で割った正規化応答で同じ定義を使う。
+
+\begin{definition}[定常値と定常偏差]
+出力が有限な極限を持つとき、その極限
+\begin{equation}
+  y_\infty=\lim_{t\to\infty}y(t)
+\end{equation}
+を定常値という。目標値または入力指令を $r(t)$ とし、$r_\infty=\lim_{t\to\infty}r(t)$ が存在するとき、
+\begin{equation}
+  e_\infty=\lim_{t\to\infty}\{r(t)-y(t)\}=r_\infty-y_\infty
+  \label{eq:steady-state-error}
+\end{equation}
+を定常偏差という。単位ステップ目標に対して $y_\infty=1$ なら $e_\infty=0$ であり、出力が $0.98$ に収束するなら $e_\infty=0.02$ である。
+\end{definition}
+
+\begin{definition}[立上り時間、ピーク時刻、最大オーバーシュート、整定時間]
+正規化応答を
+\begin{equation}
+  \eta(t)=\frac{y(t)-y_0}{\Delta y}
+\end{equation}
+とする。$\eta=0$ が初期値、$\eta=1$ が定常値に対応する。
+\begin{itemize}
+  \item 立上り時間は、応答が所定の下側割合から上側割合へ到達するまでの時間である。本書では測定値として、特に断らない限り $10\%$ から $90\%$ までの時間
+  \begin{equation}
+    t_r^{10-90}=t_{0.9}-t_{0.1},
+    \qquad \eta(t_{0.1})=0.1,\quad \eta(t_{0.9})=0.9
+  \end{equation}
+  を用いる。標準二次系の公式では、初めて定常値に到達する $0$--$100\%$ 立上り時間もよく用いられる。
+  \item ピーク時刻 $t_p$ は、ステップ後の最初の局所最大値に到達する時刻である。
+  \item 最大オーバーシュート $M_p$ は、最大値 $y_{\max}$ が定常値をどれだけ超えたかを、変化量で割った値
+  \begin{equation}
+    M_p=\frac{y_{\max}-y_\infty}{\abs{\Delta y}}
+  \end{equation}
+  である。百分率では $100M_p\,\%$ と書く。
+  \item $\varepsilon$ 整定時間 $t_s^{(\varepsilon)}$ は、時刻 $t_s^{(\varepsilon)}$ 以後に応答が定常値まわりの帯域
+  \begin{equation}
+    \abs{y(t)-y_\infty}\le \varepsilon\abs{\Delta y}
+    \qquad (t\ge t_s^{(\varepsilon)})
+  \end{equation}
+  に入り続ける最初の時刻である。代表的には $\varepsilon=0.02$ の $2\%$ 整定時間と、$\varepsilon=0.05$ の $5\%$ 整定時間を使う。
+\end{itemize}
+\end{definition}
+
+ステップ応答のグラフ上でこれらを求めるときは、まず最終的に落ち着く水平線 $y=y_\infty$ を決める。次に、初期値 $y_0$ から定常値 $y_\infty$ までの差 $\Delta y$ を基準に、$10\%$ 線 $y_0+0.1\Delta y$、$90\%$ 線 $y_0+0.9\Delta y$、必要なら $100\%$ 線 $y_\infty$ を引く。応答曲線が $10\%$ 線と $90\%$ 線を最初に横切る時刻の差が $10$--$90\%$ 立上り時間である。最初の山の頂点の横座標がピーク時刻、縦座標が $y_{\max}$ であり、$y_{\max}-y_\infty$ を $\abs{\Delta y}$ で割れば最大オーバーシュートになる。整定時間は、$y_\infty\pm\varepsilon\abs{\Delta y}$ の二本の水平線でできる帯域を描き、その帯域へ最後に入ったあとの時刻として定める。単に一度帯域に入った時刻ではなく、その後に帯域を出ないことまで含める点が重要である。
+
+\begin{formula}[不足減衰二次系の標準過渡仕様]
+次の仮定を置く。
+\begin{itemize}
+  \item 系は零点を持たない標準二次系
+  \begin{equation}
+    G(s)=\frac{K\omega_n^2}
+             {s^2+2\zeta\omega_n s+\omega_n^2}
+  \end{equation}
+  で近似できる。
+  \item $0<\zeta<1$、$\omega_n>0$ である。
+  \item 初期静止状態から大きさ $u_0$ のステップを加え、$K u_0>0$ とする。
+  \item 他の極はこの複素共役極より十分速く減衰し、測定ノイズや飽和は過渡仕様の評価を支配しない。
+\end{itemize}
+このとき、$\omega_d=\omega_n\sqrt{1-\zeta^2}$、$\sigma=\zeta\omega_n$ とおけば、定常値は
+\begin{equation}
+  y_\infty=K u_0
+\end{equation}
+であり、正規化応答は
+\begin{equation}
+  \eta(t)=1-e^{-\sigma t}
+  \left\{\cos\omega_d t+\frac{\zeta}{\sqrt{1-\zeta^2}}\sin\omega_d t\right\}.
+  \label{eq:transient-normalized-step}
+\end{equation}
+標準的な仕様値は
+\begin{align}
+  t_r^{0-100}
+  &=\frac{\pi-\arccos\zeta}{\omega_d},
+  \label{eq:rise-time-first-crossing}\\
+  t_p
+  &=\frac{\pi}{\omega_d},
+  \label{eq:peak-time}\\
+  M_p
+  &=\exp\left(-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}\right),
+  \label{eq:maximum-overshoot}\\
+  t_s^{(0.02)}
+  &\simeq \frac{4}{\zeta\omega_n},
+  \qquad
+  t_s^{(0.05)}
+  \simeq \frac{3}{\zeta\omega_n}.
+  \label{eq:settling-time-envelope}
+\end{align}
+\weq{rise-time-first-crossing} は初回定常値到達時刻、\weq{peak-time} と \weq{maximum-overshoot} は標準二次系では厳密な式である。一方、整定時間の式は、減衰包絡 $e^{-\zeta\omega_n t}$ が $2\%$ または $5\%$ 程度まで小さくなる時刻を使った近似である。
+\end{formula}
+
+\begin{derivation}
+\weq{transient-normalized-step} の中括弧を一つの正弦波にまとめる。$\phi=\arccos\zeta$ とおくと、$\sin\phi=\sqrt{1-\zeta^2}$ であるから
+\begin{align}
+  \cos\omega_d t
+  +\frac{\zeta}{\sqrt{1-\zeta^2}}\sin\omega_d t
+  &=
+  \frac{1}{\sqrt{1-\zeta^2}}
+  \sin(\omega_d t+\phi).
+\end{align}
+応答が初めて $\eta(t)=1$ に達するには、この正弦項が初めて 0 になればよい。$t=0$ では角度が $\phi$ であり、次の零点は $\omega_d t+\phi=\pi$ だから
+\begin{equation}
+  t_r^{0-100}=\frac{\pi-\phi}{\omega_d}
+  =\frac{\pi-\arccos\zeta}{\omega_d}
+\end{equation}
+である。
+
+ピーク時刻は $\dot{\eta}(t)=0$ で求める。\weq{transient-normalized-step} を微分すると
+\begin{align}
+  \dot{\eta}(t)
+  &=
+  e^{-\sigma t}
+  \left[
+    \sigma\left\{\cos\omega_d t+
+    \frac{\sigma}{\omega_d}\sin\omega_d t\right\}
+    +\omega_d\sin\omega_d t-\sigma\cos\omega_d t
+  \right]\\
+  &=
+  e^{-\sigma t}
+  \left(\omega_d+\frac{\sigma^2}{\omega_d}\right)\sin\omega_d t.
+\end{align}
+したがって極値は $\sin\omega_d t=0$、すなわち $t=k\pi/\omega_d$ で生じる。最初の正の極値は
+\begin{equation}
+  t_p=\frac{\pi}{\omega_d}
+\end{equation}
+である。この時刻では $\cos\pi=-1$、$\sin\pi=0$ なので
+\begin{equation}
+  \eta(t_p)
+  =1+e^{-\sigma\pi/\omega_d}.
+\end{equation}
+よって
+\begin{equation}
+  M_p=\eta(t_p)-1
+  =
+  \exp\left(-\frac{\sigma\pi}{\omega_d}\right)
+  =
+  \exp\left(-\frac{\pi\zeta}{\sqrt{1-\zeta^2}}\right)
+\end{equation}
+を得る。
+
+整定時間は包絡線から近似する。正規化偏差 $\eta(t)-1$ は指数因子 $e^{-\sigma t}$ を持つため、主要な減衰速度は $\sigma=\zeta\omega_n$ である。$2\%$ 帯域なら
+\begin{equation}
+  e^{-\sigma t}\simeq0.02
+\end{equation}
+と置き、両辺の自然対数を取ると
+\begin{equation}
+  t\simeq\frac{-\ln0.02}{\sigma}
+  =\frac{3.912\cdots}{\zeta\omega_n}
+  \simeq \frac{4}{\zeta\omega_n}
+\end{equation}
+である。同様に $5\%$ 帯域では $-\ln0.05=2.996\cdots$ なので
+\begin{equation}
+  t_s^{(0.05)}\simeq\frac{3}{\zeta\omega_n}
+\end{equation}
+となる。
+\end{derivation}
+
+\begin{example}[標準二次系の過渡仕様]
+単位ステップ入力に対する標準二次系
+\begin{equation}
+  G(s)=\frac{16}{s^2+4s+16}
+\end{equation}
+を考える。分母を
+\begin{equation}
+  s^2+2\zeta\omega_n s+\omega_n^2
+\end{equation}
+と比較すると、$\omega_n=4\,\mathrm{rad/s}$、$2\zeta\omega_n=4$ より $\zeta=0.5$ である。したがって
+\begin{align}
+  \omega_d&=4\sqrt{1-0.5^2}=3.464\cdots\,\mathrm{rad/s},\\
+  y_\infty&=1
+\end{align}
+である。初回定常値到達時刻は
+\begin{equation}
+  t_r^{0-100}
+  =
+  \frac{\pi-\arccos(0.5)}{3.464\cdots}
+  =
+  0.605\cdots\,\mathrm{s}
+\end{equation}
+であり、ピーク時刻は
+\begin{equation}
+  t_p=\frac{\pi}{3.464\cdots}
+  =0.907\cdots\,\mathrm{s}
+\end{equation}
+である。最大オーバーシュートは
+\begin{equation}
+  M_p
+  =
+  \exp\left(-\frac{\pi(0.5)}{\sqrt{1-0.5^2}}\right)
+  =
+  0.163\cdots
+\end{equation}
+だから、ピーク値はおよそ $1.163$、百分率表示では $16.3\%$ である。$2\%$ 整定時間と $5\%$ 整定時間の近似は
+\begin{equation}
+  t_s^{(0.02)}\simeq\frac{4}{0.5\cdot4}=2.0\,\mathrm{s},
+  \qquad
+  t_s^{(0.05)}\simeq\frac{3}{0.5\cdot4}=1.5\,\mathrm{s}
+\end{equation}
+となる。目標値も単位ステップであれば $r_\infty=1$ なので、定常偏差は $e_\infty=1-y_\infty=0$ である。
+\end{example}
+
+\begin{remark}[過渡仕様の適用範囲]
+上の公式は、零点を持たない不足減衰二次標準形を前提にした仕様である。実際の伝達関数に零点があると、同じ極を持っていても立上り時間、ピーク値、初期の曲がり方は変わる。特に右半平面零点を持つ非最小位相系では、正のステップに対して出力が最初に負側へ動く逆応答が生じることがあり、単純な $0$--$100\%$ 立上り時間や最大オーバーシュートの解釈が曖昧になる。高次系を二次系で近似する場合も、残りの極が十分速く、零点の影響が小さいという支配極近似の条件を確認する必要がある。
+
+測定データから仕様を求める場合には、ノイズ、量子化、サンプリング周期、外乱、入力飽和にも注意する。ノイズを含む信号は整定帯域を細かく出入りするため、瞬間値だけで整定時間を判定すると過大または過小に見積もる。実験では、平均化、低域通過フィルタ、一定時間だけ帯域内に留まるという判定窓を用い、フィルタによる遅れが立上り時間とピーク時刻を変えないかも併せて確認する。
+\end{remark}
+
+\subsection{ラプラス変換と伝達関数}
+
+時間領域の微分方程式には、指数関数、正弦波、初期値、入力の積分が現れる。ラプラス変換は、これらを複素変数 $s$ の関数へ写し、微分を $s$ 倍と初期値項に、積分を $1/s$ 倍に変換する。
 
 \begin{definition}[ラプラス変換]
 時刻 $t\ge0$ の関数 $f(t)$ に対して
 \begin{equation}
   F(s)=\mathcal{L}\{f(t)\}
   =\int_0^\infty f(t)e^{-st}\,\dd t
+  \label{eq:laplace-definition}
 \end{equation}
 をラプラス変換という。
 \end{definition}
 
-ラプラス変換は、微分方程式を $s$ の代数方程式へ変える道具である。その核心は次の公式である。
+ここで $s$ は複素数である。以下では、任意の有限区間で区分的に連続で、ある定数 $M>0$、$\alpha$、$T$ に対して
+\begin{equation}
+  \abs{f(t)}\le M e^{\alpha t}\qquad (t\ge T)
+\end{equation}
+を満たす関数を扱う。この仮定は指数位数の仮定であり、線形時不変系の応答で生じる指数関数および減衰振動を含む。このとき少なくとも $\operatorname{Re}s>\alpha$ では積分が収束する。初期値 $f(0)$ は、時刻 $0$ の右極限 $f(0+)$ を表すものとして書く。
+
+\begin{theorem}[ラプラス変換の線形性]
+$F(s)=\mathcal{L}\{f(t)\}$、$G(s)=\mathcal{L}\{g(t)\}$ が同じ領域で存在するとする。定数 $a,b$ に対して
+\begin{equation}
+  \mathcal{L}\{a f(t)+b g(t)\}=aF(s)+bG(s)
+  \label{eq:laplace-linearity}
+\end{equation}
+である。
+\end{theorem}
+
+\begin{derivation}
+定義へそのまま代入すると
+\begin{align}
+  \mathcal{L}\{a f+b g\}
+  &=\int_0^\infty \{a f(t)+b g(t)\}e^{-st}\,\dd t\\
+  &=a\int_0^\infty f(t)e^{-st}\,\dd t
+    +b\int_0^\infty g(t)e^{-st}\,\dd t\\
+  &=aF(s)+bG(s)
+\end{align}
+となる。
+\end{derivation}
+
+線形性により、入力または応答を複数の成分に分解した場合でも、各成分の変換を加算することで全体の変換が得られる。
 
 \begin{formula}[ラプラス変換の微分公式]
-十分よい関数 $f(t)$ について
+$f$ が区分的に連続微分可能で、$f$ と $\dot{f}$ のラプラス変換が存在するとする。また、考えている $s$ について $f(t)e^{-st}\to0$ $(t\to\infty)$ とする。このとき
 \begin{equation}
   \mathcal{L}\{\dot{f}(t)\}=sF(s)-f(0)
   \label{eq:laplace-derivative}
@@ -104,12 +492,17 @@ $0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}
 \begin{equation}
   \int_a^b u'(t)v(t)\,\dd t=[u(t)v(t)]_a^b-\int_a^b u(t)v'(t)\,\dd t
 \end{equation}
-を、$u(t)=f(t)$、$v(t)=e^{-st}$ として使う。すると
+を、$u(t)=f(t)$、$v(t)=e^{-st}$ として、まず上限を有限の $T$ にして使う。すると
+\begin{align}
+  \int_0^T \dot{f}(t)e^{-st}\,\dd t
+  &=\left[f(t)e^{-st}\right]_0^T
+    -\int_0^T f(t)(-s)e^{-st}\,\dd t\\
+  &=f(T)e^{-sT}-f(0)+s\int_0^T f(t)e^{-st}\,\dd t
+\end{align}
+である。$T\to\infty$ とすると、仮定より境界項 $f(T)e^{-sT}$ は 0 へ行く。したがって
 \begin{align}
   \int_0^\infty \dot{f}(t)e^{-st}\,\dd t
-  &=\left[f(t)e^{-st}\right]_0^\infty
-    -\int_0^\infty f(t)(-s)e^{-st}\,\dd t\\
-  &=\left(0-f(0)\right)+s\int_0^\infty f(t)e^{-st}\,\dd t\\
+  &=-f(0)+s\int_0^\infty f(t)e^{-st}\,\dd t\\
   &=sF(s)-f(0).
 \end{align}
 二階微分はこの公式を $\dot{f}$ にもう一度使う。$\mathcal{L}\{\dot{f}\}=sF(s)-f(0)$ だから
@@ -121,6 +514,464 @@ $0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}
 \end{align}
 \end{derivation}
 
+微分公式では、微分に対応する $s$ 倍の項に加えて初期値項が現れる。初期値が 0 でない場合、この項は零入力応答を構成する。
+
+\begin{formula}[ラプラス変換の積分公式]
+$f$ のラプラス変換を $F(s)$ とし、
+\begin{equation}
+  h(t)=\int_0^t f(\tau)\,\dd\tau
+\end{equation}
+とおく。積分と順序交換が許される収束領域で
+\begin{equation}
+  \mathcal{L}\{h(t)\}=\frac{F(s)}{s}
+  \label{eq:laplace-integral}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+定義から始めると
+\begin{equation}
+  \mathcal{L}\{h(t)\}
+  =\int_0^\infty \left(\int_0^t f(\tau)\,\dd\tau\right)e^{-st}\,\dd t
+\end{equation}
+である。積分領域は $0\le\tau\le t<\infty$ である。順序を入れ替えると、$\tau$ を固定したとき $t$ は $\tau$ から $\infty$ まで動くので
+\begin{align}
+  \mathcal{L}\{h(t)\}
+  &=\int_0^\infty f(\tau)
+    \left(\int_\tau^\infty e^{-st}\,\dd t\right)\dd\tau\\
+  &=\int_0^\infty f(\tau)
+    \left[-\frac{1}{s}e^{-st}\right]_{t=\tau}^{\infty}\dd\tau\\
+  &=\int_0^\infty f(\tau)\frac{e^{-s\tau}}{s}\,\dd\tau\\
+  &=\frac{1}{s}F(s).
+\end{align}
+したがって時間領域の累積は、$s$ 領域では $1/s$ 倍に対応する。
+\end{derivation}
+
+特に、時刻 $0$ から一定値 $u_0$ を加えるステップ状の信号では
+\begin{align}
+  \mathcal{L}\{u_0\}
+  &=\int_0^\infty u_0e^{-st}\,\dd t\\
+  &=u_0\left[-\frac{1}{s}e^{-st}\right]_0^\infty\\
+  &=\frac{u_0}{s}
+  \label{eq:constant-laplace}
+\end{align}
+である。この式は、ステップ応答および定常偏差の計算で用いる。
+
+\subsubsection{時間移動と指数移動の公式}
+
+入力が時刻 $0$ ではなく時刻 $a>0$ から加わる場合には、単に標準ステップ応答を計算するだけでは開始時刻を表せない。ここでは単位ステップ関数
+\begin{equation}
+  H(t-a)=
+  \begin{cases}
+    0, & 0\le t<a,\\
+    1, & t\ge a
+  \end{cases}
+  \label{eq:unit-step-delayed}
+\end{equation}
+を用いる。$H(t-a)$ は時刻 $a$ で信号を有効にする関数であり、値 $H(0)$ の取り方は通常のラプラス変換の積分値に影響しない。以下では一側ラプラス変換を用い、信号は $t<0$ で 0 とみなす因果信号であるとする。また、$f$ は区分的に連続で指数位数 $\alpha$ を持ち、$F(s)=\mathcal{L}\{f(t)\}$ が $\operatorname{Re}s>\alpha$ で存在するとする。
+
+\begin{formula}[時間移動の公式]
+$a\ge0$ とする。このとき
+\begin{equation}
+  \mathcal{L}\{H(t-a)f(t-a)\}=e^{-as}F(s)
+  \label{eq:laplace-time-shift}
+\end{equation}
+である。特に $f(t)=1$ とすれば
+\begin{equation}
+  \mathcal{L}\{H(t-a)\}=\frac{e^{-as}}{s},
+  \qquad \operatorname{Re}s>0
+  \label{eq:delayed-step-laplace}
+\end{equation}
+を得る。
+\end{formula}
+
+\begin{derivation}
+定義に代入し、$\tau=t-a$ と置換する。
+\begin{align}
+  \mathcal{L}\{H(t-a)f(t-a)\}
+  &=\int_0^\infty H(t-a)f(t-a)e^{-st}\,\dd t\\
+  &=\int_a^\infty f(t-a)e^{-st}\,\dd t\\
+  &=\int_0^\infty f(\tau)e^{-s(\tau+a)}\,\dd\tau\\
+  &=e^{-as}\int_0^\infty f(\tau)e^{-s\tau}\,\dd\tau\\
+  &=e^{-as}F(s).
+\end{align}
+したがって、時間領域で $a$ 秒だけ遅らせる操作は、$s$ 領域では因子 $e^{-as}$ を掛ける操作に対応する。
+\end{derivation}
+
+時間移動の公式では、$H(t-a)$ を含めることが本質的である。$f(t-a)$ だけを書くと、$0\le t<a$ で $f$ の負時刻側を参照する形になり、一側ラプラス変換で扱う因果信号の仮定と合わない。制御の伝達関数で遅れた入力を扱うときは、遅れた信号を $H(t-a)u_0(t-a)$ と書き、遅れる前の信号 $u_0$ が時刻 0 から定義された因果信号であることを明示する。
+
+\begin{formula}[指数移動と周波数移動の公式]
+$\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存在するなら
+\begin{equation}
+  \mathcal{L}\{e^{\beta t}f(t)\}=F(s-\beta),
+  \qquad \operatorname{Re}(s-\beta)>\alpha
+  \label{eq:laplace-exponential-shift}
+\end{equation}
+である。$\beta=-\lambda$、$\lambda>0$ なら減衰因子 $e^{-\lambda t}$ により $F(s+\lambda)$ が現れる。$\beta=j\omega_0$ なら
+\begin{equation}
+  \mathcal{L}\{e^{j\omega_0t}f(t)\}=F(s-j\omega_0)
+\end{equation}
+となり、複素平面では周波数方向の移動として解釈できる。
+\end{formula}
+
+\begin{derivation}
+定義から
+\begin{align}
+  \mathcal{L}\{e^{\beta t}f(t)\}
+  &=\int_0^\infty e^{\beta t}f(t)e^{-st}\,\dd t\\
+  &=\int_0^\infty f(t)e^{-(s-\beta)t}\,\dd t\\
+  &=F(s-\beta)
+\end{align}
+である。収束条件は、元の変換で複素変数を $s-\beta$ に置き換えた条件 $\operatorname{Re}(s-\beta)>\alpha$ になる。
+\end{derivation}
+
+\begin{example}[遅れたステップ入力に対する一次遅れ応答]
+一次遅れ系
+\begin{equation}
+  G(s)=\frac{K}{\tau s+1},
+  \qquad K\in\mathbb{R},\quad \tau>0
+\end{equation}
+を零初期条件で考える。入力が時刻 $a\ge0$ で大きさ $u_0$ へ変わる遅れたステップ
+\begin{equation}
+  u(t)=u_0H(t-a)
+\end{equation}
+なら、\weq{delayed-step-laplace} より
+\begin{equation}
+  U(s)=\frac{u_0e^{-as}}{s}
+\end{equation}
+である。したがって
+\begin{align}
+  Y(s)
+  &=G(s)U(s)\\
+  &=e^{-as}\frac{K u_0}{s(\tau s+1)}.
+  \label{eq:first-order-delayed-step-laplace}
+\end{align}
+遅れを持たない時刻 $0$ 開始の応答を
+\begin{equation}
+  y_0(t)=K u_0\left(1-e^{-t/\tau}\right)
+\end{equation}
+とおけば、\weq{first-order-delayed-step-laplace} と時間移動の公式から
+\begin{equation}
+  y(t)=H(t-a)y_0(t-a)
+  =
+  K u_0 H(t-a)
+  \left(1-e^{-(t-a)/\tau}\right)
+  \label{eq:first-order-delayed-step}
+\end{equation}
+を得る。すなわち
+\begin{equation}
+  y(t)=
+  \begin{cases}
+    0, & 0\le t<a,\\
+    K u_0\left(1-e^{-(t-a)/\tau}\right), & t\ge a
+  \end{cases}
+\end{equation}
+である。零初期条件の線形時不変系では、入力を $a$ 秒遅らせると、零状態応答も同じだけ遅れる。初期値が 0 でない場合には、初期値に由来する自然応答が時刻 $0$ から存在するため、遅れるのは入力による零状態応答だけである。
+\end{example}
+
+\begin{theorem}[初期値の定理]
+$f(t)$ が $t=0$ で右連続で、ラプラス変換が十分大きな実数 $s$ で存在し、原点にインパルス状の成分を持たないとする。このとき
+\begin{equation}
+  f(0)=\lim_{s\to\infty}sF(s)
+  \label{eq:initial-value-theorem}
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+\begin{derivation}
+正の実数 $s$ について
+\begin{equation}
+  sF(s)=\int_0^\infty s f(t)e^{-st}\,\dd t
+\end{equation}
+である。ここで $\xi=st$ と置けば、$t=\xi/s$、$\dd t=\dd\xi/s$ なので
+\begin{align}
+  sF(s)
+  &=\int_0^\infty s f\left(\frac{\xi}{s}\right)e^{-\xi}\frac{\dd\xi}{s}\\
+  &=\int_0^\infty f\left(\frac{\xi}{s}\right)e^{-\xi}\,\dd\xi.
+\end{align}
+$s\to\infty$ とすると、固定した $\xi$ に対して $\xi/s\to0$ である。右連続性より
+\begin{equation}
+  f\left(\frac{\xi}{s}\right)\to f(0)
+\end{equation}
+となる。重み $e^{-\xi}$ の積分は
+\begin{equation}
+  \int_0^\infty e^{-\xi}\,\dd\xi=1
+\end{equation}
+だから、極限を積分の中へ移せる条件のもとで
+\begin{equation}
+  \lim_{s\to\infty}sF(s)=f(0)\int_0^\infty e^{-\xi}\,\dd\xi=f(0)
+\end{equation}
+を得る。
+\end{derivation}
+
+初期値の定理では、$s\to\infty$ において重み $e^{-st}$ が時刻 $0$ 近傍へ集中することを用いている。
+
+\begin{theorem}[最終値の定理]
+$f$ が区分的に連続微分可能で、$f(t)$ が有限の極限 $f_\infty$ へ収束し、$\dot{f}$ の積分が収束するとする。線形時不変系の有理関数として用いる場合には、$sF(s)$ のすべての極が左半平面 $\operatorname{Re}s<0$ にあることを仮定する。このとき
+\begin{equation}
+  \lim_{t\to\infty}f(t)=\lim_{s\to0}sF(s)
+  \label{eq:final-value-theorem}
+\end{equation}
+が成り立つ。
+\end{theorem}
+
+\begin{derivation}
+微分公式より
+\begin{equation}
+  \mathcal{L}\{\dot{f}(t)\}=sF(s)-f(0)
+\end{equation}
+である。$s\to0$ とすると、左辺は
+\begin{align}
+  \lim_{s\to0}\mathcal{L}\{\dot{f}\}
+  &=\lim_{s\to0}\int_0^\infty \dot{f}(t)e^{-st}\,\dd t\\
+  &=\int_0^\infty \dot{f}(t)\,\dd t\\
+  &=f_\infty-f(0)
+\end{align}
+となる。したがって右辺の極限も同じ値を持ち、
+\begin{equation}
+  \lim_{s\to0}\{sF(s)-f(0)\}=f_\infty-f(0)
+\end{equation}
+である。両辺に $f(0)$ を足して
+\begin{equation}
+  \lim_{s\to0}sF(s)=f_\infty
+\end{equation}
+を得る。
+\end{derivation}
+
+最終値の定理には極の条件が必要である。$sF(s)$ が虚軸上に極を持つ場合には持続振動により時間極限が存在しない。$sF(s)$ が原点に極を持つ場合には出力が有界な最終値へ収束しない。
+
+\subsubsection{逆ラプラス変換と部分分数分解}
+
+$s$ 領域で求めた $Y(s)$ は、最終的には時間応答 $y(t)$ として再構成する必要がある。逆ラプラス変換は、表に載っている基本形へ $Y(s)$ を分解し、各項を時間領域へ戻す作業である。線形時不変系の伝達関数と、ステップ、インパルス、ランプのような標準入力を掛けた $Y(s)$ は、多くの場合、有理関数になる。このとき中心になる計算が部分分数分解である。
+
+\begin{definition}[逆ラプラス変換]
+ラプラス変換が $F(s)$ である時間関数 $f(t)$ を求める操作を、逆ラプラス変換といい、
+\begin{equation}
+  f(t)=\mathcal{L}^{-1}\{F(s)\}
+\end{equation}
+と書く。制御で扱う通常の応答では、時刻 $t\ge0$ の右側の関数として扱う。
+\end{definition}
+
+以下の基本変換を表として使う。ただし $a$ と $\omega$ は実数、$\omega>0$、$k=1,2,\ldots$ とする。
+\begin{center}
+\begin{tabular}{c|c}
+$s$ 領域の項 & 時間領域の項\\ \hline
+$\dfrac{1}{s}$ & $1$\\[1ex]
+$\dfrac{1}{s+a}$ & $e^{-at}$\\[1ex]
+$\dfrac{1}{(s+a)^k}$ & $\dfrac{t^{k-1}}{(k-1)!}e^{-at}$\\[1ex]
+$\dfrac{s+a}{(s+a)^2+\omega^2}$ & $e^{-at}\cos\omega t$\\[1ex]
+$\dfrac{\omega}{(s+a)^2+\omega^2}$ & $e^{-at}\sin\omega t$
+\end{tabular}
+\end{center}
+
+表を使う前に、対象の有理関数を表の形に直す。分子次数が分母次数以上なら先に多項式除算を行い、残りを真にプロパーな有理関数にする。分母を因数分解し、単純な実極、重極、複素共役極に分けて部分分数分解する。最後に線形性を使って、各項の逆変換を足し合わせる。
+
+\begin{formula}[単純極に対する Heaviside の展開公式]
+$F(s)=N(s)/D(s)$ が真にプロパーで、分母が互いに異なる一次因子
+\begin{equation}
+  D(s)=\prod_{i=1}^n(s-p_i)
+\end{equation}
+に分解できるとする。このとき
+\begin{equation}
+  F(s)=\sum_{i=1}^n\frac{A_i}{s-p_i},
+  \qquad
+  A_i=\lim_{s\to p_i}(s-p_i)F(s)
+  \label{eq:heaviside-simple-poles}
+\end{equation}
+である。対応する時間応答は
+\begin{equation}
+  f(t)=\sum_{i=1}^n A_i e^{p_i t}
+\end{equation}
+である。
+\end{formula}
+
+\begin{derivation}
+$F(s)$ を
+\begin{equation}
+  F(s)=\frac{A_i}{s-p_i}+\sum_{\ell\neq i}\frac{A_\ell}{s-p_\ell}
+\end{equation}
+と書けると仮定し、両辺に $(s-p_i)$ を掛ける。すると
+\begin{equation}
+  (s-p_i)F(s)=A_i+\sum_{\ell\neq i}A_\ell\frac{s-p_i}{s-p_\ell}
+\end{equation}
+である。$s\to p_i$ とすると、右辺の和の各項は分子が 0 になるため消え、$A_i$ だけが残る。これが \weq{heaviside-simple-poles} である。
+\end{derivation}
+
+\begin{example}[単純な実極]
+\begin{equation}
+  F(s)=\frac{3s+7}{(s+1)(s+3)}
+\end{equation}
+を逆変換する。部分分数分解を
+\begin{equation}
+  \frac{3s+7}{(s+1)(s+3)}
+  =
+  \frac{A}{s+1}+\frac{B}{s+3}
+\end{equation}
+とおく。両辺に $(s+1)(s+3)$ を掛けると
+\begin{align}
+  3s+7&=A(s+3)+B(s+1)\\
+      &=(A+B)s+(3A+B)
+\end{align}
+である。係数を比較して
+\begin{align}
+  A+B&=3,\\
+  3A+B&=7
+\end{align}
+を得る。差を取ると $2A=4$ なので $A=2$、したがって $B=1$ である。よって
+\begin{equation}
+  F(s)=\frac{2}{s+1}+\frac{1}{s+3}
+\end{equation}
+であり、表から
+\begin{equation}
+  f(t)=2e^{-t}+e^{-3t}
+\end{equation}
+となる。極 $-1$ に対応する $e^{-t}$ は、極 $-3$ に対応する $e^{-3t}$ よりゆっくり減衰する。そのため長い時間では $e^{-t}$ の項が支配的に残る。
+\end{example}
+
+\begin{example}[重根を持つ極]
+\begin{equation}
+  F(s)=\frac{2s+5}{(s+1)^2(s+4)}
+\end{equation}
+を考える。$s=-1$ は二重の極であるから、
+\begin{equation}
+  F(s)=\frac{A}{s+1}+\frac{B}{(s+1)^2}+\frac{C}{s+4}
+\end{equation}
+とおく。分母を払うと
+\begin{align}
+  2s+5
+  &=A(s+1)(s+4)+B(s+4)+C(s+1)^2\\
+  &=(A+C)s^2+(5A+B+2C)s+(4A+4B+C)
+\end{align}
+である。係数比較により
+\begin{align}
+  A+C&=0,\\
+  5A+B+2C&=2,\\
+  4A+4B+C&=5
+\end{align}
+を得る。第一式から $C=-A$ であり、第二式は $3A+B=2$ となる。これを第三式へ入れると
+\begin{equation}
+  4A+4(2-3A)-A=5
+\end{equation}
+だから $A=1/3$、$B=1$、$C=-1/3$ である。したがって
+\begin{equation}
+  F(s)=\frac{1}{3}\frac{1}{s+1}
+       +\frac{1}{(s+1)^2}
+       -\frac{1}{3}\frac{1}{s+4}
+\end{equation}
+となり、
+\begin{equation}
+  f(t)=\frac{1}{3}e^{-t}+t e^{-t}-\frac{1}{3}e^{-4t}
+\end{equation}
+を得る。重極では、同じ指数 $e^{-t}$ に $t$ のような多項式因子が掛かる。$t e^{-t}$ は最終的には 0 へ減衰するが、単なる $e^{-t}$ より途中で大きく膨らむため、同じ実部の単純極だけで評価した場合より応答の変化が緩やかになることがある。
+\end{example}
+
+\begin{example}[複素共役極]
+実係数の伝達関数では、複素数の極は共役な組として現れる。
+\begin{equation}
+  F(s)=\frac{s+3}{s^2+2s+5}
+\end{equation}
+を考える。分母を平方完成すると
+\begin{equation}
+  s^2+2s+5=(s+1)^2+4
+\end{equation}
+であり、分子は
+\begin{equation}
+  s+3=(s+1)+2
+\end{equation}
+と書ける。したがって
+\begin{align}
+  F(s)
+  &=\frac{s+1}{(s+1)^2+2^2}
+    +\frac{2}{(s+1)^2+2^2}.
+\end{align}
+表の余弦項と正弦項を使えば
+\begin{equation}
+  f(t)=e^{-t}\cos 2t+e^{-t}\sin 2t
+\end{equation}
+である。極は $s=-1\pm 2j$ であり、実部 $-1$ が包絡線 $e^{-t}$ の減衰を、虚部の大きさ $2$ が振動角周波数を決める。
+\end{example}
+
+複素共役極の一般形も同じ表から読める。$\sigma>0$、$\omega>0$ とし、
+\begin{equation}
+  F(s)=
+  \frac{B(s+\sigma)+C\omega}{(s+\sigma)^2+\omega^2}
+\end{equation}
+なら
+\begin{equation}
+  f(t)=e^{-\sigma t}\{B\cos\omega t+C\sin\omega t\}
+  \label{eq:complex-mode-time}
+\end{equation}
+である。したがって、複素共役極 $-\sigma\pm j\omega$ は、減衰包絡 $e^{-\sigma t}$ と振動 $\cos\omega t,\sin\omega t$ を一組にした時間応答を作る。
+
+一次遅れ系のステップ応答も、同じ逆変換で確認できる。\weq{first-order-laplace-step} を用いると
+\begin{align}
+  Y(s)
+  &=\frac{K u_0}{s(\tau s+1)}
+    +\frac{\tau y_0}{\tau s+1}\\
+  &=\frac{K u_0}{s}
+    -\frac{K u_0\tau}{\tau s+1}
+    +\frac{\tau y_0}{\tau s+1}\\
+  &=\frac{K u_0}{s}
+    +\frac{\tau(y_0-Ku_0)}{\tau s+1}\\
+  &=\frac{K u_0}{s}
+    +\frac{y_0-Ku_0}{s+1/\tau}.
+\end{align}
+表から
+\begin{equation}
+  y(t)=K u_0+(y_0-Ku_0)e^{-t/\tau}
+\end{equation}
+となり、時間領域で直接解いた \weq{first-order-step} と一致する。つまり一次遅れの極 $-1/\tau$ は、初期値と定常値との差を指数的に消すモードである。
+
+二次遅れの不足減衰応答では、複素共役極の読み替えがそのまま現れる。$0<\zeta<1$ とし、
+\begin{equation}
+  \sigma=\zeta\omega_n,\qquad
+  \omega_d=\omega_n\sqrt{1-\zeta^2}
+\end{equation}
+とおくと、
+\begin{equation}
+  s^2+2\zeta\omega_n s+\omega_n^2
+  =(s+\sigma)^2+\omega_d^2
+\end{equation}
+である。ゲイン $K$ の二次遅れ
+\begin{equation}
+  G(s)=
+  \frac{K\omega_n^2}
+       {s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+のインパルス応答は
+\begin{align}
+  h(t)
+  &=\mathcal{L}^{-1}\left\{
+    \frac{K\omega_n^2}{(s+\sigma)^2+\omega_d^2}
+    \right\}\\
+  &=\frac{K\omega_n^2}{\omega_d}e^{-\sigma t}\sin\omega_d t
+\end{align}
+である。単位ステップ入力に対しては
+\begin{align}
+  Y(s)
+  &=\frac{K\omega_n^2}
+    {s(s^2+2\sigma s+\omega_n^2)}\\
+  &=\frac{K}{s}
+    -K\frac{s+2\sigma}{s^2+2\sigma s+\omega_n^2}\\
+  &=\frac{K}{s}
+    -K\frac{s+\sigma}{(s+\sigma)^2+\omega_d^2}
+    -K\frac{\sigma}{\omega_d}
+      \frac{\omega_d}{(s+\sigma)^2+\omega_d^2}.
+\end{align}
+したがって
+\begin{equation}
+  y(t)
+  =
+  K\left[
+    1-e^{-\sigma t}\left\{
+      \cos\omega_d t+\frac{\sigma}{\omega_d}\sin\omega_d t
+    \right\}
+  \right]
+  \label{eq:second-order-step-underdamped}
+\end{equation}
+である。最終値は $K$、減衰の速さは $\sigma=\zeta\omega_n$、振動の速さは $\omega_d$ で決まる。逆ラプラス変換は、伝達関数の極を単なる代数的な根ではなく、時間応答のモードとして対応付ける操作である。
+
 \begin{definition}[伝達関数]
 線形時不変系で初期値を 0 としたとき、入力のラプラス変換 $U(s)$ と出力のラプラス変換 $Y(s)$ の比
 \begin{equation}
@@ -129,18 +980,53 @@ $0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}
 を伝達関数という。
 \end{definition}
 
-一次遅れ \weq{first-order} に初期値 0 のラプラス変換を使うと
+伝達関数では、初期状態に起因する零入力応答と、入力に起因する零状態応答を分離するために初期値を 0 とする。
+
+\subsubsection{一次遅れ系のラプラス変換}
+
+熱容量を持つ物体の温度、RC 回路のコンデンサ電圧、粘性抵抗を受ける速度は、一次遅れで近似される。一次遅れ系を
+\begin{equation}
+  \tau\dot{y}(t)+y(t)=K u(t),
+  \qquad \tau>0
+\end{equation}
+とし、初期値を $y(0)=y_0$ とする。微分公式と線形性より
 \begin{align}
   \tau\mathcal{L}\{\dot{y}\}+\mathcal{L}\{y\}&=K\mathcal{L}\{u\},\\
-  \tau sY(s)+Y(s)&=KU(s),\\
-  (\tau s+1)Y(s)&=KU(s),\\
-  \frac{Y(s)}{U(s)}&=\frac{K}{\tau s+1}.
+  \tau\{sY(s)-y_0\}+Y(s)&=KU(s),\\
+  (\tau s+1)Y(s)-\tau y_0&=KU(s),\\
+  Y(s)&=\frac{K}{\tau s+1}U(s)+\frac{\tau y_0}{\tau s+1}.
+  \label{eq:first-order-laplace-general}
 \end{align}
-したがって一次遅れの伝達関数は
+右辺の第一項は入力による応答、第二項は初期値による応答である。初期値を 0 とした伝達関数は
 \begin{equation}
   G(s)=\frac{K}{\tau s+1}
 \end{equation}
 である。
+
+時刻 $0$ から一定入力 $u(t)=u_0$ を加えると、\weq{constant-laplace} より $U(s)=u_0/s$ である。したがって
+\begin{equation}
+  Y(s)=\frac{K u_0}{s(\tau s+1)}+
+  \frac{\tau y_0}{\tau s+1}
+  \label{eq:first-order-laplace-step}
+\end{equation}
+となる。この式から、逆変換を行わずに初期値と最終値を計算できる。まず初期値の定理より
+\begin{align}
+  \lim_{s\to\infty}sY(s)
+  &=\lim_{s\to\infty}\left\{
+    \frac{K u_0}{\tau s+1}
+    +\frac{\tau y_0 s}{\tau s+1}\right\}\\
+  &=0+y_0.
+\end{align}
+これは初期条件と一致する。次に $\tau>0$ なら $\tau s+1=0$ の極は $s=-1/\tau$ で左半平面にあるので、最終値の定理を適用できる。よって
+\begin{align}
+  \lim_{t\to\infty}y(t)
+  &=\lim_{s\to0}sY(s)\\
+  &=\lim_{s\to0}\left\{
+    \frac{K u_0}{\tau s+1}
+    +\frac{\tau y_0 s}{\tau s+1}\right\}\\
+  &=K u_0.
+\end{align}
+初期値に起因する項は $s=-1/\tau$ の極に対応し、時間領域では指数的に減衰する。定常値は静的ゲイン $K$ と一定入力 $u_0$ の積である。
 
 \begin{definition}[極と零点]
 伝達関数 $G(s)=N(s)/D(s)$ に対して、分母 $D(s)=0$ の解を極、分子 $N(s)=0$ の解を零点という。
@@ -152,25 +1038,605 @@ $0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}
 \end{equation}
 なら極は $-1$ と $-5$ である。部分分数分解の形から、時間応答には $e^{-t}$ と $e^{-5t}$ が含まれる。$e^{-5t}$ は早く消え、$e^{-t}$ が長く残るので、$-1$ の極が支配的である。
 
-\section{閉ループと安定性}
+\subsubsection{プロパー性と相対次数}
 
-制御器 $C(s)$、制御対象 $G(s)$、目標値 $R(s)$、出力 $Y(s)$ を持つ負帰還を考える。偏差は
+定数係数の線形微分方程式
+\begin{equation}
+  a_n y^{(n)}+a_{n-1}y^{(n-1)}+\cdots+a_1\dot{y}+a_0y
+  =
+  b_m u^{(m)}+b_{m-1}u^{(m-1)}+\cdots+b_1\dot{u}+b_0u
+  \label{eq:input-output-ode}
+\end{equation}
+を考える。ただし $a_n\neq0$、$b_m\neq0$ とし、初期値は 0 とする。ラプラス変換の微分公式を使うと
+\begin{align}
+  &(a_ns^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0)Y(s)\\
+  &\qquad
+  =(b_ms^m+b_{m-1}s^{m-1}+\cdots+b_1s+b_0)U(s)
+\end{align}
+である。したがって伝達関数は
+\begin{equation}
+  G(s)=\frac{Y(s)}{U(s)}
+  =
+  \frac{b_ms^m+b_{m-1}s^{m-1}+\cdots+b_1s+b_0}
+       {a_ns^n+a_{n-1}s^{n-1}+\cdots+a_1s+a_0}
+  =
+  \frac{N(s)}{D(s)}
+  \label{eq:rational-transfer}
+\end{equation}
+となる。ここで $D(s)$ は自然応答を決める特性多項式であり、$N(s)$ は入力が各モードへどのように現れるかを表す多項式である。
+
+\begin{definition}[プロパー性と相対次数]
+共通因子を約分した有理伝達関数 $G(s)=N(s)/D(s)$ に対して、$n=\deg D$、$m=\deg N$ とおく。
+\begin{itemize}
+  \item $m\le n$ のとき、$G(s)$ はプロパーである。
+  \item $m<n$ のとき、$G(s)$ は真にプロパーである。
+  \item $m=n$ のとき、$G(s)$ は同次数プロパー、またはバイプロパーである。
+  \item $m>n$ のとき、$G(s)$ はインプロパーである。
+\end{itemize}
+整数
+\begin{equation}
+  r=n-m
+\end{equation}
+を相対次数という。プロパーな伝達関数では $r\ge0$、真にプロパーな伝達関数では $r\ge1$ である。
+\end{definition}
+
+相対次数は、高周波で入力が出力へどれだけ直接現れるかを測る数である。最高次係数を取り出すと、$\abs{s}$ が十分大きい範囲で
+\begin{equation}
+  G(s)
+  =
+  \frac{b_ms^m(1+\mathcal{O}(s^{-1}))}
+       {a_ns^n(1+\mathcal{O}(s^{-1}))}
+  \simeq
+  \frac{b_m}{a_n}s^{-r}
+  \label{eq:relative-degree-asymptote}
+\end{equation}
+である。$r=0$ なら高周波ゲインは有限値 $b_m/a_n$ へ近づく。$r\ge1$ なら高周波ゲインは 0 へ近づき、入力の急な変化は出力で弱められる。$r<0$ なら高周波ゲインは無限大へ増え、入力の微分を理想的に要求する形になる。
+
+いくつかの標準例を並べる。一次遅れ
+\begin{equation}
+  G_1(s)=\frac{K}{\tau s+1}
+\end{equation}
+は $n=1$、$m=0$ なので真にプロパーで、相対次数は $1$ である。質量ばねダンパ系の力入力から変位出力までの伝達関数
+\begin{equation}
+  G_2(s)=\frac{1}{Ms^2+Cs+K_s}
+\end{equation}
+は $n=2$、$m=0$ なので相対次数は $2$ である。物体に力を加えても変位が瞬時に跳ばない、という慣性の性質が式にも現れている。純粋なゲイン $G_3(s)=K$ は $n=m=0$ の同次数プロパーであり、状態を介さない直接の入出力経路を表す。理想微分器 $G_4(s)=s$ は $m=1$、$n=0$ なのでインプロパーであり、入力 $u(t)$ から出力 $y(t)=\dot{u}(t)$ を直接作ることを要求する。
+
+物理的な実現可能性の観点では、有限次元の因果的な状態空間実現
+\begin{align}
+  \dot{x}(t)&=Ax(t)+Bu(t),\\
+  y(t)&=Cx(t)+Du(t)
+\end{align}
+から得られる伝達関数
+\begin{equation}
+  G(s)=C(sI-A)^{-1}B+D
+\end{equation}
+はプロパーである。$D=0$ なら真にプロパーであり、入力はまず状態を変え、その後に出力へ現れる。$D\neq0$ なら同次数プロパーの成分を持ち、入力が出力へ瞬時に通る直接フィードスルーがある。インプロパーな伝達関数をそのまま実装しようとすると、理想微分器のように高周波ノイズを無限に増幅する要素が必要になるため、実際には低域通過フィルタを付けた近似として扱う。
+
+状態空間実現との対応を、相対次数 $1$ の例で確かめる。
+\begin{align}
+  \dot{x}(t)
+  &=
+  \begin{bmatrix}
+    0 & 1\\
+    -5 & -4
+  \end{bmatrix}x(t)
+  +
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}u(t),\\
+  y(t)
+  &=
+  \begin{bmatrix}
+    3 & 2
+  \end{bmatrix}x(t)
+\end{align}
+とする。初期値を 0 とすれば
+\begin{align}
+  G(s)
+  &=C(sI-A)^{-1}B\\
+  &=
+  \begin{bmatrix}3 & 2\end{bmatrix}
+  \frac{1}{s^2+4s+5}
+  \begin{bmatrix}
+    s+4 & 1\\
+    -5 & s
+  \end{bmatrix}
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}\\
+  &=
+  \frac{1}{s^2+4s+5}
+  \begin{bmatrix}3 & 2\end{bmatrix}
+  \begin{bmatrix}
+    1\\
+    s
+  \end{bmatrix}
+  =
+  \frac{2s+3}{s^2+4s+5}.
+\end{align}
+分母次数は $2$、分子次数は $1$ なので、この実現は真にプロパーで相対次数 $1$ の伝達関数を与える。
+
+\subsubsection{極零相殺と最小性への注意}
+
+分子と分母に共通因子があるとき、代数的にはその因子を約分できる。たとえば
+\begin{equation}
+  G(s)=\frac{s+2}{(s+1)(s+2)}
+  =
+  \frac{1}{s+1}
+\end{equation}
+であり、入出力関係だけを見れば $s=-2$ の極は消える。このように伝達関数の分子の零点と分母の極が同じ位置にあるとき、極零相殺が起こるという。安定な極の相殺でも、実機ではパラメータ誤差により完全には消えないため、設計上は消えたものとして過信しない。
+
+より危険なのは不安定極の相殺である。状態空間系
+\begin{align}
+  \dot{x}(t)
+  &=
+  \begin{bmatrix}
+    1 & 0\\
+    0 & -2
+  \end{bmatrix}x(t)
+  +
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}u(t),\\
+  y(t)
+  &=
+  \begin{bmatrix}
+    0 & 1
+  \end{bmatrix}x(t)
+\end{align}
+を考える。初期値を 0 とした入出力伝達関数は
+\begin{align}
+  G(s)
+  &=C(sI-A)^{-1}B\\
+  &=
+  \begin{bmatrix}0 & 1\end{bmatrix}
+  \frac{1}{(s-1)(s+2)}
+  \begin{bmatrix}
+    s+2 & 0\\
+    0 & s-1
+  \end{bmatrix}
+  \begin{bmatrix}
+    0\\
+    1
+  \end{bmatrix}\\
+  &=
+  \frac{s-1}{(s-1)(s+2)}
+  =
+  \frac{1}{s+2}.
+  \label{eq:unstable-cancellation}
+\end{align}
+約分後の伝達関数だけで判定すると極は $-2$ であり、入力から出力への応答は安定である。しかし内部状態 $x_1$ は
+\begin{equation}
+  \dot{x}_1=x_1,\qquad x_1(t)=x_1(0)e^t
+\end{equation}
+を満たす。$x_1$ は入力から動かせず、出力からも見えないため、初期値が少しでもずれると内部では発散する。このような発散は、零初期条件の伝達関数には現れない。
+
+\begin{remark}[最小実現と安定性の判定]
+共通因子をすべて約分した伝達関数は、入力から出力までの最小な入出力関係を表す。けれども、与えられた状態空間実現が最小であるとは限らない。連続時間の線形状態空間系では、すべての状態が入力で動かせる可制御性と、すべての状態が出力から再構成できる可観測性を満たすとき、その実現を最小実現という。最小実現でない場合、伝達関数の極と内部モードは一致しないことがある。したがって、極零相殺を含むモデルや制御器で安定性を主張するときは、約分後の入出力伝達関数だけでなく、相殺されたモードが安定か、または状態空間実現が最小かを必ず確認する。
+\end{remark}
+
+\subsection{ブロック線図と閉ループ結合}
+
+伝達関数は、複数の要素を接続した制御系を代数的に整理するために用いる。ブロック線図では、矢印が信号を表し、四角で囲まれたブロックが信号に作用する伝達関数を表す。たとえば
+\[
+  U \longrightarrow [\,G\,] \longrightarrow Y
+\]
+という記法は、零初期条件のもとで
+\begin{equation}
+  Y(s)=G(s)U(s)
+  \label{eq:block-basic}
+\end{equation}
+を意味する。ここで $U(s)$ と $Y(s)$ はラプラス変換された信号であり、ブロックそのものは時間領域の畳み込み作用を $s$ 領域で掛け算として表したものである。
+
+\begin{figure}[tb]
+\centering
+\setlength{\unitlength}{0.75mm}
+\begin{picture}(160,65)
+  \small
+  \thinlines
+  \put(4,36){\makebox(0,0)[r]{$R(s)$}}
+  \put(6,36){\vector(1,0){24}}
+  \put(34,36){\circle{8}}
+  \put(28,41){\makebox(0,0){$+$}}
+  \put(28,30){\makebox(0,0){$-$}}
+  \put(38,36){\vector(1,0){14}}
+  \put(44,40){\makebox(0,0)[b]{$E(s)$}}
+  \put(52,30){\framebox(22,12){$C(s)$}}
+  \put(74,36){\vector(1,0){12}}
+  \put(90,36){\circle{8}}
+  \put(86,41){\makebox(0,0){$+$}}
+  \put(92,42){\makebox(0,0){$+$}}
+  \put(90,56){\makebox(0,0)[b]{$D(s)$}}
+  \put(90,54){\vector(0,-1){14}}
+  \put(94,36){\vector(1,0){10}}
+  \put(104,30){\framebox(22,12){$G(s)$}}
+  \put(126,36){\vector(1,0){8}}
+  \put(138,36){\circle{8}}
+  \put(134,41){\makebox(0,0){$+$}}
+  \put(140,42){\makebox(0,0){$+$}}
+  \put(138,56){\makebox(0,0)[b]{$D_y(s)$}}
+  \put(138,54){\vector(0,-1){14}}
+  \put(142,36){\vector(1,0){12}}
+  \put(158,36){\makebox(0,0)[l]{$Y(s)$}}
+  \put(150,36){\line(0,-1){24}}
+  \put(150,12){\vector(-1,0){26}}
+  \put(120,12){\circle{8}}
+  \put(116,17){\makebox(0,0){$+$}}
+  \put(124,17){\makebox(0,0){$+$}}
+  \put(120,0){\makebox(0,0)[t]{$N(s)$}}
+  \put(120,2){\vector(0,1){6}}
+  \put(116,12){\line(-1,0){82}}
+  \put(34,12){\vector(0,1){20}}
+  \put(73,15){\makebox(0,0)[b]{$Y_m(s)=Y(s)+N(s)$}}
+\end{picture}
+\caption{目標値、制御器、対象、外乱、測定ノイズを含む負帰還ブロック線図}
+\label{fig:negative-feedback-block}
+\end{figure}
+
+図\ref{fig:negative-feedback-block} のように、信号名を付けてから和差点の式を書くと、閉ループでどの信号がどの経路を通るかを確認しやすい。目標値は偏差 $E$ を通って制御器へ入り、入力側外乱 $D$ は制御対象の前で加わり、出力側外乱 $D_y$ は対象出力の後で加わる。測定ノイズ $N$ は実出力そのものではなく、帰還される測定値 $Y_m$ に加わる。
+
+\subsubsection{和差点と符号規約}
+
+複数の信号を足し合わせる点を和差点という。和差点では、各入力に付いた符号を明示する。入力を $X_1,\ldots,X_m$、各入力の符号を $\sigma_i\in\{+1,-1\}$ と書けば、出力 $Z$ は
+\begin{equation}
+  Z(s)=\sum_{i=1}^{m}\sigma_i X_i(s)
+  \label{eq:summing-junction}
+\end{equation}
+である。負帰還でよく現れる和差点は
+\[
+  R \stackrel{+}{\longrightarrow} \oplus,\qquad
+  Y \stackrel{-}{\longrightarrow} \oplus,\qquad
+  \oplus \longrightarrow E
+\]
+のように書け、このとき
 \begin{equation}
   E(s)=R(s)-Y(s)
+  \label{eq:unity-error}
 \end{equation}
-であり、制御器出力は
-\begin{equation}
-  U(s)=C(s)E(s)=C(s)\{R(s)-Y(s)\}
-\end{equation}
-である。対象は $Y(s)=G(s)U(s)$ だから
+である。符号を省略すると、正帰還と負帰還を取り違え、閉ループ分母の符号まで変わる。したがって、ブロック線図を式へ変換するときは、まずすべての和差点で符号付き和を書く。
+
+\subsubsection{直列結合と並列結合}
+
+直列結合
+\[
+  U \longrightarrow [\,G_1\,] \longrightarrow V
+    \longrightarrow [\,G_2\,] \longrightarrow Y
+\]
+では
 \begin{align}
-  Y(s)&=G(s)C(s)\{R(s)-Y(s)\},\\
-  Y(s)&=C(s)G(s)R(s)-C(s)G(s)Y(s),\\
-  \{1+C(s)G(s)\}Y(s)&=C(s)G(s)R(s),\\
-  \frac{Y(s)}{R(s)}&=\frac{C(s)G(s)}{1+C(s)G(s)}.
-  \label{eq:closed-loop}
+  V(s)&=G_1(s)U(s),\\
+  Y(s)&=G_2(s)V(s)
 \end{align}
-この分母 $1+C(s)G(s)$ が閉ループ極を決める。
+だから
+\begin{equation}
+  \frac{Y(s)}{U(s)}=G_2(s)G_1(s)
+  \label{eq:series-interconnection}
+\end{equation}
+である。単一入力単一出力の伝達関数では掛け算が可換なので $G_1G_2$ と書いても同じ値になるが、信号の流れとしては $G_1$ の出力が $G_2$ の入力になる。多入力多出力系では伝達関数行列の積の順序と次元が意味を持つため、接続順序を入れ替えてはならない。
+
+並列結合では、同じ入力を複数の経路へ分岐し、最後に和差点で足し合わせる。たとえば
+\[
+  U \longrightarrow [\,G_1\,] \stackrel{+}{\longrightarrow} \oplus,
+  \qquad
+  U \longrightarrow [\,G_2\,] \stackrel{+}{\longrightarrow} \oplus,
+  \qquad
+  \oplus \longrightarrow Y
+\]
+なら
+\begin{equation}
+  Y(s)=G_1(s)U(s)+G_2(s)U(s)
+  =\{G_1(s)+G_2(s)\}U(s)
+  \label{eq:parallel-interconnection}
+\end{equation}
+である。一方、下側経路が負号で和差点へ入るなら
+\begin{equation}
+  \frac{Y(s)}{U(s)}=G_1(s)-G_2(s)
+\end{equation}
+となる。分岐点は、同じ信号を複数の式へ複写する点であり、信号の大きさを分割する点ではない。電気回路や油圧回路のように負荷が分岐元のダイナミクスを変える場合には、その負荷効果を含むモデルを作ってからブロック線図にする必要がある。
+
+\subsubsection{フィードバック結合と感度関数}
+
+前向き経路を $P(s)$、帰還経路を $H(s)$ とする負帰還
+\[
+  R \stackrel{+}{\longrightarrow}\oplus\longrightarrow E
+  \longrightarrow [\,P\,]\longrightarrow Y,\qquad
+  Y\longrightarrow [\,H\,]\stackrel{-}{\longrightarrow}\oplus
+\]
+を考える。和差点と前向き経路の式は
+\begin{equation}
+  E(s)=R(s)-H(s)Y(s),\qquad
+  Y(s)=P(s)E(s)
+\end{equation}
+である。これらを代入すると
+\begin{align}
+  Y(s)&=P(s)\{R(s)-H(s)Y(s)\},\\
+  Y(s)&=P(s)R(s)-P(s)H(s)Y(s),\\
+  \{1+P(s)H(s)\}Y(s)&=P(s)R(s)
+\end{align}
+だから、目標値から出力までの閉ループ伝達関数は
+\begin{equation}
+  \frac{Y(s)}{R(s)}
+  =
+  \frac{P(s)}{1+P(s)H(s)}
+  \label{eq:feedback-general}
+\end{equation}
+である。正帰還では $E=R+HY$ となるため、分母は $1-PH$ に変わる。負帰還か正帰還かは、この一箇所の符号で決まる。
+
+制御器 $C(s)$ と制御対象 $G(s)$ を直列に接続し、単位負帰還 $H=1$ をかける場合には、開ループ伝達関数を
+\begin{equation}
+  L(s)=C(s)G(s)
+\end{equation}
+とおく。このとき
+\begin{align}
+  T(s)&=\frac{Y(s)}{R(s)}
+  =\frac{L(s)}{1+L(s)},
+  \label{eq:closed-loop}\\
+  S(s)&=\frac{E(s)}{R(s)}
+  =\frac{1}{1+L(s)}
+  \label{eq:sensitivity-complementary}
+\end{align}
+である。$S(s)$ を感度関数、$T(s)$ を相補感度関数という。単位負帰還では
+\begin{equation}
+  S(s)+T(s)=1
+\end{equation}
+が成り立つ。感度関数は、出力側に加わる外乱やモデル誤差が閉ループへ残る割合を表す基本量であり、相補感度関数は、目標値追従と測定ノイズの伝達に現れる基本量である。
+
+出力に外乱 $D_y(s)$ が加わり、測定値にノイズ $N(s)$ が加わる単位負帰還では
+\begin{equation}
+  Y(s)=G(s)C(s)\{R(s)-Y(s)-N(s)\}+D_y(s)
+\end{equation}
+である。$L=CG$ とすれば
+\begin{equation}
+  Y(s)=T(s)R(s)+S(s)D_y(s)-T(s)N(s)
+  \label{eq:sensitivity-paths}
+\end{equation}
+となる。したがって、同じ閉ループでも、目標値、外乱、ノイズは異なる伝達関数を通って出力へ現れる。
+
+\subsubsection{和差点と分岐点の移動}
+
+ブロック線図の等価変換では、変換前後で外部端子に現れる信号関係が同じでなければならない。たとえば、ブロック $G$ の前で信号 $U$ と外部信号 $D$ を足してから $G$ に入れる構成は
+\begin{equation}
+  Y(s)=G(s)\{U(s)+D(s)\}
+  =G(s)U(s)+G(s)D(s)
+  \label{eq:move-sum-before}
+\end{equation}
+である。したがって、この和差点を $G$ の後へ移すなら、$D$ 側にも $G$ を挿入しなければならない。逆に、$G$ の後で外部信号 $D$ を足す構成
+\begin{equation}
+  Y(s)=G(s)U(s)+D(s)
+  \label{eq:move-sum-after}
+\end{equation}
+を $G$ の前の和差点へ移すには
+\begin{equation}
+  Y(s)=G(s)\{U(s)+G(s)^{-1}D(s)\}
+\end{equation}
+とする必要がある。ただし $G^{-1}$ が存在しても、それが因果的、プロパー、安定に実装できるとは限らない。右半平面零点を持つ系や相対次数が正の系では、逆系が不安定またはインプロパーになることがある。
+
+分岐点についても同じ考え方を用いる。$G$ の後で分岐した信号は $Y=GU$ である。この分岐点を $G$ の前へ移すなら、分岐先の経路に $G$ を挿入して同じ $Y$ を作る必要がある。反対に、$G$ の前で分岐していた $U$ を $G$ の後から取り出すには、分岐先に $G^{-1}$ が必要になる。分岐点と和差点の移動は式変形としては有効であるが、逆伝達関数を追加する変換は実装可能性と内部安定性を別途確認する。
+
+\begin{example}[比例制御による二次閉ループ]
+制御対象
+\begin{equation}
+  G(s)=\frac{1}{s(s+2)}
+\end{equation}
+に比例制御器 $C(s)=K$ を直列に接続し、単位負帰還をかける。開ループ伝達関数は
+\begin{equation}
+  L(s)=C(s)G(s)=\frac{K}{s(s+2)}
+\end{equation}
+である。したがって、目標値から出力までの相補感度関数は
+\begin{align}
+  T(s)
+  &=\frac{L(s)}{1+L(s)}\\
+  &=
+  \frac{K}{s(s+2)+K}\\
+  &=
+  \frac{K}{s^2+2s+K},
+  \label{eq:proportional-loop-example}
+\end{align}
+感度関数は
+\begin{equation}
+  S(s)=\frac{1}{1+L(s)}
+  =
+  \frac{s(s+2)}{s^2+2s+K}
+\end{equation}
+である。$K=4$ と選べば
+\begin{equation}
+  T(s)=\frac{4}{s^2+2s+4}
+\end{equation}
+となる。標準二次形
+\begin{equation}
+  \frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}
+\end{equation}
+と比較すると、$\omega_n=2\,\mathrm{rad/s}$、$2\zeta\omega_n=2$ より $\zeta=0.5$ である。単位ステップ目標に対する応答は不足減衰となり、前節の過渡仕様をそのまま適用できる。一方、出力外乱 $D_y$ は $S(s)$ を通って出力へ現れるため、目標追従の伝達関数 $T(s)$ だけでは外乱抑制を評価できない。
+\end{example}
+
+\subsubsection{定常偏差と系の型}
+
+単位負帰還系では、感度関数
+\begin{equation}
+  S(s)=\frac{1}{1+L(s)}
+\end{equation}
+が目標値から偏差までの伝達関数である。したがって、参照入力 $R(s)$ に対して
+\begin{equation}
+  E(s)=S(s)R(s)=\frac{R(s)}{1+L(s)}
+  \label{eq:steady-error-transfer}
+\end{equation}
+となる。閉ループが安定で、$sE(s)$ のすべての極が左半平面にあるなら、最終値の定理により
+\begin{equation}
+  e_\infty=\lim_{t\to\infty}e(t)
+  =
+  \lim_{s\to0}sE(s)
+  =
+  \lim_{s\to0}s\frac{R(s)}{1+L(s)}
+  \label{eq:steady-error-final-value}
+\end{equation}
+である。
+
+\weq{steady-error-final-value} は、時間極限が存在することを前提にした式である。閉ループ極が右半平面にある場合には偏差が発散し、虚軸上に極がある場合には持続振動が残るため、定常偏差は定義できない。また、$sE(s)$ が原点に極を持つ場合には、ランプ入力に追従できない 0 型系のように偏差が有限値へ収束しない。定常偏差の公式は、閉ループ安定性を確認した後に適用する代数計算であり、安定判定の代用ではない。
+
+$s=0$ にある開ループ極の個数を、単位負帰還系の系の型という。$s=0$ 近傍で
+\begin{equation}
+  L(s)=\frac{K_0}{s^\nu}\Phi(s),
+  \qquad
+  \Phi(0)=1,\quad K_0\neq0
+  \label{eq:loop-type-factor}
+\end{equation}
+と書けるとき、非負整数 $\nu$ が系の型である。$\nu=0$ を 0 型、$\nu=1$ を 1 型、$\nu=2$ を 2 型という。型は、開ループに理想積分器 $1/s$ が何個含まれるかを数えている。ただし、原点極が不安定な極零相殺で消されている場合や、入力飽和により積分器が線形モデル通りに働かない場合には、この数え方だけで定常偏差を判断してはならない。
+
+\begin{definition}[位置・速度・加速度誤差定数]
+単位負帰還系の開ループ伝達関数 $L(s)$ に対して
+\begin{align}
+  K_p&=\lim_{s\to0}L(s),\\
+  K_v&=\lim_{s\to0}sL(s),\\
+  K_a&=\lim_{s\to0}s^2L(s)
+  \label{eq:error-constants}
+\end{align}
+を、それぞれ位置誤差定数、速度誤差定数、加速度誤差定数という。ここで $p$、$v$、$a$ は、位置、速度、加速度に相当するステップ、ランプ、放物線状の目標値に対応する記号である。
+\end{definition}
+
+単位ステップ、単位ランプ、単位放物線入力を
+\begin{equation}
+  r(t)=1,\qquad r(t)=t,\qquad r(t)=\frac{t^2}{2}
+\end{equation}
+とすると、ラプラス変換はそれぞれ
+\begin{equation}
+  R(s)=\frac{1}{s},\qquad
+  R(s)=\frac{1}{s^2},\qquad
+  R(s)=\frac{1}{s^3}
+\end{equation}
+である。これらを \weq{steady-error-final-value} に代入すると、有限な定常偏差が存在する場合には
+\begin{align}
+  e_\infty^{\mathrm{step}}
+  &=
+  \lim_{s\to0}\frac{1}{1+L(s)}
+  =
+  \frac{1}{1+K_p},
+  \label{eq:step-error-constant}\\
+  e_\infty^{\mathrm{ramp}}
+  &=
+  \lim_{s\to0}\frac{1}{s\{1+L(s)\}}
+  =
+  \frac{1}{K_v},
+  \label{eq:ramp-error-constant}\\
+  e_\infty^{\mathrm{parabolic}}
+  &=
+  \lim_{s\to0}\frac{1}{s^2\{1+L(s)\}}
+  =
+  \frac{1}{K_a}.
+  \label{eq:parabolic-error-constant}
+\end{align}
+ここで $1/\infty=0$、$1/0$ は有限値へ収束しないことを表す記法である。たとえば 1 型系では $K_p=\infty$ なのでステップ定常偏差は 0 になるが、$K_v$ が有限ならランプ定常偏差は $1/K_v$ として残る。ランプの偏差は一定値へ収束し、出力そのものは目標値と同じ傾きで増え続ける。
+
+\begin{example}[型と標準入力に対する定常偏差]
+開ループ伝達関数
+\begin{equation}
+  L_0(s)=\frac{K}{\tau s+1},
+  \qquad K>0,\quad \tau>0
+\end{equation}
+は 0 型である。閉ループ分母は $\tau s+1+K$ であり、$K>0$ なら安定である。誤差定数は
+\begin{equation}
+  K_p=K,\qquad K_v=0,\qquad K_a=0
+\end{equation}
+だから、単位ステップに対して
+\begin{equation}
+  e_\infty=\frac{1}{1+K}
+\end{equation}
+が残る。単位ランプや単位放物線に対しては、偏差は有限値へ収束しない。比例ゲイン $K$ を大きくすればステップ偏差は小さくなるが、閉ループ極、飽和、ノイズ増幅を無視して無限大にできるわけではない。
+
+次に
+\begin{equation}
+  L_1(s)=\frac{K}{s(\tau s+1)}
+\end{equation}
+を考える。この系は 1 型であり、閉ループ分母は $\tau s^2+s+K$ である。$K>0$、$\tau>0$ なら二次の安定条件を満たす。誤差定数は
+\begin{equation}
+  K_p=\infty,\qquad K_v=K,\qquad K_a=0
+\end{equation}
+なので、単位ステップ偏差は 0、単位ランプ偏差は
+\begin{equation}
+  e_\infty=\frac{1}{K}
+\end{equation}
+である。単位放物線に対しては偏差が有限値へ収束しない。
+
+2 型の安定な例として
+\begin{equation}
+  L_2(s)=\frac{4(s+1)}{s^2(s+2)}
+\end{equation}
+を用いる。閉ループ特性多項式は
+\begin{equation}
+  s^2(s+2)+4(s+1)=s^3+2s^2+4s+4
+\end{equation}
+である。三次の Routh--Hurwitz 条件では、係数が正であり、さらに $2\cdot4>4$ が成り立つため安定である。このとき
+\begin{equation}
+  K_p=\infty,\qquad K_v=\infty,\qquad K_a=2
+\end{equation}
+なので、単位ステップと単位ランプの定常偏差は 0、単位放物線の定常偏差は
+\begin{equation}
+  e_\infty=\frac{1}{2}
+\end{equation}
+となる。
+\end{example}
+
+\subsubsection{負荷外乱に対する定常応答}
+
+外乱の加わる位置によって、外乱から出力までの伝達関数は変わる。ここでは、制御対象の入力側に負荷外乱 $d(t)$ が加わる構造を考える。このとき
+\begin{equation}
+  Y(s)=G(s)\{U(s)+D(s)\},
+  \qquad
+  U(s)=C(s)\{R(s)-Y(s)\}
+\end{equation}
+である。整理すると
+\begin{equation}
+  Y(s)=\frac{L(s)}{1+L(s)}R(s)
+       +\frac{G(s)}{1+L(s)}D(s)
+  \label{eq:load-disturbance-output}
+\end{equation}
+を得る。目標値を 0 とし、負荷外乱が大きさ $d_0$ のステップ
+\begin{equation}
+  D(s)=\frac{d_0}{s}
+\end{equation}
+で入る場合、出力の定常値は、最終値の定理を適用できるなら
+\begin{equation}
+  y_{\infty,d}
+  =
+  d_0\lim_{s\to0}\frac{G(s)}{1+C(s)G(s)}
+  \label{eq:load-disturbance-final}
+\end{equation}
+である。
+
+制御対象を
+\begin{equation}
+  G(s)=\frac{1}{\tau s+1}
+\end{equation}
+とする。比例制御 $C(s)=K_P$ では
+\begin{equation}
+  y_{\infty,d}
+  =
+  d_0\frac{1}{1+K_P}
+\end{equation}
+となり、負荷外乱の影響が残る。これに対して PI 制御
+\begin{equation}
+  C(s)=K_P+\frac{K_I}{s},
+  \qquad K_I>0
+\end{equation}
+を用いると
+\begin{align}
+  \lim_{s\to0}\frac{G(s)}{1+C(s)G(s)}
+  &=
+  \lim_{s\to0}
+  \frac{sG(s)}{s+\{K_Ps+K_I\}G(s)}
+  =
+  0
+\end{align}
+であり、閉ループが安定ならステップ負荷外乱に対する出力定常値は 0 になる。物理的には、積分器がわずかな偏差を累積し、定常状態で外乱を打ち消す一定入力を作る。$r=0$、$y_\infty=0$ であれば、制御対象の定常入力は $u_\infty+d_0=0$ を満たすので、制御器は $u_\infty=-d_0$ を生成している。
+
+積分動作は、低周波で $L(s)$ を大きくして目標値追従と定値外乱抑制を改善する。一方で、積分器を増やせば常に良くなるわけではない。型を上げると閉ループ極の配置が変わり、振動性や安定余裕が悪化することがある。右半平面零点を持つ非最小位相系では、定常偏差を 0 にできても、逆応答や大きな過渡偏差を避けにくい。アクチュエータ飽和が起きると、線形モデルで仮定した入力を実機が出せず、積分器は偏差を蓄積してワインドアップを起こす。したがって、定常偏差の計算結果は、閉ループ安定性、非最小位相零点、入力飽和、アンチワインドアップの有無と併せて評価する。
+
+\subsubsection{閉ループ極と安定性}
+
+閉ループ伝達関数の分母は、閉ループ極を決める。単位負帰還では $1+C(s)G(s)=0$、一般の負帰還では $1+P(s)H(s)=0$ が閉ループの特性方程式である。
 
 \begin{theorem}[線形連続時間系の極による安定判定]
 真にプロパーな線形時不変系で、すべての閉ループ極が左半平面 $\operatorname{Re}s<0$ にあれば、内部応答は指数的に減衰する。右半平面の極があれば応答は発散する。
@@ -193,7 +1659,7 @@ $0<\zeta<1$ なら $\zeta^2-1<0$ なので、$\sqrt{\zeta^2-1}=j\sqrt{1-\zeta^2}
 
 三次条件の最後の不等式は、係数が正なら安定という単純な話ではないことを示す。極を直接解けない高次系では、Routh 表を作って第一列の符号変化を数える。
 
-\section{PID 制御}
+\subsection{PID 制御}
 
 \begin{definition}[PID 制御]
 偏差 $e(t)=r(t)-y(t)$ に対して
