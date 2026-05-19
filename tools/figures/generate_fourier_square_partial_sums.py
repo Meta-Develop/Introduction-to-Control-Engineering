@@ -19,6 +19,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the Fourier figure") from exc
 
+from figure_style import finalize_figure
+
 
 CUTOFFS = (1, 3, 9, 25)
 THETA_START = 0.0
@@ -134,8 +136,7 @@ def main() -> None:
     ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
     ax.legend(loc="upper right")
 
-    fig.tight_layout()
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

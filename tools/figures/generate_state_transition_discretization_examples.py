@@ -22,6 +22,8 @@ except ImportError as exc:  # pragma: no cover - figure generation requires it.
         "matplotlib is required to generate the state-transition figure"
     ) from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -206,7 +208,6 @@ def main() -> None:
     visible_sample_states = sample_states[visible]
 
     fig, axes = plt.subplots(2, 2, figsize=(8.4, 6.4), constrained_layout=False)
-    fig.suptitle("状態遷移と ZOH 離散化の視覚例", y=0.985)
 
     time_axis = axes[0, 0]
     time_axis.plot(
@@ -378,8 +379,7 @@ def main() -> None:
         },
     )
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.955))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the tank-pendulum figure") from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -261,9 +263,8 @@ def main() -> None:
     draw_pendulum_schematic(axes[1, 0])
     draw_pendulum_response(axes[1, 1])
 
-    fig.suptitle("タンクと単振子における保存則・構成則・局所近似", fontsize=13, fontweight="bold")
-    fig.subplots_adjust(left=0.075, right=0.985, bottom=0.075, top=0.89, hspace=0.42, wspace=0.28)
-    fig.savefig(output_path, facecolor="white")
+    fig.subplots_adjust(left=0.075, right=0.985, bottom=0.075, top=0.98, hspace=0.42, wspace=0.28)
+    finalize_figure(fig, output_path, layout="none")
     print(output_path)
 
 

@@ -19,10 +19,12 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the normalization figure") from exc
 
+from figure_style import finalize_figure
+
 
 CASES = (
-    {"name": "条件 A", "theta0": 20.0, "tau": 60.0, "color": "#1f77b4", "linestyle": "-"},
-    {"name": "条件 B", "theta0": 10.0, "tau": 120.0, "color": "#d62728", "linestyle": "--"},
+    {"name": "Case A", "theta0": 20.0, "tau": 60.0, "color": "#1f77b4", "linestyle": "-"},
+    {"name": "Case B", "theta0": 10.0, "tau": 120.0, "color": "#d62728", "linestyle": "--"},
 )
 TIME_STOP = 360.0
 XI_STOP = 3.0
@@ -53,8 +55,10 @@ def normalized_response(xi):
 
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    output_path = repo_root / "ja" / "figures" / "unit_normalization_example.png"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir = repo_root / "ja" / "figures"
+    dimensional_output_path = output_dir / "unit_response_dimensional.png"
+    normalized_output_path = output_dir / "unit_response_normalized.png"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     time = make_linspace(0.0, TIME_STOP, SAMPLE_COUNT)
     xi = make_linspace(0.0, XI_STOP, SAMPLE_COUNT)
@@ -71,10 +75,9 @@ def main() -> None:
         }
     )
 
-    fig, (dimensional_ax, normalized_ax) = plt.subplots(
-        1, 2, figsize=(7.2, 4.2), constrained_layout=False
+    dimensional_fig, dimensional_ax = plt.subplots(
+        figsize=(7.2, 4.2), constrained_layout=False
     )
-    fig.suptitle("一次遅れ応答の単位付き表示と正規化表示")
 
     for case in CASES:
         label = (
@@ -89,6 +92,23 @@ def main() -> None:
             linewidth=2.0,
             label=label,
         )
+
+    dimensional_ax.set_title("Dimensional response")
+    dimensional_ax.set_xlabel(r"時間 $t$ [s]")
+    dimensional_ax.set_ylabel(r"温度偏差 $\theta$ [K]")
+    dimensional_ax.set_xlim(0.0, TIME_STOP)
+    dimensional_ax.set_ylim(0.0, 21.0)
+    dimensional_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
+    dimensional_ax.legend(loc="upper right")
+
+    finalize_figure(dimensional_fig, dimensional_output_path)
+    plt.close(dimensional_fig)
+    print(dimensional_output_path)
+
+    normalized_fig, normalized_ax = plt.subplots(
+        figsize=(7.2, 4.2), constrained_layout=False
+    )
+    for case in CASES:
         normalized_ax.plot(
             xi,
             normalized_response(xi),
@@ -107,15 +127,7 @@ def main() -> None:
         label=r"$\exp(-\xi)$",
     )
 
-    dimensional_ax.set_title("単位付き応答")
-    dimensional_ax.set_xlabel(r"時間 $t$ [s]")
-    dimensional_ax.set_ylabel(r"温度偏差 $\theta$ [K]")
-    dimensional_ax.set_xlim(0.0, TIME_STOP)
-    dimensional_ax.set_ylim(0.0, 21.0)
-    dimensional_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
-    dimensional_ax.legend(loc="upper right")
-
-    normalized_ax.set_title("正規化座標")
+    normalized_ax.set_title("Normalized coordinates")
     normalized_ax.set_xlabel(r"正規化時間 $\xi=t/\tau$ [-]")
     normalized_ax.set_ylabel(r"正規化応答 $x=\theta/\theta_0$ [-]")
     normalized_ax.set_xlim(0.0, XI_STOP)
@@ -123,9 +135,9 @@ def main() -> None:
     normalized_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
     normalized_ax.legend(loc="upper right")
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.93))
-    fig.savefig(output_path, facecolor="white")
-    print(output_path)
+    finalize_figure(normalized_fig, normalized_output_path)
+    plt.close(normalized_fig)
+    print(normalized_output_path)
 
 
 if __name__ == "__main__":

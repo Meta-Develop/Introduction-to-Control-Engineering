@@ -15,6 +15,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the physical-modeling figure") from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -138,11 +140,11 @@ def draw_spring(axis, start_x: float, end_x: float, y: float, coils: int = 6) ->
 
 def draw_thermal(axis) -> None:
     setup_panel(axis, "熱収支")
-    add_box(axis, (0.36, 0.39), 0.26, 0.25, "物体\n状態 $x=T$ [K]\n容量 $C_{th}$ [J/K]", "#edf7ed")
-    add_box(axis, (0.06, 0.41), 0.18, 0.18, "ヒータ\n入力 $u$ [W]", "#fff4e5")
+    add_box(axis, (0.36, 0.39), 0.26, 0.25, "物体\n$x=T$ [K]\n$C_{th}$ [J/K]", "#edf7ed", fontsize=9.0)
+    add_box(axis, (0.06, 0.41), 0.18, 0.18, "ヒータ\n$u$ [W]", "#fff4e5", fontsize=9.0)
     add_box(axis, (0.72, 0.41), 0.20, 0.18, "周囲\n$T_a$ [K]", "#eef5ff")
     add_arrow(axis, (0.24, 0.50), (0.36, 0.50), "熱流 $u$", "#ff7f0e", (0.0, 0.07))
-    add_arrow(axis, (0.62, 0.52), (0.72, 0.52), r"流出 $(T-T_a)/R_{th}$ [W]", "#d62728", (0.02, 0.08))
+    add_arrow(axis, (0.62, 0.52), (0.72, 0.52), "流出\n$(T-T_a)/R_{th}$ [W]", "#d62728", (0.02, 0.10))
     add_arrow(axis, (0.48, 0.82), (0.48, 0.64), r"外乱 $d_q$ [W]", "#9467bd", (-0.08, 0.0))
     axis.text(
         0.05,
@@ -248,9 +250,8 @@ def main() -> None:
     draw_mass_spring_damper(axes[1, 0])
     draw_dc_motor(axes[1, 1])
 
-    fig.suptitle("物理法則から状態方程式へ進む標準例", fontsize=13, fontweight="bold")
-    fig.subplots_adjust(left=0.055, right=0.985, bottom=0.07, top=0.90, hspace=0.40, wspace=0.24)
-    fig.savefig(output_path, facecolor="white")
+    fig.subplots_adjust(left=0.055, right=0.985, bottom=0.07, top=0.98, hspace=0.40, wspace=0.24)
+    finalize_figure(fig, output_path, layout="none")
     print(output_path)
 
 

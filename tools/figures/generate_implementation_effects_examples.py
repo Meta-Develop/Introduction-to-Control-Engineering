@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the implementation effects figure") from exc
 
+from figure_style import finalize_figure
+
 
 TOTAL_TIME = 4.0
 INTEGRATION_STEP = 0.001
@@ -176,7 +178,6 @@ def main() -> None:
 
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.8), constrained_layout=False)
     state_ax, measurement_ax, input_ax, margin_ax = axes.ravel()
-    fig.suptitle("実装条件が閉ループ応答と制約余裕へ与える影響")
 
     state_ax.plot(time, nominal["state"], color=nominal_case.color, linewidth=1.8, label=nominal_case.name)
     state_ax.plot(time, practical["state"], color=practical_case.color, linewidth=1.8, label=practical_case.name)
@@ -272,8 +273,7 @@ def main() -> None:
     margin_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
     margin_ax.legend(loc="upper right", framealpha=0.94)
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

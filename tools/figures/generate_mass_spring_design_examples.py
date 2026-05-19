@@ -17,6 +17,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the mass-spring figure") from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -243,12 +245,10 @@ def main() -> None:
     response_ax = fig.add_subplot(grid[0, :])
     force_ax = fig.add_subplot(grid[1, 0])
     tradeoff_ax = fig.add_subplot(grid[1, 1])
-    fig.suptitle("質量ばねダンパの古典制御候補設計")
 
     plot_response(response_ax, force_ax, tradeoff_ax)
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.95))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the frequency-design figure") from exc
 
+from figure_style import finalize_figure
+
 
 NYQUIST_K_VALUES = (0.6, 1.0, 2.0)
 ROOT_K_LIMIT = 48.0
@@ -264,7 +266,6 @@ def main() -> None:
 
     fig = plt.figure(figsize=(7.2, 6.8), constrained_layout=False)
     grid = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.05])
-    fig.suptitle("周波数領域設計の代表例")
 
     nyquist_ax = fig.add_subplot(grid[0, 0])
     root_locus_ax = fig.add_subplot(grid[0, 1])
@@ -274,8 +275,7 @@ def main() -> None:
     plot_root_locus(root_locus_ax)
     plot_sensitivity(sensitivity_ax)
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.955))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

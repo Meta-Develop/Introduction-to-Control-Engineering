@@ -19,6 +19,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the nonlinear figure") from exc
 
+from figure_style import finalize_figure
+
 
 DAMPING = 0.35
 LINEAR_THETA_LIMIT = 0.55
@@ -176,19 +178,6 @@ def main() -> None:
     energy_derivative = -DAMPING * omega_mesh**2
 
     fig, axes = plt.subplots(2, 2, figsize=(8.0, 7.4), constrained_layout=False)
-    fig.suptitle("非線形幾何と非線形推定近似", y=0.992)
-    fig.text(
-        0.5,
-        0.958,
-        (
-            r"振子: $\dot{\theta}=\omega,\ \dot{\omega}=-\sin\theta-0.35\omega$, "
-            r"$V=\omega^2/2+1-\cos\theta$; "
-            r"推定: $h(x)=x_1^2+0.35x_2,\ y=0.55,\ R=0.08^2$"
-        ),
-        ha="center",
-        va="top",
-        fontsize=8,
-    )
 
     phase_axis = axes[0, 0]
     phase_theta = np.linspace(-np.pi, np.pi, 28)
@@ -311,7 +300,15 @@ def main() -> None:
     )
     invariant_axis.text(0.16, 0.18, r"$M=\{(0,0)\}$", fontsize=8, color="#111111")
     invariant_axis.text(-2.75, 1.55, r"$\Omega_{1.8}$", fontsize=8, color="#d95f02")
-    invariant_axis.text(1.55, -0.58, r"$c=2$ は上向き平衡点を含む", fontsize=7)
+    invariant_axis.text(
+        0.94,
+        0.38,
+        "$c=2$\n上向き平衡点を含む",
+        transform=invariant_axis.transAxes,
+        fontsize=8,
+        ha="right",
+        va="top",
+    )
     invariant_axis.set_title(r"Lyapunov 準位集合と不変集合")
     invariant_axis.set_xlabel(r"角度 $\theta$ [rad]")
     invariant_axis.set_ylabel(r"角速度 $\omega$ [rad/s]")
@@ -459,8 +456,7 @@ def main() -> None:
     particle_axis.legend(loc="upper right")
     add_panel_label(particle_axis, "D")
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

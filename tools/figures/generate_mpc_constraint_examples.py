@@ -19,6 +19,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the MPC constraint figure") from exc
 
+from figure_style import finalize_figure
+
 
 A_PLANT = 0.8
 B_PLANT = 0.5
@@ -186,7 +188,6 @@ def main() -> None:
     feasible_ax = fig.add_subplot(grid[:, 0])
     state_ax = fig.add_subplot(grid[0, 1])
     input_ax = fig.add_subplot(grid[1, 1], sharex=state_ax)
-    fig.suptitle("MPC の制約幾何と入力幅の比較")
 
     a_matrix = np.asarray(
         [
@@ -308,8 +309,7 @@ def main() -> None:
     input_ax.set_ylim(-1.08, 0.10)
     input_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

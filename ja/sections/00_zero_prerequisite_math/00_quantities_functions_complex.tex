@@ -149,12 +149,19 @@ $1.0$ & $60$ & $7.4$ & $120$ & $3.7$ & $0.37$
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.92\linewidth,bb=0 0 1296 756]{figures/unit_normalization_example.png}
-\caption{ケース A $(\theta_0=20\,\mathrm{K},\,\tau=60\,\mathrm{s})$ とケース B $(\theta_0=10\,\mathrm{K},\,\tau=120\,\mathrm{s})$ の一次遅れ応答。左は次元つきの時間 $t$ と温度偏差 $\theta$ で描いた図であり、初期偏差と時定数が異なるため曲線の高さと減衰速度が異なる。右は $\xi=t/\tau$ と $x=\theta/\theta_0$ で正規化した図であり、両者が $x=e^{-\xi}$ に重なるため、単位や実験スケールを越えて同じ減衰過程として比較できる。}
+\includegraphics[width=0.86\linewidth,bb=0 0 1296 756]{figures/unit_response_dimensional.png}
+\caption{ケース A $(\theta_0=20\,\mathrm{K},\,\tau=60\,\mathrm{s})$ とケース B $(\theta_0=10\,\mathrm{K},\,\tau=120\,\mathrm{s})$ を、次元つきの時間 $t$ と温度偏差 $\theta$ で描いた一次遅れ応答。初期偏差と時定数が異なるため、曲線の高さと減衰速度が異なる。}
+\label{fig:unit-normalization-dimensional}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.86\linewidth,bb=0 0 1296 756]{figures/unit_response_normalized.png}
+\caption{$\xi=t/\tau$ と $x=\theta/\theta_0$ で正規化した一次遅れ応答。二つの実験が $x=e^{-\xi}$ に重なるため、単位や実験スケールを越えて同じ減衰過程として比較できる。}
 \label{fig:unit-normalization-example}
 \end{figure}
 
-図\ref{fig:unit-normalization-example} は、上の比較表を連続曲線として表したものである。次元つきの左図では実験ごとの初期偏差と時定数がそのまま曲線を変えるが、正規化した右図では表の最後の列と同じ無次元応答へ整理される。この比較では、ケース B の時定数がケース A の 2 倍であるため、同じ $\xi$ に到達する実時間 $t$ は 2 倍になる。また、ケース B の初期偏差はケース A の半分なので、同じ $\xi$ における温度偏差 $\theta$ も半分になる。それでも最後の列の $x$ は一致する。したがって、異なる実験の温度値や時間値を直接比較する代わりに、何時定数分だけ経過したか、初期偏差の何割まで減ったかを比較できる。制御器の調整でも、図の右側と同じように状態を許容偏差で割り、時間を代表時定数で割っておくと、ゲインや評価関数の重みが単位の選び方に過度に依存しにくくなる。
+図\ref{fig:unit-normalization-dimensional} と図\ref{fig:unit-normalization-example} は、上の比較表を連続曲線として表したものである。次元つきの図では実験ごとの初期偏差と時定数がそのまま曲線を変えるが、正規化した図では表の最後の列と同じ無次元応答へ整理される。この比較では、ケース B の時定数がケース A の 2 倍であるため、同じ $\xi$ に到達する実時間 $t$ は 2 倍になる。また、ケース B の初期偏差はケース A の半分なので、同じ $\xi$ における温度偏差 $\theta$ も半分になる。それでも最後の列の $x$ は一致する。したがって、異なる実験の温度値や時間値を直接比較する代わりに、何時定数分だけ経過したか、初期偏差の何割まで減ったかを比較できる。制御器の調整でも、図\ref{fig:unit-normalization-example} と同じように状態を許容偏差で割り、時間を代表時定数で割っておくと、ゲインや評価関数の重みが単位の選び方に過度に依存しにくくなる。
 
 \begin{practice}[単位変換と正規化の確認]
 上の比較表と同じ二つのケースで $\xi=1.5$ とする。各ケースの $t$、$\theta(t)$、華氏温度差、$x$ を求めよ。単位つきの $t$ と $\theta$ は異なるが、無次元量 $x$ は一致することを確認せよ。

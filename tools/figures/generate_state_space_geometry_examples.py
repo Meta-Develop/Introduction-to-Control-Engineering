@@ -18,6 +18,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the state-space figure") from exc
 
+from figure_style import finalize_figure
+
 
 A = np.array([[0.0, 1.0], [-2.0, -3.0]])
 B = np.array([[0.0], [1.0]])
@@ -136,7 +138,6 @@ def main() -> None:
     )
 
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 6.4), constrained_layout=False)
-    fig.suptitle("状態空間幾何の例")
 
     colors = ("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd")
     initials = (
@@ -253,8 +254,7 @@ def main() -> None:
     lyapunov_ax.set_ylim(-2.4, 2.4)
     lyapunov_ax.legend(loc="upper right")
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

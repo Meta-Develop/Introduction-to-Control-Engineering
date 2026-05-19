@@ -16,6 +16,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the classical-design figure") from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -363,13 +365,11 @@ def main() -> None:
     )
 
     fig, axes = plt.subplots(2, 2, figsize=(7.2, 6.8), constrained_layout=False)
-    fig.suptitle("古典制御における偏差・飽和・アンチワインドアップの時間波形")
 
     plot_system_type_errors(axes[0, 0], axes[0, 1])
     plot_pi_windup(axes[1, 0], axes[1, 1])
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.955))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

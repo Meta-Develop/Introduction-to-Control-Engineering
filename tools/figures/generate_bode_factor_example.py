@@ -19,6 +19,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the Bode figure") from exc
 
+from figure_style import finalize_figure
+
 
 K = 5.0
 OMEGA_0 = 1.0
@@ -172,7 +174,6 @@ def main() -> None:
     fig, (gain_ax, phase_ax) = plt.subplots(
         2, 1, figsize=(7.2, 5.6), sharex=True, constrained_layout=False
     )
-    fig.suptitle(r"正規化因子で分解した $L(s)$ のボード線図")
 
     gain_ax.semilogx(omega, gain, color="#1f77b4", linewidth=2.0, label="厳密")
     gain_ax.semilogx(
@@ -239,8 +240,7 @@ def main() -> None:
             fontsize=8,
         )
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

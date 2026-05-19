@@ -18,6 +18,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the LQR/Kalman figure") from exc
 
+from figure_style import finalize_figure
+
 
 SAMPLE_TIME = 0.1
 SIMULATION_STEPS = 80
@@ -121,20 +123,6 @@ def main() -> None:
     )
 
     fig, axes = plt.subplots(2, 2, figsize=(7.6, 7.2), constrained_layout=False)
-    fig.suptitle("LQR とカルマンフィルタの調整例", y=0.985)
-    lqr_cases = ",".join(f"{r_weight:g}" for r_weight in R_SWEEP)
-    fig.text(
-        0.5,
-        0.948,
-        (
-            f"設定: h={SAMPLE_TIME:g} s, "
-            f"Q_x=diag(1,0.08), R_u={{{lqr_cases}}}, "
-            "R_v={0.02,0.20}"
-        ),
-        ha="center",
-        va="top",
-        fontsize=8,
-    )
     response_ax, input_ax, riccati_ax, covariance_ax = axes.ravel()
 
     colors = ("#1f77b4", "#d62728", "#2ca02c", "#9467bd")
@@ -277,8 +265,7 @@ def main() -> None:
     covariance_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
     covariance_ax.legend(loc="upper right")
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.925))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

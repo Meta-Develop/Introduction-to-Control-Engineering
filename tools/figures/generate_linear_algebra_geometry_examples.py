@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the linear algebra geometry figure") from exc
 
+from figure_style import finalize_figure
+
 
 OUTPUT_SIZE = (8.0, 6.0)
 DPI = 180
@@ -193,15 +195,13 @@ def main() -> None:
         fig.add_subplot(2, 2, 3, projection="3d"),
         fig.add_subplot(2, 2, 4),
     ]
-    fig.suptitle("固有方向、二次形式、正定値性の幾何")
 
     plot_linear_map(axes[0])
     plot_quadratic_levels(axes[1])
     plot_quadratic_surface(axes[2])
     plot_parameter_variation(axes[3])
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

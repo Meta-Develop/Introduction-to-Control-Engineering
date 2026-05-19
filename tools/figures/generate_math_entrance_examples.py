@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the math entrance figure") from exc
 
+from figure_style import finalize_figure
+
 
 OUTPUT_SIZE = (8.0, 6.0)
 DPI = 180
@@ -275,15 +277,13 @@ def main() -> None:
     )
 
     fig, axes = plt.subplots(2, 2, figsize=OUTPUT_SIZE, constrained_layout=False)
-    fig.suptitle("微分・積分・Taylor 近似・二次形式の視覚例")
 
     plot_secants(axes[0, 0])
     plot_integral(axes[1, 0])
     plot_taylor(axes[0, 1])
     plot_quadratic_forms(axes[1, 1])
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

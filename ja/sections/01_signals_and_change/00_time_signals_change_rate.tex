@@ -1,51 +1,96 @@
 \subsection{時間、信号、変化率}
 
-水槽の水位制御では、最初に得られる情報は測定記録である。時刻 $t=0,1,2,\ldots$ [s] ごとに、水位計が返した測定値 $y_m(t)$ [cm]、目標水位 $r(t)$ [cm]、ポンプへ送った指令 $u_c(t)$ [\%]、対象へ実際に入った流量 $u(t)$ [L/s]、排水量や追加流入のような外乱 $d(t)$ [L/s]、水位計に混入する測定ばらつき $n(t)$ [cm] が表に並ぶ。モータの角度、部屋の温度、移動ロボットの横ずれでも、時刻、測定された量、目標、入力指令、外乱、ノイズを同じ形式で記録できる。
+制御器が最初に受け取るのは、連続した数式ではなく、一定間隔で並んだ測定記録である。水槽では水位 $h$ [cm]、室温制御では温度 $T$ [$^\circ$C]、移動ロボットでは基準線からの横ずれ $e$ [m] が、時刻とともに表へ記録される。サンプリング間隔を $\Delta t$ [s] とし、$k=0,1,2,\ldots$ 番目の記録時刻を
+\begin{equation}
+  t_k=k\Delta t
+\end{equation}
+と置く。たとえば $\Delta t=2\,\mathrm{s}$ なら、$t_0=0\,\mathrm{s}$、$t_1=2\,\mathrm{s}$、$t_2=4\,\mathrm{s}$ である。水位、温度、横ずれの測定値は
+\begin{equation}
+  h_k=h(t_k),\qquad T_k=T(t_k),\qquad e_k=e(t_k)
+\end{equation}
+のように添字つきの列として扱える。目標水位 $r_k$ [cm]、ポンプ指令 $u_{c,k}$ [\%]、実際の流入量 $u_k$ [L/s]、排水や追加流入を表す外乱 $d_k$ [L/s]、水位計の測定ばらつき $n_k$ [cm] も同じ時刻列に並ぶ。
 
-制御工学では、この記録から次の値を予測し、要求した挙動へ近づくように入力を選ぶ。したがって最初に必要なのは、時刻ごとに値をもつ量を一つの対象として扱い、その量の単位、変化率、入力、出力、状態との関係を区別することである。
+次の入力を選ぶには、値そのものだけでなく、値がどの速さで変わっているかが必要になる。連続する二つの水位記録が
+\begin{equation}
+  h_k=18.0\,\mathrm{cm},\qquad h_{k+1}=18.6\,\mathrm{cm},\qquad
+  \Delta t=2.0\,\mathrm{s}
+\end{equation}
+であったとする。この区間で増えた水位は
+\begin{equation}
+  \Delta h_k=h_{k+1}-h_k
+  =18.6\,\mathrm{cm}-18.0\,\mathrm{cm}
+  =0.6\,\mathrm{cm}
+\end{equation}
+である。これを経過時間で割ると、区間 $[t_k,t_{k+1}]$ における平均変化率
+\begin{equation}
+  \frac{\Delta h_k}{\Delta t}
+  =\frac{h_{k+1}-h_k}{\Delta t}
+  =\frac{0.6\,\mathrm{cm}}{2.0\,\mathrm{s}}
+  =0.30\,\mathrm{cm/s}
+\end{equation}
+を得る。温度で同じ計算をすれば単位は $^\circ$C/s になり、ロボットの横ずれで同じ計算をすれば単位は m/s になる。分子の単位を時間の単位で割るため、変化率の単位は「その量の単位毎秒」になる。
 
+この段階で、時刻ごとに値をもつ量を一つの対象として扱う必要が生じる。水位、温度、横ずれ、目標値、入力指令、外乱、測定ばらつきは役割が異なるが、いずれも時刻を指定すると値が定まる。
 \begin{definition}[信号]
-時刻 $t$ の各値に対して数、ベクトル、または行列を対応させるものを信号という。水位 $h(t)$、温度 $T(t)$、角度 $\theta(t)$、電圧 $v(t)$、位置 $p(t)\in\R^3$ はすべて信号である。
+各時刻 $t$ に対して数、ベクトル、または行列を対応させるものを信号という。水位 $h(t)$、温度 $T(t)$、角度 $\theta(t)$、電圧 $v(t)$、位置 $p(t)\in\R^3$ はすべて信号である。
 \end{definition}
 
-実験の記録は通常、一定のサンプリング間隔で並んだ数列である。その並びを理想化して、任意の時刻 $t$ で値が決まる関数として扱う。制御では、センサが信号を測り、制御器が信号を計算し、アクチュエータが信号を対象へ加える。
-
-単位は式の意味を守る。角度 $\theta$ の単位を rad、時刻 $t$ の単位を s とすれば、角速度は rad/s でなければならない。したがって
+平均変化率は測定間隔に依存する。区間を短くすると、より短い時間幅での変化を評価することになる。一般の信号 $x$ について、$t_k$ から $t_{k+1}$ までの平均変化率は
 \begin{equation}
-  \omega(t)=\frac{\dd \theta(t)}{\dd t}
+  \frac{x_{k+1}-x_k}{\Delta t}
+\end{equation}
+である。ここで $x_k=x(t_k)$、$x_{k+1}=x(t_k+\Delta t)$ だから、同じ式は
+\begin{equation}
+  \frac{x(t_k+\Delta t)-x(t_k)}{\Delta t}
+\end{equation}
+と書ける。サンプリング間隔を十分小さくした極限として、時刻 $t$ そのものにおける瞬間的な変化率を表す記法が微分である。
+
+角度 $\theta$ [rad] を例にとる。時刻 $t$ から $t+\Delta t$ までの平均角速度は
+\begin{equation}
+  \frac{\theta(t+\Delta t)-\theta(t)}{\Delta t}
+\end{equation}
+であり、単位は rad/s である。$\Delta t$ を 0 に近づけた極限が存在するとき、角速度 $\omega$ を
+\begin{equation}
+  \omega(t)
+  =\lim_{\Delta t\to0}
+  \frac{\theta(t+\Delta t)-\theta(t)}{\Delta t}
+  =\frac{\dd \theta(t)}{\dd t}
   \label{eq:angular-speed-definition}
 \end{equation}
-は角度の時間変化率を表す。逆に、角速度を時間で積み上げれば角度に戻る。
+と書く。\weq{angular-speed-definition} は、有限差分で計算していた平均角速度を、連続時間の瞬間角速度へ移した表記である。
 
-\begin{formula}[微分と積分の対応]
-初期角度 $\theta(0)$ と角速度 $\omega(t)$ が分かっているとき、角度は
+逆に、変化率を時間ごとに足し合わせると、量そのものの変化が得られる。区間 $[t_k,t_{k+1}]$ で水位の変化率を $v_k$ [cm/s] と近似すれば、
 \begin{equation}
-  \theta(t)=\theta(0)+\int_0^t \omega(\tau)\,\dd \tau
+  h_{k+1}-h_k=v_k\Delta t
+\end{equation}
+である。したがって
+\begin{align}
+  h_1&=h_0+v_0\Delta t,\\
+  h_2&=h_1+v_1\Delta t
+      =h_0+v_0\Delta t+v_1\Delta t,\\
+  h_3&=h_2+v_2\Delta t
+      =h_0+v_0\Delta t+v_1\Delta t+v_2\Delta t
+\end{align}
+となる。$N$ 個の区間を通した水位は
+\begin{equation}
+  h_N=h_0+\sum_{k=0}^{N-1}v_k\Delta t
+\end{equation}
+で表される。各項 $v_k\Delta t$ の単位は $(\mathrm{cm/s})\cdot\mathrm{s}=\mathrm{cm}$ であり、総和全体も水位の単位 cm をもつ。
+
+角速度でも同じ加算が成り立つ。$\omega_k$ [rad/s] を区間 $[t_k,t_{k+1}]$ の角速度の代表値とすれば
+\begin{align}
+  \theta_{k+1}-\theta_k&=\omega_k\Delta t,\\
+  \theta_N&=\theta_0+\sum_{k=0}^{N-1}\omega_k\Delta t
+\end{align}
+である。ここで $t_N=t$ とし、$\Delta t$ を小さくしていくと、有限和は連続時間の積分に移る。初期角度 $\theta(0)$ と角速度 $\omega(t)$ が分かっているとき、
+\begin{equation}
+  \theta(t)
+  =\theta(0)+
+  \lim_{\Delta t\to0}\sum_{k=0}^{N-1}\omega(t_k)\Delta t
+  =\theta(0)+\int_0^t \omega(\tau)\,\dd \tau
   \label{eq:integral-angle}
 \end{equation}
-で与えられる。
-\end{formula}
-
-\begin{derivation}
-\weq{angular-speed-definition} より
-\begin{equation}
-  \frac{\dd\theta}{\dd t}=\omega(t)
-\end{equation}
-である。両辺に $\dd t$ を掛ける記法で考えると
-\begin{equation}
-  \dd\theta=\omega(t)\,\dd t
-\end{equation}
-となる。時刻 $0$ から $t$ まで足し合わせるので
-\begin{equation}
-  \int_{\theta(0)}^{\theta(t)}\dd\theta
-  =\int_0^t\omega(\tau)\,\dd\tau
-\end{equation}
-である。左辺は $\theta(t)-\theta(0)$ だから
-\begin{equation}
-  \theta(t)-\theta(0)=\int_0^t\omega(\tau)\,\dd\tau
-\end{equation}
-となり、移項して \weq{integral-angle} を得る。
-\end{derivation}
+である。\weq{integral-angle} は、サンプリングされた角速度を有限和で積み上げる計算を、連続時間の極限として書いたものである。微分は短い区間の差分から瞬間の変化率を取り出し、積分は短い区間の増分を足し戻す。以後のモデル式は、この二つを使って、測定記録から時間変化を表す方程式へ移る。
 
 \subsubsection{指数関数解の導出}
 

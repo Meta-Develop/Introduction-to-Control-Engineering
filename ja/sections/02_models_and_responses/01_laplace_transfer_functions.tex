@@ -21,9 +21,9 @@
 を満たす関数を扱う。この仮定は指数位数の仮定であり、線形時不変系の応答で生じる指数関数および減衰振動を含む。このとき少なくとも $\operatorname{Re}s>\alpha$ では積分が収束する。初期値 $f(0)$ は、時刻 $0$ の右極限 $f(0+)$ を表すものとして書く。
 
 \begin{theorem}[ラプラス変換の線形性]
-$F(s)=\mathcal{L}\{f(t)\}$、$G(s)=\mathcal{L}\{g(t)\}$ が同じ領域で存在するとする。定数 $a,b$ に対して
+$F_1(s)=\mathcal{L}\{f_1(t)\}$、$F_2(s)=\mathcal{L}\{f_2(t)\}$ が同じ領域で存在するとする。定数 $a,b$ に対して
 \begin{equation}
-  \mathcal{L}\{a f(t)+b g(t)\}=aF(s)+bG(s)
+  \mathcal{L}\{a f_1(t)+b f_2(t)\}=aF_1(s)+bF_2(s)
   \label{eq:laplace-linearity}
 \end{equation}
 である。
@@ -32,11 +32,11 @@ $F(s)=\mathcal{L}\{f(t)\}$、$G(s)=\mathcal{L}\{g(t)\}$ が同じ領域で存在
 \begin{derivation}
 定義へそのまま代入すると
 \begin{align}
-  \mathcal{L}\{a f+b g\}
-  &=\int_0^\infty \{a f(t)+b g(t)\}e^{-st}\,\dd t\\
-  &=a\int_0^\infty f(t)e^{-st}\,\dd t
-    +b\int_0^\infty g(t)e^{-st}\,\dd t\\
-  &=aF(s)+bG(s)
+  \mathcal{L}\{a f_1+b f_2\}
+  &=\int_0^\infty \{a f_1(t)+b f_2(t)\}e^{-st}\,\dd t\\
+  &=a\int_0^\infty f_1(t)e^{-st}\,\dd t
+    +b\int_0^\infty f_2(t)e^{-st}\,\dd t\\
+  &=aF_1(s)+bF_2(s)
 \end{align}
 となる。
 \end{derivation}
@@ -173,7 +173,7 @@ $a\ge0$ とする。このとき
 したがって、時間領域で $a$ 秒だけ遅らせる操作は、$s$ 領域では因子 $e^{-as}$ を掛ける操作に対応する。
 \end{derivation}
 
-時間移動の公式では、$H(t-a)$ を含めることが本質的である。$f(t-a)$ だけを書くと、$0\le t<a$ で $f$ の負時刻側を参照する形になり、一側ラプラス変換で扱う因果信号の仮定と合わない。制御の伝達関数で遅れた入力を扱うときは、遅れた信号を $H(t-a)u_0(t-a)$ と書き、遅れる前の信号 $u_0$ が時刻 0 から定義された因果信号であることを明示する。
+時間移動の公式では、$H(t-a)$ を含めることが本質的である。$f(t-a)$ だけを書くと、$0\le t<a$ で $f$ の負時刻側を参照する形になり、一側ラプラス変換で扱う因果信号の仮定と合わない。制御の応答計算で遅れた入力を扱うときは、遅れた信号を $H(t-a)u_0(t-a)$ と書き、遅れる前の信号 $u_0$ が時刻 0 から定義された因果信号であることを明示する。
 
 \begin{formula}[指数移動と周波数移動の公式]
 $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存在するなら
@@ -203,10 +203,18 @@ $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存
 \begin{example}[遅れたステップ入力に対する一次遅れ応答]
 一次遅れ系
 \begin{equation}
-  G(s)=\frac{K}{\tau s+1},
+  \tau\dot{y}(t)+y(t)=K u(t),
   \qquad K\in\mathbb{R},\quad \tau>0
 \end{equation}
-を零初期条件で考える。入力が時刻 $a\ge0$ で大きさ $u_0$ へ変わる遅れたステップ
+を零初期条件 $y(0)=0$ で考える。微分公式と線形性を使うと
+\begin{align}
+  \tau\mathcal{L}\{\dot{y}\}+\mathcal{L}\{y\}
+  &=K\mathcal{L}\{u\},\\
+  \tau sY(s)+Y(s)&=KU(s),\\
+  (\tau s+1)Y(s)&=KU(s),\\
+  Y(s)&=\frac{K}{\tau s+1}U(s).
+\end{align}
+入力が時刻 $a\ge0$ で大きさ $u_0$ へ変わる遅れたステップ
 \begin{equation}
   u(t)=u_0H(t-a)
 \end{equation}
@@ -217,15 +225,26 @@ $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存
 である。したがって
 \begin{align}
   Y(s)
-  &=G(s)U(s)\\
+  &=\frac{K}{\tau s+1}\frac{u_0e^{-as}}{s}\\
   &=e^{-as}\frac{K u_0}{s(\tau s+1)}.
   \label{eq:first-order-delayed-step-laplace}
 \end{align}
-遅れを持たない時刻 $0$ 開始の応答を
+遅れ因子 $e^{-as}$ を除いた部分は
+\begin{equation}
+  \frac{K u_0}{s(\tau s+1)}
+  =
+  \frac{K u_0}{s}
+  -\frac{K u_0}{s+1/\tau}
+\end{equation}
+である。\weq{constant-laplace} と、指数移動の公式を $f(t)=1$、$\beta=-1/\tau$ に適用して得られる
+\begin{equation}
+  \mathcal{L}\{e^{-t/\tau}\}=\frac{1}{s+1/\tau}
+\end{equation}
+を使えば、遅れを持たない時刻 $0$ 開始の応答は
 \begin{equation}
   y_0(t)=K u_0\left(1-e^{-t/\tau}\right)
 \end{equation}
-とおけば、\weq{first-order-delayed-step-laplace} と時間移動の公式から
+である。したがって、\weq{first-order-delayed-step-laplace} と時間移動の公式から
 \begin{equation}
   y(t)=H(t-a)y_0(t-a)
   =
@@ -314,6 +333,16 @@ $f$ が区分的に連続微分可能で、$f(t)$ が有限の極限 $f_\infty$ 
 \end{derivation}
 
 最終値の定理には極の条件が必要である。$sF(s)$ が虚軸上に極を持つ場合には持続振動により時間極限が存在しない。$sF(s)$ が原点に極を持つ場合には出力が有界な最終値へ収束しない。
+
+\begin{definition}[伝達関数]
+線形時不変系で初期値を 0 としたとき、入力のラプラス変換 $U(s)$ と出力のラプラス変換 $Y(s)$ の比
+\begin{equation}
+  G(s)=\frac{Y(s)}{U(s)}
+\end{equation}
+を伝達関数という。
+\end{definition}
+
+伝達関数では、初期状態に起因する零入力応答と、入力に起因する零状態応答を分離するために初期値を 0 とする。
 
 \subsubsection{逆ラプラス変換と部分分数分解}
 
@@ -478,8 +507,14 @@ $F(s)$ を
 \end{equation}
 である。したがって、複素共役極 $-\sigma\pm j\omega$ は、減衰包絡 $e^{-\sigma t}$ と振動 $\cos\omega t,\sin\omega t$ を一組にした時間応答を作る。
 
-一次遅れ系のステップ応答も、同じ逆変換で確認できる。\weq{first-order-laplace-step} を用いると
+一次遅れ系のステップ応答も、同じ逆変換で確認できる。微分方程式
+\begin{equation}
+  \tau\dot{y}(t)+y(t)=Ku(t),
+  \qquad y(0)=y_0,\quad u(t)=u_0
+\end{equation}
+にラプラス変換を適用し、\weq{constant-laplace} を使うと
 \begin{align}
+  \tau\{sY(s)-y_0\}+Y(s)&=K\frac{u_0}{s},\\
   Y(s)
   &=\frac{K u_0}{s(\tau s+1)}
     +\frac{\tau y_0}{\tau s+1}\\
@@ -545,16 +580,6 @@ $F(s)$ を
   \label{eq:second-order-step-underdamped}
 \end{equation}
 である。最終値は $K$、減衰の速さは $\sigma=\zeta\omega_n$、振動の速さは $\omega_d$ で決まる。逆ラプラス変換は、伝達関数の極を単なる代数的な根ではなく、時間応答のモードとして対応付ける操作である。
-
-\begin{definition}[伝達関数]
-線形時不変系で初期値を 0 としたとき、入力のラプラス変換 $U(s)$ と出力のラプラス変換 $Y(s)$ の比
-\begin{equation}
-  G(s)=\frac{Y(s)}{U(s)}
-\end{equation}
-を伝達関数という。
-\end{definition}
-
-伝達関数では、初期状態に起因する零入力応答と、入力に起因する零状態応答を分離するために初期値を 0 とする。
 
 \subsubsection{一次遅れ系のラプラス変換}
 

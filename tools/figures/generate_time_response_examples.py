@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the response figure") from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -118,8 +120,10 @@ def configure_fonts() -> None:
 
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    output_path = repo_root / "ja" / "figures" / "time_response_examples.png"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir = repo_root / "ja" / "figures"
+    first_output_path = output_dir / "time_response_first_order.png"
+    second_output_path = output_dir / "time_response_second_order.png"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     first_time = make_linspace(0.0, FIRST_TIME_STOP, SAMPLE_COUNT)
     second_time = make_linspace(0.0, SECOND_TIME_STOP, SAMPLE_COUNT)
@@ -136,14 +140,10 @@ def main() -> None:
         }
     )
 
-    fig, (first_ax, second_ax) = plt.subplots(
-        1, 2, figsize=(7.2, 4.2), constrained_layout=False
-    )
-    fig.suptitle("正規化ステップ応答")
-
     colors = ("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728")
     linestyles = ("-", "--", "-.", ":")
 
+    first_fig, first_ax = plt.subplots(figsize=(7.2, 4.2), constrained_layout=False)
     for tau, color, linestyle in zip(FIRST_ORDER_TAUS, colors, linestyles):
         first_ax.plot(
             first_time,
@@ -154,32 +154,20 @@ def main() -> None:
             label=rf"$\tau={tau:.1f}\,\mathrm{{s}}$",
         )
 
-    for zeta, color, linestyle in zip(SECOND_ORDER_ZETAS, colors, linestyles):
-        second_ax.plot(
-            second_time,
-            second_order_step(second_time, zeta),
-            color=color,
-            linestyle=linestyle,
-            linewidth=2.0,
-            label=rf"$\zeta={zeta:.1f},\ \omega_n={OMEGA_N:.1f}\,\mathrm{{rad/s}}$",
-        )
-
-    for ax in (first_ax, second_ax):
-        ax.axhline(1.0, color="#555555", linestyle=":", linewidth=1.0)
-        ax.set_xlabel(r"時間 $t$ [s]")
-        ax.set_ylabel(r"正規化出力 $y/(K u_0)$ [-]")
-        ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
-        ax.legend(loc="lower right")
-
+    first_ax.axhline(1.0, color="#555555", linestyle=":", linewidth=1.0)
     first_ax.axhline(
         1.0 - math.exp(-1.0),
         color="#777777",
         linestyle="--",
         linewidth=1.0,
     )
-    first_ax.set_title("一次遅れ応答")
+    first_ax.set_title("First-order response")
+    first_ax.set_xlabel(r"時間 $t$ [s]")
+    first_ax.set_ylabel(r"正規化出力 $y/(K u_0)$ [-]")
     first_ax.set_xlim(0.0, FIRST_TIME_STOP)
     first_ax.set_ylim(0.0, 1.06)
+    first_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
+    first_ax.legend(loc="lower right")
     first_ax.text(
         0.03,
         0.62,
@@ -191,13 +179,33 @@ def main() -> None:
         color="#444444",
     )
 
-    second_ax.set_title("二次遅れ応答")
+    finalize_figure(first_fig, first_output_path)
+    plt.close(first_fig)
+    print(first_output_path)
+
+    second_fig, second_ax = plt.subplots(figsize=(7.2, 4.2), constrained_layout=False)
+    for zeta, color, linestyle in zip(SECOND_ORDER_ZETAS, colors, linestyles):
+        second_ax.plot(
+            second_time,
+            second_order_step(second_time, zeta),
+            color=color,
+            linestyle=linestyle,
+            linewidth=2.0,
+            label=rf"$\zeta={zeta:.1f},\ \omega_n={OMEGA_N:.1f}\,\mathrm{{rad/s}}$",
+        )
+
+    second_ax.axhline(1.0, color="#555555", linestyle=":", linewidth=1.0)
+    second_ax.set_title("Second-order response")
+    second_ax.set_xlabel(r"時間 $t$ [s]")
+    second_ax.set_ylabel(r"正規化出力 $y/(K u_0)$ [-]")
     second_ax.set_xlim(0.0, SECOND_TIME_STOP)
     second_ax.set_ylim(0.0, 1.6)
+    second_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
+    second_ax.legend(loc="lower right")
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.93))
-    fig.savefig(output_path, facecolor="white")
-    print(output_path)
+    finalize_figure(second_fig, second_output_path)
+    plt.close(second_fig)
+    print(second_output_path)
 
 
 if __name__ == "__main__":

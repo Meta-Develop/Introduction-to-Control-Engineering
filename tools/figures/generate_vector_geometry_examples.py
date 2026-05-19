@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the vector geometry figure") from exc
 
+from figure_style import finalize_figure
+
 
 OUTPUT_SIZE = (8.0, 6.0)
 DPI = 180
@@ -207,15 +209,13 @@ def main() -> None:
         fig.add_subplot(2, 2, 3, projection="3d"),
         fig.add_subplot(2, 2, 4),
     ]
-    fig.suptitle("ベクトル、射影、基底、外積の幾何")
 
     plot_projection(axes[0])
     plot_basis_change(axes[1])
     plot_cross_product(axes[2])
     plot_torque(axes[3])
 
-    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.94))
-    fig.savefig(output_path, facecolor="white")
+    finalize_figure(fig, output_path)
     print(output_path)
 
 

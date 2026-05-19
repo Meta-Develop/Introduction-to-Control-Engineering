@@ -20,6 +20,8 @@ try:
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
     raise SystemExit("matplotlib is required to generate the signal-modeling figure") from exc
 
+from figure_style import finalize_figure
+
 
 JAPANESE_FONT_CANDIDATES = (
     "Noto Sans CJK JP",
@@ -124,35 +126,35 @@ def draw_signal_path(axis) -> None:
     axis.set_axis_off()
     axis.set_xlim(0.0, 1.0)
     axis.set_ylim(0.0, 1.0)
-    axis.set_title("信号の役割と入る位置", loc="left", fontweight="bold")
+    axis.set_title("Signal roles and entry points", loc="left", fontweight="bold")
 
-    add_box(axis, (0.04, 0.62), 0.13, 0.18, "参照信号\n$r=25\\,^{\\circ}$C", "#eef5ff")
-    add_box(axis, (0.22, 0.62), 0.15, 0.18, "制御器\n$e=r-y_m$", "#f8f0ff")
-    add_box(axis, (0.43, 0.62), 0.17, 0.18, "アクチュエータ\n$u_c\\to u$", "#fff5e8")
+    add_box(axis, (0.04, 0.62), 0.13, 0.18, "Reference\n$r=25\\,^{\\circ}$C", "#eef5ff")
+    add_box(axis, (0.22, 0.62), 0.15, 0.18, "Controller\n$e=r-y_m$", "#f8f0ff")
+    add_box(axis, (0.43, 0.62), 0.17, 0.18, "Actuator\n$u_c\\to u$", "#fff5e8")
     add_box(
         axis,
         (0.66, 0.56),
         0.20,
         0.30,
-        "対象\n状態 $x=T$\n出力 $y=T$",
+        "Plant\nstate $x=T$\noutput $y=T$",
         "#edf7ed",
     )
-    add_box(axis, (0.69, 0.18), 0.17, 0.17, "センサ\n$y_m=y+n_T$", "#f7f7f7")
+    add_box(axis, (0.69, 0.18), 0.17, 0.17, "Sensor\n$y_m=y+n_T$", "#f7f7f7")
 
     add_arrow(axis, (0.17, 0.71), (0.22, 0.71), "", "#1f77b4")
-    add_arrow(axis, (0.37, 0.71), (0.43, 0.71), "指令 $u_c$ [-]", "#9467bd", (0.0, -0.075))
-    add_arrow(axis, (0.60, 0.71), (0.66, 0.71), "入力 $u$ [W]", "#ff7f0e", (0.0, -0.075))
-    add_arrow(axis, (0.86, 0.68), (0.96, 0.68), "出力 $y$ [$^{\\circ}$C]", "#2ca02c", (0.0, 0.07))
+    add_arrow(axis, (0.37, 0.71), (0.43, 0.71), "command $u_c$ [-]", "#9467bd", (0.0, -0.075))
+    add_arrow(axis, (0.60, 0.71), (0.66, 0.71), "input $u$ [W]", "#ff7f0e", (0.0, -0.075))
+    add_arrow(axis, (0.86, 0.68), (0.96, 0.68), "output $y$ [$^{\\circ}$C]", "#2ca02c", (0.0, 0.07))
     add_arrow(axis, (0.78, 0.56), (0.78, 0.35), "", "#2ca02c")
-    add_arrow(axis, (0.69, 0.27), (0.37, 0.62), "測定 $y_m$ [$^{\\circ}$C]", "#555555", (-0.04, -0.05))
-    add_arrow(axis, (0.74, 0.93), (0.74, 0.86), "外乱 $d=(T_a,d_q)$\n[$^{\\circ}$C, W]", "#d62728", (-0.02, 0.02))
-    add_arrow(axis, (0.55, 0.24), (0.69, 0.27), "ノイズ $n_T$ [$^{\\circ}$C]", "#8c564b", (-0.01, -0.06))
+    add_arrow(axis, (0.69, 0.27), (0.37, 0.62), "measurement $y_m$ [$^{\\circ}$C]", "#555555", (-0.04, -0.05))
+    add_arrow(axis, (0.74, 0.93), (0.74, 0.86), "disturbance $d=(T_a,d_q)$\n[$^{\\circ}$C, W]", "#d62728", (-0.02, 0.02))
+    add_arrow(axis, (0.55, 0.24), (0.69, 0.27), "noise $n_T$ [$^{\\circ}$C]", "#8c564b", (-0.01, -0.06))
 
     axis.text(
         0.04,
         0.19,
         (
-            "例: $R_{th}=2.0$ K/W, $C_{th}=10$ J/K, "
+            "Example: $R_{th}=2.0$ K/W, $C_{th}=10$ J/K, "
             "$\\eta=0.5$ W/V$^2$, $T_a=20\\,^{\\circ}$C"
         ),
         ha="left",
@@ -163,7 +165,7 @@ def draw_signal_path(axis) -> None:
     axis.text(
         0.04,
         0.08,
-        r"対象式: $C_{th}\dot{T}=-(T-T_a)/R_{th}+u+d_q,\quad y_m=y+n_T$",
+        r"Plant equation: $C_{th}\dot{T}=-(T-T_a)/R_{th}+u+d_q,\quad y_m=y+n_T$",
         ha="left",
         va="center",
         fontsize=9,
@@ -181,13 +183,13 @@ def draw_linearization(axis) -> None:
         VALID_V_DEVIATION,
         color="#e8f4ff",
         alpha=0.85,
-        label=rf"一次近似の有効域 $|\tilde{{v}}|\leq{VALID_V_DEVIATION:.1f}$ V",
+        label=rf"first-order-valid region $|\tilde{{v}}|\leq{VALID_V_DEVIATION:.1f}$ V",
     )
-    axis.plot(deviations, exact, color="#1f77b4", linewidth=2.0, label="厳密な入力寄与")
-    axis.plot(deviations, linear, color="#d62728", linestyle="--", linewidth=2.0, label="一次 Taylor 近似")
+    axis.plot(deviations, exact, color="#1f77b4", linewidth=2.0, label="exact input contribution")
+    axis.plot(deviations, linear, color="#d62728", linestyle="--", linewidth=2.0, label="first-order Taylor approximation")
     axis.axhline(0.0, color="#666666", linewidth=0.8)
     axis.axvline(0.0, color="#666666", linewidth=0.8)
-    axis.set_title("平衡点・偏差変数・線形化誤差", fontweight="bold")
+    axis.set_title("Equilibrium, deviation variables, and linearization error", fontweight="bold")
     axis.set_xlabel(r"入力偏差 $\tilde{v}=v-v_e$ [V]")
     axis.set_ylabel(r"ヒータ入力寄与 $\Delta\dot{T}_{u}$ [K/s]")
     axis.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
@@ -200,7 +202,7 @@ def draw_linearization(axis) -> None:
         (
             rf"$v_e={V_E:.1f}$ V, $T_e={T_E:.1f}\,^{{\circ}}$C" "\n"
             rf"$\Delta\dot{{T}}_u\simeq(2\eta v_e/C_{{th}})\tilde{{v}}$"
-            "\n冷却項 $-\\tilde{T}/(R_{th}C_{th})$ は除く"
+            "\ncooling term $-\\tilde{T}/(R_{th}C_{th})$ omitted"
         ),
         transform=axis.transAxes,
         ha="left",
@@ -222,7 +224,7 @@ def draw_euler_step(axis) -> None:
     exact = np.exp(-time / TAU)
     colors = ("#1f77b4", "#ff7f0e", "#d62728")
 
-    axis.plot(time, exact, color="#222222", linewidth=2.0, label=r"厳密解 $e^{-t/\tau}$")
+    axis.plot(time, exact, color="#222222", linewidth=2.0, label=r"exact solution $e^{-t/\tau}$")
     for step, color in zip(EULER_STEPS, colors):
         times, values = euler_decay_points(step, stop)
         axis.step(
@@ -240,13 +242,13 @@ def draw_euler_step(axis) -> None:
     axis.text(
         2.0 * TAU + 0.03,
         1.05,
-        r"安定条件 $h<2\tau$",
+        r"stability condition $h<2\tau$",
         color="#555555",
         fontsize=8,
         ha="left",
         va="center",
     )
-    axis.set_title("一次 ODE と刻み幅の直観", fontweight="bold")
+    axis.set_title("First-order ODE and step-size intuition", fontweight="bold")
     axis.set_xlabel(r"時間 $t$ [s]")
     axis.set_ylabel(r"偏差 $z(t)$ [V]")
     axis.set_xlim(0.0, stop)
@@ -267,8 +269,11 @@ def draw_euler_step(axis) -> None:
 
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    output_path = repo_root / "ja" / "figures" / "signal_modeling_examples.png"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir = repo_root / "ja" / "figures"
+    paths_output_path = output_dir / "signal_modeling_paths.png"
+    linearization_output_path = output_dir / "signal_modeling_linearization.png"
+    euler_output_path = output_dir / "signal_modeling_euler_step.png"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     configure_fonts()
     plt.rcParams.update(
@@ -282,20 +287,26 @@ def main() -> None:
         }
     )
 
-    fig = plt.figure(figsize=(8.0, 6.0), constrained_layout=False)
-    grid = fig.add_gridspec(2, 2, height_ratios=(0.95, 1.05), hspace=0.42, wspace=0.28)
-    signal_axis = fig.add_subplot(grid[0, :])
-    linearization_axis = fig.add_subplot(grid[1, 0])
-    euler_axis = fig.add_subplot(grid[1, 1])
-
+    paths_fig, signal_axis = plt.subplots(figsize=(8.0, 3.4), constrained_layout=False)
     draw_signal_path(signal_axis)
-    draw_linearization(linearization_axis)
-    draw_euler_step(euler_axis)
+    paths_fig.subplots_adjust(left=0.02, right=0.99, bottom=0.05, top=0.98)
+    finalize_figure(paths_fig, paths_output_path, layout="none")
+    plt.close(paths_fig)
+    print(paths_output_path)
 
-    fig.suptitle("信号の役割、偏差変数、局所近似、刻み幅", fontsize=13, fontweight="bold")
-    fig.subplots_adjust(left=0.07, right=0.98, bottom=0.08, top=0.90)
-    fig.savefig(output_path, facecolor="white")
-    print(output_path)
+    linearization_fig, linearization_axis = plt.subplots(
+        figsize=(7.2, 4.2), constrained_layout=False
+    )
+    draw_linearization(linearization_axis)
+    finalize_figure(linearization_fig, linearization_output_path)
+    plt.close(linearization_fig)
+    print(linearization_output_path)
+
+    euler_fig, euler_axis = plt.subplots(figsize=(7.2, 4.2), constrained_layout=False)
+    draw_euler_step(euler_axis)
+    finalize_figure(euler_fig, euler_output_path)
+    plt.close(euler_fig)
+    print(euler_output_path)
 
 
 if __name__ == "__main__":

@@ -48,12 +48,19 @@ ON--OFF の切替だけで操作すると、誤差が小さくなった後も入
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.92\linewidth,bb=0 0 1296 756]{figures/time_response_examples.png}
-\caption{正規化した一次遅れ応答と二次遅れ応答の比較。左は $y/(Ku_0)=1-e^{-t/\tau}$ において時定数 $\tau$ だけを変えたステップ応答であり、各曲線は $t=\tau$ で $1-e^{-1}$ に達する。右は $\omega_n=2\,\mathrm{rad/s}$ を固定し、減衰比 $\zeta$ を変えた標準二次系の単位ステップ応答である。}
+\includegraphics[width=0.86\linewidth,bb=0 0 1296 756]{figures/time_response_first_order.png}
+\caption{正規化した一次遅れ応答。$y/(Ku_0)=1-e^{-t/\tau}$ において時定数 $\tau$ だけを変えており、各曲線は $t=\tau$ で $1-e^{-1}$ に達する。}
+\label{fig:first-order-time-response}
+\end{figure}
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.86\linewidth,bb=0 0 1296 756]{figures/time_response_second_order.png}
+\caption{$\omega_n=2\,\mathrm{rad/s}$ を固定し、減衰比 $\zeta$ を変えた標準二次系の単位ステップ応答。減衰比により振動、オーバーシュート、整定の速さが変わる。}
 \label{fig:time-response-examples}
 \end{figure}
 
-図\ref{fig:time-response-examples} の左図は、同じ静的ゲイン $K$ と同じステップ入力 $u_0$ に対して、時定数だけを変えた応答を正規化して示している。$\tau$ が小さいほど極 $-1/\tau$ は複素平面の左側へ移り、指数項 $e^{-t/\tau}$ が速く消えるため、定常値への接近も速くなる。一方、最終値 $Ku_0$ は時定数ではなく静的ゲインで決まる。同じ図の右側では、二次遅れ系の固有角周波数を固定し、減衰比 $\zeta$ だけを変えている。$\zeta<1$ では複素共役極が現れて振動とオーバーシュートが生じ、$\zeta=1$ は振動しない応答と振動応答の境界になり、$\zeta>1$ では二つの実極のうち遅い極が整定速度を支配する。
+図\ref{fig:first-order-time-response} は、同じ静的ゲイン $K$ と同じステップ入力 $u_0$ に対して、時定数だけを変えた応答を正規化して示している。$\tau$ が小さいほど極 $-1/\tau$ は複素平面の左側へ移り、指数項 $e^{-t/\tau}$ が速く消えるため、定常値への接近も速くなる。一方、最終値 $Ku_0$ は時定数ではなく静的ゲインで決まる。図\ref{fig:time-response-examples} では、二次遅れ系の固有角周波数を固定し、減衰比 $\zeta$ だけを変えている。$\zeta<1$ では複素共役極が現れて振動とオーバーシュートが生じ、$\zeta=1$ は振動しない応答と振動応答の境界になり、$\zeta>1$ では二つの実極のうち遅い極が整定速度を支配する。
 
 \begin{definition}[二次遅れの標準形]
 出力 $y$ が
@@ -203,10 +210,10 @@ $\zeta>1$ なら二つの極は相異なる負の実数である。便宜上
 \end{equation}
 となる。二つの指数はいずれも減衰するが、長時間では絶対値の小さい極 $p_1$ に対応する $e^{p_1t}$ が残る。$\zeta$ を非常に大きくすると $p_2$ は大きな負値へ移る一方で、$p_1$ は原点に近づくため、減衰を増やせば常に応答が速くなるわけではない。
 
-図\ref{fig:time-response-examples} の右図は、この三つの減衰分類を同じ時間軸で比較している。$\zeta=0.2$ の曲線は実部 $-\zeta\omega_n$ が小さいため包絡線の減衰が遅く、虚部に対応する振動が定常値を大きく超える。$\zeta=0.5$ では振動とオーバーシュートは残るが、包絡線は速く縮む。$\zeta=1$ は重根に対応し、初期静止からのステップ応答では定常値を越えずに近づく。$\zeta=1.8$ は過減衰であり、振動しないが遅い実極が原点に近いため、臨界減衰よりも整定が遅くなる。
+図\ref{fig:time-response-examples} は、この三つの減衰分類を同じ時間軸で比較している。$\zeta=0.2$ の曲線は実部 $-\zeta\omega_n$ が小さいため包絡線の減衰が遅く、虚部に対応する振動が定常値を大きく超える。$\zeta=0.5$ では振動とオーバーシュートは残るが、包絡線は速く縮む。$\zeta=1$ は重根に対応し、初期静止からのステップ応答では定常値を越えずに近づく。$\zeta=1.8$ は過減衰であり、振動しないが遅い実極が原点に近いため、臨界減衰よりも整定が遅くなる。
 
 \begin{practice}[応答図による時定数と減衰比の確認]
-図\ref{fig:time-response-examples} の左図で、$\tau=0.5\,\mathrm{s}$、$1.0\,\mathrm{s}$、$2.0\,\mathrm{s}$ の各曲線が $y/(Ku_0)=1-e^{-1}$ に達する時刻を読み取り、極 $-1/\tau$ の位置と応答速度を対応づけよ。右図では $\zeta=0.2$、$0.5$、$1.0$、$1.8$ の各曲線について、振動の有無、オーバーシュートの有無、整定の速さを比較し、同じ $\omega_n$ でも減衰比を大きくしすぎると応答が遅くなる理由を極の位置から説明せよ。
+図\ref{fig:first-order-time-response} で、$\tau=0.5\,\mathrm{s}$、$1.0\,\mathrm{s}$、$2.0\,\mathrm{s}$ の各曲線が $y/(Ku_0)=1-e^{-1}$ に達する時刻を読み取り、極 $-1/\tau$ の位置と応答速度を対応づけよ。図\ref{fig:time-response-examples} では $\zeta=0.2$、$0.5$、$1.0$、$1.8$ の各曲線について、振動の有無、オーバーシュートの有無、整定の速さを比較し、同じ $\omega_n$ でも減衰比を大きくしすぎると応答が遅くなる理由を極の位置から説明せよ。
 \end{practice}
 
 \subsubsection{ステップ応答の過渡仕様}
