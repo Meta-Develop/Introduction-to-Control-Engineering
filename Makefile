@@ -12,6 +12,8 @@ en: en-dvi
 
 ja-dvi:
 	mkdir -p build/ja
+	rm -f build/ja/main.*
+	cd ja && uplatex -interaction=nonstopmode -file-line-error -output-directory=../build/ja main.tex
 	cd ja && uplatex -interaction=nonstopmode -file-line-error -output-directory=../build/ja main.tex
 	cd ja && uplatex -interaction=nonstopmode -file-line-error -output-directory=../build/ja main.tex
 

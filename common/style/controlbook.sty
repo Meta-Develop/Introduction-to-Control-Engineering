@@ -8,6 +8,9 @@
 \RequirePackage{amsthm}
 \RequirePackage{bm}
 \RequirePackage[dvipdfmx]{graphicx}
+\def\pgfsysdriver{pgfsys-dvipdfmx.def}
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
 \RequirePackage{longtable}
 \RequirePackage{array}
 \RequirePackage{geometry}
@@ -101,6 +104,53 @@
 \newcommand{\wfig}[1]{図\ref{fig:#1}}
 \newcommand{\wtab}[1]{表\ref{tab:#1}}
 \newcommand{\wsec}[1]{\textbf{\ref{sec:#1}}}
+
+\tikzset{
+  control block/.style={
+    draw=black,
+    rectangle,
+    align=center,
+    minimum height=9mm,
+    minimum width=18mm,
+    inner sep=3pt
+  },
+  control small block/.style={
+    control block,
+    minimum height=7mm,
+    minimum width=12mm,
+    inner sep=2pt
+  },
+  control sum/.style={
+    draw=black,
+    circle,
+    align=center,
+    minimum size=6.5mm,
+    inner sep=0pt
+  },
+  control dot/.style={
+    circle,
+    fill=black,
+    draw=black,
+    minimum size=2.2pt,
+    inner sep=0pt
+  },
+  control signal/.style={
+    -{Latex},
+    draw=black,
+    line width=0.45pt
+  },
+  control disturbance/.style={
+    -{Latex},
+    draw=black,
+    densely dashed,
+    line width=0.45pt
+  },
+  control signal label/.style={
+    font=\small,
+    fill=white,
+    inner sep=1pt
+  }
+}
 \newenvironment{derivation}{\begin{quote}\small\textbf{式変形.}\par}{\end{quote}}
 \newenvironment{lecturepoint}{\begin{quote}\small\textbf{講義の要点.}\par}{\end{quote}}
 \newenvironment{why}{\begin{quote}\small\textbf{なぜそう見るか.}\par}{\end{quote}}

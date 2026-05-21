@@ -1,6 +1,10 @@
 \documentclass[a4paper,11pt,dvipdfmx]{ujarticle}
 
-\usepackage{../common/style/controlbook}
+\makeatletter
+\def\input@path{{../common/style/}}
+\AddToHook{file/controlbook.sty/before}{\def\@currpath{}}
+\makeatother
+\usepackage{controlbook}
 
 \begin{document}
 
