@@ -106,6 +106,19 @@
 \label{fig:mass-spring-design-examples}
 \end{figure}
 
-\begin{practice}[質量ばねダンパの候補設計確認]
-\wfig{mass-spring-design-examples} について、P 制御と PD 制御の定常値がともに $q_\infty=K_pr/(k+K_p)=5/6\,\mathrm{m}$ になることを式から確認せよ。次に、PD 制御で減衰比が $(c+K_d)/\{2\sqrt{m(k+K_p)}\}$ へ増えることを計算し、上段の振動の小ささと対応させよ。最後に、PID 制御の候補値が $(c+K_d)(k+K_p)>mK_I$ を満たすことを確認し、右下の図で終端偏差の小ささと RMS 操作力の大きさを同時に評価する。
-\end{practice}
+\wfig{mass-spring-design-examples} の数値は、上の式だけでも読み取れる。P 制御と PD 制御では積分器がないので、一定目標値に対する定常力の釣合いは
+\begin{equation}
+  kq_\infty=K_p(r-q_\infty),\qquad
+  q_\infty=\frac{K_p}{k+K_p}r=\frac{5}{6}\,\mathrm{m}
+\end{equation}
+である。したがって、どちらも目標値 $1\,\mathrm{m}$ に対して約 $0.167\,\mathrm{m}$ の残留偏差を持つ。PD 制御が改善しているのは定常値ではなく、二次閉ループの減衰である。固有角周波数は $\omega_n=\sqrt{(k+K_p)/m}=\sqrt{6}\,\mathrm{rad/s}$、減衰比は
+\begin{equation}
+  \zeta=\frac{c+K_d}{2\sqrt{m(k+K_p)}}
+\end{equation}
+だから、P 制御では $\zeta=1/(2\sqrt{6})\simeq0.204$、PD 制御では $\zeta=4/(2\sqrt{6})\simeq0.816$ になる。この増加が、上段の振動とオーバーシュートの小ささに対応している。
+
+PID 候補では、積分ゲインを入れても Routh-Hurwitz 条件を満たす必要がある。ここでは
+\begin{equation}
+  (c+K_d)(k+K_p)=4\cdot6=24>mK_I=2
+\end{equation}
+であり、少なくとも三次線形モデルの安定条件は満たしている。図の下段右では、この安定な PID 候補が終端偏差をほぼ $0\,\mathrm{m}$ まで減らす一方、RMS 操作力は PD 制御の約 $0.94\,\mathrm{N}$ より大きい約 $1.11\,\mathrm{N}$ になっている。三候補はいずれも初期操作力が $u(0)=K_pr=5\,\mathrm{N}$ で、ピーク力だけでは差が出ない。このため、同じピーク力の範囲でも、PD 制御は平均的な入力を抑えて振動を減らし、PID 制御は残留偏差を消す代わりに操作力を長く使う、という入力側のトレードオフが残る。

@@ -1,5 +1,7 @@
 \subsection{EKF}
 
+前節では、差動二輪ロボットのオドメトリ予測で、向きの不確かさが走行距離に比例して横方向の位置共分散へ伸びることを見た。相補フィルタの固定重みでは、車輪すべり、ジャイロバイアス、外部測定の粗さを時々刻々で区別しにくい。一方、線形 Kalman フィルタの予測共分散、革新、Kalman ゲインは、その区別を数量として持てる。ただし姿勢予測そのものは $\sin\theta$ と $\cos\theta$ を含むため、固定行列 $A,C$ だけでは表せない。したがって次に必要になるのは、平均は非線形なロボット運動学で進め、共分散と革新だけを現在の推定値の近くで線形化する手順である。
+
 線形カルマンフィルタは、線形モデル $A,C$ と共分散 $Q,R$ を使って予測と更新を行った。拡張 Kalman フィルタは、この二段構造を保ったまま、状態遷移と測定の式を非線形写像へ広げる方法である。離散時間の非線形確率モデルを
 \begin{align}
   x_k&=f_{k-1}(x_{k-1},u_{k-1})+G_{k-1}w_{k-1},\\
@@ -372,13 +374,49 @@ UKF の予測は、EKF と同じ非線形確率モデル
 \label{fig:nonlinear-geometry-estimation-examples}
 \end{figure}
 
-\begin{practice}[非線形幾何と推定近似の確認]
-図\ref{fig:nonlinear-geometry-estimation-examples}の数値を用いる。まず、$\theta=0.55\,\mathrm{rad}$ で $\abs{\sin\theta-\theta}/\abs{\theta}$ を計算し、橙色の局所線形化領域が小角近似のどの程度の誤差に対応しているかを確認せよ。次に、$V(\pi,0)=2$ を計算し、$c=1.8$ の準位集合が上向き平衡点を含まない理由と、$\dot{V}=0$ の直線全体ではなく最大不変集合を見る必要がある理由を説明せよ。最後に、$\bar{x}=(0.55,0.05)^\T$ から $H=[1.10\ 0.35]$ を導き、EKF の接線更新が粒子雲の曲がった尤度集合を一つの楕円で近似していることを図から読み取れ。
-\end{practice}
+図\ref{fig:nonlinear-geometry-estimation-examples}の数値は、局所近似と集合による判定を具体的に結び付けている。橙色の局所線形化領域の端である $\theta=0.55\,\mathrm{rad}$ では
+\begin{equation}
+  \frac{\abs{\sin 0.55-0.55}}{0.55}
+  =
+  \frac{\abs{0.5227-0.55}}{0.55}
+  \simeq 4.97\times10^{-2}
+\end{equation}
+であり、小角近似 $\sin\theta\simeq\theta$ の相対誤差は約 $5.0\,\%$ である。この値は、橙色の長方形が「完全な線形領域」ではなく、数パーセント程度の曲率を許した局所モデルの作業領域であることを示す。エネルギー関数については
+\begin{equation}
+  V(\pi,0)
+  =
+  \frac{1}{2}0^2+1-\cos\pi
+  =
+  2
+\end{equation}
+となるため、$c=1.8$ の準位集合は上向き平衡点 $(\pi,0)$ を含まない。さらに $\dot{V}=0$ は $\omega=0$ の直線全体で成り立つが、その直線上で運動が止まり続けるには同時に $\dot{\omega}=-\sin\theta=0$ も必要である。したがって $c<2$ の内側で残る最大不変集合は下向き平衡点 $(0,0)$ だけであり、LaSalle の議論では $\dot{V}=0$ の集合そのものではなく、その中の最大不変集合を見る。
+
+下段の測定写像でも、同じ局所化が接線として現れる。$h(x)=x_1^2+0.35x_2$ なので
+\begin{equation}
+  \left.\frac{\pp h}{\pp x}\right|_{\bar{x}}
+  =
+  \begin{bmatrix}
+    2\bar{x}_1&0.35
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1.10&0.35
+  \end{bmatrix}
+\end{equation}
+である。また、平均点での予測測定は $h(\bar{x})=0.55^2+0.35\cdot0.05=0.32$ であり、実測 $y=0.55$ との差は $0.23$ である。EKF はこの差を $H$ が張る接線方向の線形革新として扱うため、曲がった尤度集合を一つの楕円で表す。一方、UKF のシグマ点と粒子フィルタの粒子雲は、同じ測定曲線の曲率をサンプルの配置と重みに残す。
 
 \subsection{ESKF}
 
 誤差状態 Kalman フィルタ（error-state Kalman filter; ESKF）は、状態そのものを線形化した座標で持つのではなく、非線形な名目状態と、その近くの小さな誤差状態を分けて扱う EKF である。姿勢を四元数 $q$ または回転行列 $R\in\SO(3)$ で表す場合、$q$ には $\norm{q}=1$、$R$ には $R^\T R=I$ と $\det R=1$ という制約がある。通常の EKF のように四元数の 4 成分へ補正量を直接足すと、この制約から外れやすい。ESKF では、姿勢本体は曲面上の名目状態として積分し、共分散は小角度誤差 $\delta\theta\in\R^3$ のような最小座標に持たせる。
+
+図\ref{fig:flow6-eskf-structure}は、この分離を信号経路として表したものである。IMU 測定は上段の名目状態を多様体上で非線形に伝搬し、同じ測定から下段の誤差状態モデルと共分散伝搬も決まる。外部測定が入ると、名目状態から予測測定を作って革新を計算し、その革新で接空間上の誤差状態を更新する。得られた $\widehat{\delta x}$ は名目状態へ注入され、誤差平均は 0 にリセットされる。この流れにより、姿勢本体は常に $\SO(3)$ または単位四元数上に残り、共分散は名目姿勢の近くの小さい誤差だけを表し続ける。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.96\linewidth,bb=0 0 1440 702]{figures/flow6_eskf_structure.png}
+\caption{ESKF における名目状態と誤差状態の分離。IMU 測定は名目状態を伝搬し、同時に接空間上の誤差共分散を伝搬する。測定革新は誤差状態を更新し、推定された誤差は名目状態へ注入されてからリセットされる。}
+\label{fig:flow6-eskf-structure}
+\end{figure}
 
 \subsubsection{名目状態と誤差状態の分離}
 
@@ -406,7 +444,7 @@ IMU を用いる剛体の推定では、名目状態を
   \end{bmatrix}
   \in\R^{15}
 \end{equation}
-と置く。真の状態と名目状態の関係は
+と置く。以下で使う $[r]_\times$ は、任意の $s\in\R^3$ に対して $[r]_\times s=r\times s$ を満たす歪対称行列である。真の状態と名目状態の関係は
 \begin{align}
   p^I&=\hat{p}^I+\delta p^I,\\
   v^I&=\hat{v}^I+\delta v^I,\\
@@ -425,9 +463,9 @@ IMU を用いる剛体の推定では、名目状態を
 \end{equation}
 であり、回転行列で書けば
 \begin{equation}
-  R^I_B=\hat{R}^I_B\operatorname{Exp}(\widehat{\delta\theta})
+  R^I_B=\hat{R}^I_B\operatorname{Exp}([\delta\theta]_\times)
   \simeq
-  \hat{R}^I_B(I+\widehat{\delta\theta})
+  \hat{R}^I_B(I+[\delta\theta]_\times)
 \end{equation}
 である。したがって、フィルタが持つ共分散 $P$ は四元数 4 成分の共分散ではなく、$\delta p^I,\delta v^I,\delta\theta,\delta b_g,\delta b_a$ に関する共分散である。
 
@@ -472,7 +510,7 @@ IMU の測定モデルを
 
 右乗法誤差
 \begin{equation}
-  R^I_B=\hat{R}^I_B\operatorname{Exp}(\widehat{\delta\theta})
+  R^I_B=\hat{R}^I_B\operatorname{Exp}([\delta\theta]_\times)
 \end{equation}
 を用い、二次以上の小さい項を無視すると、誤差状態は
 \begin{equation}
@@ -507,20 +545,20 @@ IMU の測定モデルを
     0&0&0&I
   \end{bmatrix}.
 \end{equation}
-ここで $[r]_\times$ は、$[r]_\times s=r\times s$ を満たす歪対称行列である。第二行の $-\hat{R}^I_B[\hat{a}]_\times\delta\theta$ は、姿勢誤差が比力の慣性系成分を変えることを表す。第三行の $-[\hat{\omega}]_\times\delta\theta-\delta b_g$ は、角速度の名目値まわりで姿勢誤差が回転し、ジャイロバイアス誤差が角度誤差として蓄積することを表す。
+第二行の $-\hat{R}^I_B[\hat{a}]_\times\delta\theta$ は、姿勢誤差が比力の慣性系成分を変えることを表す。第三行の $-[\hat{\omega}]_\times\delta\theta-\delta b_g$ は、角速度の名目値まわりで姿勢誤差が回転し、ジャイロバイアス誤差が角度誤差として蓄積することを表す。
 
 \begin{derivation}
-速度誤差の主要項は、真の並進式と名目並進式の差から得られる。$a_m-b_a-n_a=\hat{a}-\delta b_a-n_a$ と $R^I_B\simeq\hat{R}^I_B(I+\widehat{\delta\theta})$ を使うと
+速度誤差の主要項は、真の並進式と名目並進式の差から得られる。$a_m-b_a-n_a=\hat{a}-\delta b_a-n_a$ と $R^I_B\simeq\hat{R}^I_B(I+[\delta\theta]_\times)$ を使うと
 \begin{align}
   \delta\dot{v}^I
   &=
   R^I_B(a_m-b_a-n_a)-\hat{R}^I_B\hat{a}\\
   &\simeq
-  \hat{R}^I_B(I+\widehat{\delta\theta})
+  \hat{R}^I_B(I+[\delta\theta]_\times)
   (\hat{a}-\delta b_a-n_a)
   -\hat{R}^I_B\hat{a}\\
   &\simeq
-  \hat{R}^I_B\widehat{\delta\theta}\hat{a}
+  \hat{R}^I_B[\delta\theta]_\times\hat{a}
   -\hat{R}^I_B\delta b_a
   -\hat{R}^I_B n_a\\
   &=
@@ -785,13 +823,24 @@ EKF で行っていることは、非線形モデルを捨てることではな�
 となり、小角度四元数の式を得る。
 \end{derivation}
 
-\begin{practice}[誤差状態と一般化座標の接続]
 ESKF の姿勢更新
 \begin{equation}
   \hat{q}^{+}=\hat{q}^{-}\otimes\delta q(\widehat{\delta\theta})
 \end{equation}
-と、単振子で姿勢角を $\theta=\hat{\theta}+\delta\theta$ と分けて考える記述を比較せよ。$\widehat{\delta\theta}$ は更新時に名目姿勢へ注入してリセットする局所誤差であり、$\theta$ は運動エネルギーとポテンシャルエネルギーを記述する一般化座標である。この違いを踏まえ、共分散を持たせる座標、力学式を立てる座標、線形化点として固定する名目値をそれぞれ区別して説明せよ。
-\end{practice}
+では、$\widehat{\delta\theta}$ は推定された小回転誤差であり、更新時に名目姿勢へ注入された直後に平均 0 の誤差状態へ戻される。したがって共分散を持つ座標は、四元数の 4 成分そのものではなく、注入前後の接空間に置かれた $\delta\theta$ の 3 成分である。リセット後の共分散は、必要に応じて $G_rP^+G_r^\T$ により新しい接空間へ写される。
+
+これに対して単振子の記述で $\theta=\hat{\theta}+\delta\theta$ と書くとき、$\theta$ は
+\begin{equation}
+  T=\frac{1}{2}m\ell^2\dot{\theta}^2,\qquad
+  U=mg\ell(1-\cos\theta)
+\end{equation}
+を立てる一般化座標である。線形化では
+\begin{equation}
+  \sin(\hat{\theta}+\delta\theta)
+  \simeq
+  \sin\hat{\theta}+\cos\hat{\theta}\,\delta\theta
+\end{equation}
+のように、固定した名目値 $\hat{\theta}$ のまわりで小さい変化 $\delta\theta$ だけを一次まで残す。したがって、ESKF では共分散の座標が接空間の誤差 $\delta\theta$、力学式を立てる座標が実姿勢または一般化座標 $\theta$、線形化点として固定される値が名目状態 $\hat{\theta}$ または $\hat{q}$ である。この三者の分離が、姿勢推定の局所誤差と力学モデルの一般化座標を接続する条件になる。
 
 この区別を保つと、姿勢推定で使う局所誤差と、機械系の運動方程式で使う一般化座標を同じ記号の引き算として混同しにくくなる。最後に、エネルギーから運動方程式を得る定式化として、オイラー・ラグランジュ方程式を接続用に再掲する。
 

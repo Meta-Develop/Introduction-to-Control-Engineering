@@ -396,8 +396,66 @@ $B_d$ は $e^{A\sigma}B$ の積分であり、\weq{two-state-transition} の第�
 \end{equation}
 となる。軌道の図形は座標成分の取り方で変わって見えるが、同じ物理状態を表している。可制御性、可観測性、安定性のような性質を座標変換で失ってはならないので、後で正準形や極配置を扱うときは、どの座標で設計し、元の座標へどう戻すかを明示する。
 
-\begin{practice}[状態遷移、ZOH、座標変換の確認]
-図\ref{fig:state-transition-discretization-examples} と同じ
+図\ref{fig:state-transition-discretization-examples} と同じ二状態モデル
 $A=\left[\begin{smallmatrix}0&1\\-2&-3\end{smallmatrix}\right]$、
-$B=\left[\begin{smallmatrix}0\\1\end{smallmatrix}\right]$ について、$T_s=0.45$ として $A_d=e^{AT_s}$ と $B_d=\int_0^{T_s}e^{A\sigma}B\,\dd\sigma$ を数値で求めよ。初期値 $x_0=\left[\begin{smallmatrix}0.25&-0.35\end{smallmatrix}\right]^\T$、入力 $u_0=1$ を用いて、$k=0$ から一歩後のサンプル状態 $x_{k+1}=A_dx_k+B_du_k$ を計算し、図の最初のサンプル点が連続軌道上にある理由を説明せよ。さらに \weq{state-transition-coordinate-p} の $P$ で $x=Pz$ とおいたとき、\weq{coordinate-transformed-discrete-model} の $P^{-1}A_dP$ と $P^{-1}B_d$ を計算し、同じ物理状態が異なる座標成分で表されることを確認せよ。
-\end{practice}
+$B=\left[\begin{smallmatrix}0\\1\end{smallmatrix}\right]$ で、$T_s=0.45$ とすると、
+ZOH の厳密離散化は
+\begin{equation}
+  A_d=e^{AT_s}\approx
+  \begin{bmatrix}
+    0.86869&0.23106\\
+    -0.46212&0.17551
+  \end{bmatrix},\qquad
+  B_d=\int_0^{T_s}e^{A\sigma}B\,\dd\sigma\approx
+  \begin{bmatrix}
+    0.06566\\
+    0.23106
+  \end{bmatrix}
+\end{equation}
+となる。初期値
+$x_0=\left[\begin{smallmatrix}0.25&-0.35\end{smallmatrix}\right]^\T$、
+入力 $u_0=1$ から一歩進めると、
+\begin{equation}
+  x_1=A_dx_0+B_du_0\approx
+  \begin{bmatrix}
+    0.20196\\
+    0.05410
+  \end{bmatrix}
+\end{equation}
+である。この値は、区間 $0\leq t\leq T_s$ で入力を $u(t)=u_0$ に保持した連続時間解
+$x(T_s)=e^{AT_s}x_0+\int_0^{T_s}e^{A\sigma}B\,\dd\sigma\,u_0$ そのものなので、
+図の更新後のサンプル点は連続 ZOH 軌道の端点に重なる。離散モデルが近似しているのは
+入力を保持する実装であり、保持入力のもとでのサンプル時刻の状態は近似点ではなく
+連続解の同じ点である。
+
+同じ物理状態を \weq{state-transition-coordinate-p} の基底で見直すと、
+\begin{equation}
+  P^{-1}A_dP\approx
+  \begin{bmatrix}
+    0.34125&-0.03066\\
+    0.63141&0.70295
+  \end{bmatrix},\qquad
+  P^{-1}B_d\approx
+  \begin{bmatrix}
+    0.22067\\
+    -0.15501
+  \end{bmatrix}
+\end{equation}
+となる。初期状態の座標成分は
+$z_0=P^{-1}x_0\approx
+\left[\begin{smallmatrix}-0.10577&0.35577\end{smallmatrix}\right]^\T$ であり、
+\weq{coordinate-transformed-discrete-model} に代入すると
+\begin{equation}
+  z_1=P^{-1}A_dPz_0+P^{-1}B_du_0\approx
+  \begin{bmatrix}
+    0.17367\\
+    0.02829
+  \end{bmatrix},\qquad
+  Pz_1\approx
+  \begin{bmatrix}
+    0.20196\\
+    0.05410
+  \end{bmatrix}=x_1
+\end{equation}
+となる。成分の数値は $x$ 座標と $z$ 座標で変わるが、$Pz_1$ が元の $x_1$ に戻るため、
+座標変換は同じサンプル時刻の同じ物理状態を別の基底で表示しているだけである。

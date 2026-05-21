@@ -292,15 +292,45 @@ $a,b\in\R^3$ を
 だけを扱うことが多い。振子、車輪、リンク機構のモデルでは、力そのものではなく、回転軸まわりのトルクが角加速度を決める。
 \end{example}
 
-\begin{practice}[ベクトル幾何の確認]
-図\ref{fig:vector-projection-cross} を用いて、次を確認せよ。
-\begin{enumerate}
-  \item 左上の図で、$a-\operatorname{proj}_b a$ が $b$ と直交することを、内積を使って説明せよ。
-  \item 右上の図で、同じ点 $p$ の座標成分が基底を変えると変わる理由を述べよ。
-  \item 左下の図で、$a$ と $b$ の順序を入れ替えた $b\times a$ の向きがどう変わるかを述べよ。
-  \item 右下の図で、力 $F$ の作用線が原点を通る場合に $\tau=r\times F$ が 0 になる理由を説明せよ。
-\end{enumerate}
-\end{practice}
+図\ref{fig:vector-projection-cross} の四つの小図は、同じベクトル幾何を成分計算としても読めることを示している。左上の射影では、
+\begin{align}
+  b^\T\left(a-\operatorname{proj}_b a\right)
+  &=
+  b^\T a
+  -
+  b^\T\left(\frac{a^\T b}{b^\T b}b\right)\\
+  &=
+  b^\T a
+  -
+  \frac{a^\T b}{b^\T b}b^\T b\\
+  &=0
+\end{align}
+となり、残差 $a-\operatorname{proj}_b a$ は $b$ と直交する。図の代表値として
+$a=(2.65,2.05)^\T$、$b=(3.00,0.95)^\T$ を用いると、
+\begin{equation}
+  \operatorname{proj}_b a
+  =
+  \frac{9.8975}{9.9025}b
+  \simeq
+  \begin{bmatrix}2.998\\0.950\end{bmatrix}
+\end{equation}
+であり、点線で描かれた残差は射影先の緑の矢印と直角になる。右上では、同じ点が標準座標では
+$p\simeq(2.84,2.13)^\T$ である一方、斜め基底では
+\begin{equation}
+  p=1.8b_1+1.3b_2
+\end{equation}
+と表されるため、座標成分は基底の選び方に依存する。左下では
+$a\times b\simeq0.706e_z$ であり、順序を入れ替えると
+$b\times a=-a\times b$ となって向きだけが反転する。右下のトルクも同じ外積で決まり、図の値では
+\begin{equation}
+  \tau_z=r_xF_y-r_yF_x
+  =
+  2.25\cdot1.45-0.72(-0.40)
+  \simeq3.55\,\mathrm{N\,m}
+\end{equation}
+である。もし力の作用線が原点を通り $F=\lambda r$ と書けるなら、
+$r_xF_y-r_yF_x=\lambda r_xr_y-\lambda r_yr_x=0$ となる。したがって図は、射影の残差が直交成分であること、座標値が基底に依存すること、外積の順序が向きを決めること、そして回転を生むのは力そのものではなく作用線から回転軸までの距離を含むモーメントであることを一続きに検算している。
+
 \subsubsection{状態空間におけるベクトルの幾何}
 
 状態空間では、状態を一つの点またはベクトルとして見る。直線上を動く質点の位置を $q$、速度を $v$ とし、状態を
@@ -957,14 +987,12 @@ $A\in\R^{m\times n}$、$B\in\R^{n\times p}$ とする。$C=AB\in\R^{m\times p}$ 
 となる。エネルギー型の二次形式は増えず、固有値は二つのモードがいずれも減衰することを示している。このように、モードによる時間率の読み取りと、正定値二次形式によるエネルギー評価は、安定性を別々の角度から確認する道具である。
 \end{example}
 
-\begin{practice}[生成図による微積分と二次形式の確認]
-図\ref{fig:math-entrance-examples} を用いて、次を確認せよ。
-\begin{enumerate}
-  \item 左上の割線で、$h$ が小さくなるほど二点間の平均変化率がどの直線の傾きに近づくかを述べよ。
-  \item 左下の $r(t)<0$ の区間で、累積量の曲線が増えるか減るかを説明せよ。
-  \item 右上で、一次 Taylor 近似の誤差が小さい範囲と大きくなる範囲を読み取り、線形化を使うときに操作点を明記する理由を述べよ。
-  \item 右下で、赤い破線の楕円が青い円より細い方向を読み取り、その方向の状態偏差が強く罰せられることを説明せよ。
-  \item 図\ref{fig:linear-algebra-geometry-examples} 右上で、楕円の短軸と大きい固有値に対応する方向の関係を説明せよ。
-  \item 図\ref{fig:linear-algebra-geometry-examples} 右下で、$\rho$ が大きくなると等高線の向きと細さがどう変わるかを述べよ。
-\end{enumerate}
-\end{practice}
+図\ref{fig:math-entrance-examples} と図\ref{fig:linear-algebra-geometry-examples} は、微積分の局所量と二次形式の幾何を同じ「近傍での変化の読み取り」としてつないでいる。図\ref{fig:math-entrance-examples} 左上では、$h$ を小さくすると二点を結ぶ割線の傾きが操作点の接線の傾き、すなわち微分係数に近づく。左下では $r(t)<0$ の区間の符号付き面積が負であるため、累積量はその区間で減少する。右上では一次 Taylor 近似の誤差は操作点の近くで小さく、離れるほど曲率の影響で大きくなるので、線形化を使うときは操作点と有効範囲を本文中で固定しておく必要がある。右下では赤い破線の楕円が青い円より細い方向ほど、同じ二次形式値を保つために許される状態偏差が小さい。したがって、その方向は重み行列によって強く罰せられる方向である。
+
+図\ref{fig:linear-algebra-geometry-examples} 右上の楕円も同じ事実を固有値で表している。対称正定値行列を $P=V\Lambda V^\T$、$V^\T x=y$ と対角化すると、
+\begin{equation}
+  x^\T Px
+  =
+  \lambda_1y_1^2+\lambda_2y_2^2
+\end{equation}
+である。等高線 $x^\T Px=c$ の半径は固有方向 $v_i$ に沿って $\sqrt{c/\lambda_i}$ になるため、大きい固有値に対応する方向が短軸になる。右下の $\rho$ を含む二次形式では、交差項が固有方向を標準座標軸から斜め方向へ回し、$|\rho|$ が大きいほど等高線は細くなる。$\rho$ の符号を変えると、細く伸びる向きも反対側の対角方向へ入れ替わる。

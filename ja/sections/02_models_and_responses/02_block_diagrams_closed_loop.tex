@@ -13,45 +13,36 @@
 
 \begin{figure}[tb]
 \centering
-\setlength{\unitlength}{0.75mm}
-\begin{picture}(160,65)
-  \small
-  \thinlines
-  \put(4,36){\makebox(0,0)[r]{$R(s)$}}
-  \put(6,36){\vector(1,0){24}}
-  \put(34,36){\circle{8}}
-  \put(28,41){\makebox(0,0){$+$}}
-  \put(28,30){\makebox(0,0){$-$}}
-  \put(38,36){\vector(1,0){14}}
-  \put(44,40){\makebox(0,0)[b]{$E(s)$}}
-  \put(52,30){\framebox(22,12){$C(s)$}}
-  \put(74,36){\vector(1,0){12}}
-  \put(90,36){\circle{8}}
-  \put(86,41){\makebox(0,0){$+$}}
-  \put(92,42){\makebox(0,0){$+$}}
-  \put(90,56){\makebox(0,0)[b]{$D(s)$}}
-  \put(90,54){\vector(0,-1){14}}
-  \put(94,36){\vector(1,0){10}}
-  \put(104,30){\framebox(22,12){$G(s)$}}
-  \put(126,36){\vector(1,0){8}}
-  \put(138,36){\circle{8}}
-  \put(134,41){\makebox(0,0){$+$}}
-  \put(140,42){\makebox(0,0){$+$}}
-  \put(138,56){\makebox(0,0)[b]{$D_y(s)$}}
-  \put(138,54){\vector(0,-1){14}}
-  \put(142,36){\vector(1,0){12}}
-  \put(158,36){\makebox(0,0)[l]{$Y(s)$}}
-  \put(150,36){\line(0,-1){24}}
-  \put(150,12){\vector(-1,0){26}}
-  \put(120,12){\circle{8}}
-  \put(116,17){\makebox(0,0){$+$}}
-  \put(124,17){\makebox(0,0){$+$}}
-  \put(120,0){\makebox(0,0)[t]{$N(s)$}}
-  \put(120,2){\vector(0,1){6}}
-  \put(116,12){\line(-1,0){82}}
-  \put(34,12){\vector(0,1){20}}
-  \put(73,15){\makebox(0,0)[b]{$Y_m(s)=Y(s)+N(s)$}}
-\end{picture}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+  \node[align=center] (reference) at (0,0) {$R(s)$};
+  \node[control sum] (error) at (1.25,0) {$\begin{array}{c}+\\[-3pt]-\end{array}$};
+  \node[control small block] (controller) at (2.65,0) {$C(s)$};
+  \node[control sum] (inputsum) at (4.05,0) {$\begin{array}{c}+\\[-3pt]+\end{array}$};
+  \node[control small block] (plant) at (5.45,0) {$G(s)$};
+  \node[control sum] (outputsum) at (6.85,0) {$\begin{array}{c}+\\[-3pt]+\end{array}$};
+  \node[control dot] (takeoff) at (8.05,0) {};
+  \node[align=center] (output) at (9.05,0) {$Y(s)$};
+  \node[control sum] (noisesum) at (8.05,-1.55) {$\begin{array}{c}+\\[-3pt]+\end{array}$};
+  \node[align=center] (inputdist) at (4.05,1.1) {$D(s)$};
+  \node[align=center] (outputdist) at (6.85,1.1) {$D_y(s)$};
+  \node[align=center] (noise) at (9.05,-1.55) {$N(s)$};
+
+  \draw[control signal] (reference) -- (error);
+  \draw[control signal] (error) -- node[control signal label,above] {$E(s)$} (controller);
+  \draw[control signal] (controller) -- (inputsum);
+  \draw[control disturbance] (inputdist) -- (inputsum);
+  \draw[control signal] (inputsum) -- (plant);
+  \draw[control signal] (plant) -- (outputsum);
+  \draw[control disturbance] (outputdist) -- (outputsum);
+  \draw[control signal] (outputsum) -- (takeoff);
+  \draw[control signal] (takeoff) -- (output);
+  \draw[control signal] (takeoff) -- (noisesum);
+  \draw[control disturbance] (noise) -- (noisesum);
+  \draw[control signal] (noisesum.west) -- ++(-6.8,0)
+    node[control signal label,above,pos=0.48] {$Y_m(s)$} |- (error.south);
+\end{tikzpicture}%
+}
 \caption{目標値、制御器、対象、外乱、測定ノイズを含む負帰還ブロック線図}
 \label{fig:negative-feedback-block}
 \end{figure}
@@ -168,11 +159,22 @@
 \begin{equation}
   Y(s)=G(s)C(s)\{R(s)-Y(s)-N(s)\}+D_y(s)
 \end{equation}
-である。$L=CG$ とすれば
-\begin{equation}
-  Y(s)=T(s)R(s)+S(s)D_y(s)-T(s)N(s)
+である。$L=CG$ として、出力を左辺に集めると
+\begin{align}
+  Y(s)&=L(s)R(s)-L(s)Y(s)-L(s)N(s)+D_y(s),\\
+  \{1+L(s)\}Y(s)&=L(s)R(s)+D_y(s)-L(s)N(s).
+\end{align}
+両辺を $1+L(s)$ で割れば
+\begin{align}
+  Y(s)
+  &=
+  \frac{L(s)}{1+L(s)}R(s)
+  +\frac{1}{1+L(s)}D_y(s)
+  -\frac{L(s)}{1+L(s)}N(s)\\
+  &=
+  T(s)R(s)+S(s)D_y(s)-T(s)N(s)
   \label{eq:sensitivity-paths}
-\end{equation}
+\end{align}
 となる。したがって、同じ閉ループでも、目標値、外乱、ノイズは異なる伝達関数を通って出力へ現れる。
 
 \subsubsection{和差点と分岐点の移動}
@@ -292,17 +294,27 @@ $s=0$ にある開ループ極の個数を、単位負帰還系の系の型と�
   &=
   \lim_{s\to0}\frac{1}{1+L(s)}
   =
+  \frac{1}{1+\lim_{s\to0}L(s)}
+  =
   \frac{1}{1+K_p},
   \label{eq:step-error-constant}\\
   e_\infty^{\mathrm{ramp}}
   &=
   \lim_{s\to0}\frac{1}{s\{1+L(s)\}}
   =
+  \lim_{s\to0}\frac{1}{s+sL(s)}
+  =
+  \frac{1}{\lim_{s\to0}sL(s)}
+  =
   \frac{1}{K_v},
   \label{eq:ramp-error-constant}\\
   e_\infty^{\mathrm{parabolic}}
   &=
   \lim_{s\to0}\frac{1}{s^2\{1+L(s)\}}
+  =
+  \lim_{s\to0}\frac{1}{s^2+s^2L(s)}
+  =
+  \frac{1}{\lim_{s\to0}s^2L(s)}
   =
   \frac{1}{K_a}.
   \label{eq:parabolic-error-constant}
@@ -366,7 +378,15 @@ $s=0$ にある開ループ極の個数を、単位負帰還系の系の型と�
   \qquad
   U(s)=C(s)\{R(s)-Y(s)\}
 \end{equation}
-である。整理すると
+である。二つの式を代入し、出力を含む項を左辺に集めると
+\begin{align}
+  Y(s)
+  &=G(s)\left[C(s)\{R(s)-Y(s)\}+D(s)\right]\\
+  &=C(s)G(s)R(s)-C(s)G(s)Y(s)+G(s)D(s),\\
+  \{1+C(s)G(s)\}Y(s)
+  &=C(s)G(s)R(s)+G(s)D(s)
+\end{align}
+である。$L(s)=C(s)G(s)$ と書けば
 \begin{equation}
   Y(s)=\frac{L(s)}{1+L(s)}R(s)
        +\frac{G(s)}{1+L(s)}D(s)
@@ -405,7 +425,12 @@ $s=0$ にある開ループ極の個数を、単位負帰還系の系の型と�
   \lim_{s\to0}\frac{G(s)}{1+C(s)G(s)}
   &=
   \lim_{s\to0}
-  \frac{sG(s)}{s+\{K_Ps+K_I\}G(s)}
+  \frac{sG(s)}{s+\{K_Ps+K_I\}G(s)}\\
+  &=
+  \frac{\lim_{s\to0}sG(s)}
+       {\lim_{s\to0}\left[s+\{K_Ps+K_I\}G(s)\right]}\\
+  &=
+  \frac{0}{K_I}
   =
   0
 \end{align}

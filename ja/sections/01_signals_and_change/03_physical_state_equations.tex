@@ -37,9 +37,28 @@
 \label{fig:physical-modeling-examples}
 \end{figure}
 
-\begin{practice}[物理モデルの構造分類]
-図\ref{fig:physical-modeling-examples} の四つの例について、蓄積される量、状態、入力、外乱、出力候補を一つずつ表にせよ。次に、熱系と RC 回路の式を見比べ、$C_{\mathrm{th}}$ と $C_e$、$R_{\mathrm{th}}$ と $R$、$T$ と $v_C$ がそれぞれどの役割に対応するかを説明せよ。最後に、質量ばねダンパ系で位置 $q$ だけを状態にした場合に未来の計算で不足する量を答えよ。
-\end{practice}
+図\ref{fig:physical-modeling-examples} の四つの例を、同じ観点で分類すると表のようになる。ここでの出力候補は測定したい量であり、状態そのものと一致する場合もあれば、状態の一部だけを取り出す場合もある。
+
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{|>{\raggedright\arraybackslash}p{0.12\linewidth}|>{\raggedright\arraybackslash}p{0.19\linewidth}|>{\raggedright\arraybackslash}p{0.15\linewidth}|>{\raggedright\arraybackslash}p{0.11\linewidth}|>{\raggedright\arraybackslash}p{0.16\linewidth}|>{\raggedright\arraybackslash}p{0.11\linewidth}|}
+\hline
+対象 & 蓄積される量 & 状態 & 入力 & 外乱 & 出力候補\\
+\hline
+熱系 & 内部エネルギー $E=C_{\mathrm{th}}T$ & 温度 $x=T$ & ヒータ熱流 $u$ & 周囲温度 $T_a$、未知熱流 $d_q$ & 温度 $T$\\
+\hline
+RC 回路 & コンデンサ電荷 $Q_C=C_e v_C$ & 電圧 $x=v_C$ & 入力電圧 $v_{\mathrm{in}}$ & 節点電流外乱 $d_i$ & 電圧 $v_C$\\
+\hline
+質量ばねダンパ系 & ばねの変形 $q$ と運動量 $Mv$ & 位置と速度 $x=[q\ v]^\T$ & 外力 $u$ & 外力外乱 $d_F$ & 位置 $q$、または $[q\ v]^\T$\\
+\hline
+DC モータ & 鎖交磁束 $L i$ または磁気エネルギー $\frac{1}{2}L i^2$ と角運動量 $J\omega$ & $x=[i\ \omega\ \theta]^\T$ & 端子電圧 $v_a$ & 負荷トルク $\tau_L$ & 角速度 $\omega$、角度 $\theta$、電流 $i$\\
+\hline
+\end{tabular}
+\end{center}
+
+熱系と RC 回路は、保存量を増やす流れと差に比例して逃げる流れが同じ構造を持つ。$C_{\mathrm{th}}$ と $C_e$ は蓄積量と状態量を結びつける係数、$R_{\mathrm{th}}$ と $R$ は温度差または電圧差から流れを作る抵抗、$T$ と $v_C$ は蓄積要素をまたぐ状態量に対応する。そのため時定数も $R_{\mathrm{th}}C_{\mathrm{th}}$ と $RC_e$ という積で現れる。一方、質量ばねダンパ系で位置 $q$ だけを状態にすると、同じ位置にいても右向きに動いている場合と左向きに動いている場合を区別できない。さらに粘性力 $-cv$ は速度で決まるため、次の位置と加速度を計算するには $v$ も状態として保持する必要がある。
 
 \subsubsection{熱系の収支式からの導出}
 
@@ -372,9 +391,66 @@
 
 図\ref{fig:tank-pendulum-modeling-examples} の右下では、$J=1$、$mgl=1$、$b=0.25$ として下向き平衡点まわりの自由応答を比べている。初期角度が $0.25\,\mathrm{rad}$ 程度なら $\sin\theta\simeq\theta$ による線形近似は非線形応答とよく合う。一方、初期角度が $1.60\,\mathrm{rad}$ まで大きくなると、復元トルクが角度に比例しなくなり、振動周期と振幅の減衰が線形近似からずれる。この差は、線形化が「対象を単純にする公式」ではなく、平衡点近くの局所モデルであることを示している。
 
-\begin{practice}[タンクと単振子の状態選択]
-図\ref{fig:tank-pendulum-modeling-examples} のタンクについて、$A_t=0.50\,\mathrm{m^2}$、$h_e=0.64\,\mathrm{m}$、$k_o=0.10\,\mathrm{m^{5/2}/s}$ のとき、外乱が 0 なら平衡流入 $q_{\mathrm{in},e}$ はいくらか計算せよ。次に \weq{tank-level-linearization} の係数 $k_o/(2A_t\sqrt{h_e})$ と時定数 $\tau_h$ を求め、$k_o=0.06\,\mathrm{m^{5/2}/s}$ の場合と比べよ。単振子については、\weq{pendulum-linearization} で $\theta_e=0$ と $\theta_e=\pi$ を代入し、重力項の符号が変わる理由を、下向き平衡点と上向き平衡点の小さなずれに対応させて説明せよ。
-\end{practice}
+タンクと単振子の二つの線形化は、数値を代入すると係数の意味が直接確認できる。まず $A_t=0.50\,\mathrm{m^2}$、$h_e=0.64\,\mathrm{m}$、$k_o=0.10\,\mathrm{m^{5/2}/s}$、$d_{q,e}=0$ とすると、\weq{tank-level-equilibrium} から
+\begin{equation}
+  q_{\mathrm{in},e}=k_o\sqrt{h_e}
+  =0.10\sqrt{0.64}
+  =0.080\,\mathrm{m^3/s}
+\end{equation}
+である。\weq{tank-level-linearization} の水位ずれに掛かる係数と時定数は
+\begin{equation}
+  \frac{k_o}{2A_t\sqrt{h_e}}
+  =\frac{0.10}{2\cdot0.50\cdot0.80}
+  =0.125\,\mathrm{s^{-1}},
+  \qquad
+  \tau_h=\frac{1}{0.125}=8.0\,\mathrm{s}
+\end{equation}
+となる。同じ $A_t$ と $h_e$ で $k_o=0.06\,\mathrm{m^{5/2}/s}$ に下げると、係数は
+\begin{equation}
+  \frac{0.06}{2\cdot0.50\cdot0.80}
+  =0.075\,\mathrm{s^{-1}},
+  \qquad
+  \tau_h=\frac{1}{0.075}\simeq13.3\,\mathrm{s}
+\end{equation}
+となり、流出が弱いタンクほど水位の戻りは遅くなる。
+
+単振子では、\weq{pendulum-linearization} に下向き平衡点 $\theta_e=0$ を代入すると
+\begin{equation}
+  \begin{bmatrix}
+    \dot{\tilde{\theta}}\\
+    \dot{\tilde{\omega}}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    0&1\\
+    -mgl/J&-b/J
+  \end{bmatrix}
+  \begin{bmatrix}
+    \tilde{\theta}\\
+    \tilde{\omega}
+  \end{bmatrix}
+  +\begin{bmatrix}0\\1/J\end{bmatrix}\tilde{u}
+  +\begin{bmatrix}0\\1/J\end{bmatrix}\tilde{d}_\tau
+\end{equation}
+であり、小さな正の角度ずれには負の重力トルクが生じる。上向き平衡点 $\theta_e=\pi$ では
+\begin{equation}
+  \begin{bmatrix}
+    \dot{\tilde{\theta}}\\
+    \dot{\tilde{\omega}}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    0&1\\
+    mgl/J&-b/J
+  \end{bmatrix}
+  \begin{bmatrix}
+    \tilde{\theta}\\
+    \tilde{\omega}
+  \end{bmatrix}
+  +\begin{bmatrix}0\\1/J\end{bmatrix}\tilde{u}
+  +\begin{bmatrix}0\\1/J\end{bmatrix}\tilde{d}_\tau
+\end{equation}
+となり、同じ正の角度ずれに対して重力項が正方向の角加速度を作る。つまり、下向き平衡点では重力がずれを戻す復元項であり、上向き平衡点ではずれを増幅する不安定化項である。
 
 \subsubsection{台車上倒立振子の非線形モデルと線形化}
 

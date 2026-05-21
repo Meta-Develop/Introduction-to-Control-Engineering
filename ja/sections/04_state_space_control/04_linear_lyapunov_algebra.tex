@@ -35,9 +35,54 @@
 
 図\ref{fig:state-space-geometry-examples} の右下では、閉ループ軌道が楕円の外側から内側へ横切っている。これは $\dot{V}=-x^\T Qx<0$ が、各軌道に沿って $V$ の値を単調に減らすことを幾何的に表している。左上の閉ループ軌道と左下の推定誤差軌道を比べると、制御極とオブザーバ極を別々に配置しても、どちらも原点へ向かう二次元の流れとして確認できる。
 
-\begin{practice}[状態空間の幾何と信号経路の確認]
-図\ref{fig:state-space-geometry-examples} の右上で、$B$ と $AB$ が一次独立であること、および $C$ と $CA$ が一次独立であることを、対応する可制御行列と可観測行列のランク計算で確認せよ。さらに、図\ref{fig:state-feedback-block} と図\ref{fig:observer-separation-block} の信号名を用いて、$r_u=0$ のときの閉ループ状態方程式と推定誤差方程式をそれぞれ書き出せ。
-\end{practice}
+図\ref{fig:state-space-geometry-examples} の二状態モデルでは、入力行列を $B=b=\begin{bmatrix}0&1\end{bmatrix}^\T$ とおくと
+\begin{equation}
+  AB=
+  \begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+  \begin{bmatrix}0\\1\end{bmatrix}
+  =
+  \begin{bmatrix}1\\-3\end{bmatrix}
+\end{equation}
+である。したがって可制御行列は
+\begin{equation}
+  \mathcal{C}=\begin{bmatrix}B&AB\end{bmatrix}
+  =
+  \begin{bmatrix}0&1\\1&-3\end{bmatrix},\qquad
+  \det\mathcal{C}=-1
+\end{equation}
+となり、$\rank\mathcal{C}=2$ である。右上に描いた $B$ と $AB$ は、入力から直接動く方向と、その方向が $A$ によって回り込んだ方向を表しており、二つが平面全体を張るので任意の二次元状態を閉ループ設計の対象にできる。同じモデルで
+\begin{equation}
+  CA=
+  \begin{bmatrix}1&0\end{bmatrix}
+  \begin{bmatrix}0&1\\-2&-3\end{bmatrix}
+  =
+  \begin{bmatrix}0&1\end{bmatrix}
+\end{equation}
+だから、可観測行列は
+\begin{equation}
+  \mathcal{O}=\begin{bmatrix}C\\CA\end{bmatrix}
+  =
+  \begin{bmatrix}1&0\\0&1\end{bmatrix},\qquad
+  \rank\mathcal{O}=2
+\end{equation}
+である。出力 $y=Cx$ は第一状態を直接測り、時間変化を通じて第二状態も $CA$ の方向として現れるため、推定誤差の二次元成分をどちらもオブザーバで減衰させられる。
+
+このランク計算は、図\ref{fig:state-feedback-block} と図\ref{fig:observer-separation-block} の信号経路と同じ内容を式で読んだものである。状態フィードバック図では $u=-Kx+r_u$ であり、$r_u=0$ とすれば $u=-Kx$、対象は
+\begin{equation}
+  \dot{x}=Ax+Bu=(A-BK)x,\qquad y=Cx
+\end{equation}
+となる。オブザーバ分離図では $u=-K\hat{x}+r_u$、$\hat{y}=C\hat{x}$、$e_y=y-\hat{y}$ であり、推定誤差を $e_x=x-\hat{x}$ とおくと
+\begin{align}
+  \dot{e}_x
+  &=\dot{x}-\dot{\hat{x}}\\
+  &=(Ax+Bu)-\{A\hat{x}+Bu+L(y-\hat{y})\}\\
+  &=(A-LC)e_x.
+\end{align}
+$r_u=0$ の推定状態フィードバックでは、$\hat{x}=x-e_x$ なので
+\begin{equation}
+  \dot{x}=(A-BK)x+BK e_x
+\end{equation}
+も得られる。したがって、状態の流れは $A-BK$、推定誤差の流れは $A-LC$ によって分かれ、図の軌道と楕円レベル集合は、可制御・可観測な二次元幾何の上で閉ループ安定性を評価している。Lyapunov 関数 $V=x^\T Px$ の楕円が軌道に沿って小さくなるという見方は、後の LQR で二次形式の価値関数を最小化する見方と同じ幾何を使っている。
 
 \subsection{状態空間の式変形を省略しない}
 

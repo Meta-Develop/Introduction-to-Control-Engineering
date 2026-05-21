@@ -239,33 +239,32 @@ LQG の制御器は、制御用リカッチ方程式と推定用リカッチ方�
 
 \begin{figure}[tb]
 \centering
-\setlength{\unitlength}{1mm}
-\begin{picture}(136,68)
-\small
-\put(16,44){\framebox(34,12){\shortstack{制御器\\$u_c=-K\hat{x}$}}}
-\put(58,44){\framebox(30,12){\shortstack{飽和・駆動\\$u_a$}}}
-\put(98,44){\framebox(28,12){\shortstack{対象\\$x$}}}
-\put(98,14){\framebox(28,12){\shortstack{測定\\$y=Cx+v$}}}
-\put(16,14){\framebox(34,12){\shortstack{推定器\\$\hat{x}$}}}
-\put(50,50){\vector(1,0){8}}
-\put(51,53){$u_c$}
-\put(88,50){\vector(1,0){10}}
-\put(90,53){$u_a$}
-\put(112,65){\vector(0,-1){9}}
-\put(114,60){$w$}
-\put(112,44){\vector(0,-1){18}}
-\put(115,35){$x$}
-\put(132,20){\vector(-1,0){6}}
-\put(129,22){$v$}
-\put(98,20){\vector(-1,0){48}}
-\put(74,22){$y$}
-\put(33,26){\vector(0,1){18}}
-\put(35,34){$\hat{x}$}
-\put(73,44){\line(0,-1){12}}
-\put(73,32){\vector(-1,0){28}}
-\put(45,32){\vector(0,-1){6}}
-\put(50,34){既知入力 $u_a$}
-\end{picture}
+\resizebox{0.96\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+  \node[control block,minimum width=24mm] (controller) at (0,0) {制御器\\$u_c=-K\hat{x}$};
+  \node[control block] (actuator) at (3.00,0) {飽和・駆動};
+  \node[control dot] (actualinput) at (4.55,0) {};
+  \node[control sum] (processsum) at (5.60,0) {$\begin{array}{c}+\\[-3pt]+\end{array}$};
+  \node[control block] (plant) at (7.30,0) {対象\\$x$};
+  \node[control block] (measurement) at (9.30,0) {測定\\$y=Cx$};
+  \node[control sum] (noisesum) at (11.15,0) {$\begin{array}{c}+\\[-3pt]+\end{array}$};
+  \node[control block] (estimator) at (12.90,0) {推定器\\$\hat{x}$};
+  \node[align=center] (processnoise) at (5.60,1.05) {$w$};
+  \node[align=center] (measurementnoise) at (11.15,1.05) {$v$};
+
+  \draw[control signal] (controller) -- node[control signal label,above] {$u_c$} (actuator);
+  \draw[control signal] (actuator) -- node[control signal label,above] {$u_a$} (actualinput);
+  \draw[control signal] (actualinput) -- (processsum);
+  \draw[control disturbance] (processnoise) -- (processsum);
+  \draw[control signal] (processsum) -- (plant);
+  \draw[control signal] (plant) -- (measurement);
+  \draw[control signal] (measurement) -- node[control signal label,above] {$y$} (noisesum);
+  \draw[control disturbance] (measurementnoise) -- (noisesum);
+  \draw[control signal] (noisesum) -- (estimator);
+  \draw[control signal] (actualinput) -- ++(0,-1.05) -| node[control signal label,pos=0.82,below] {既知入力 $u_a$} (estimator.south);
+  \draw[control signal] (estimator.north) -- ++(0,1.15) -| node[control signal label,pos=0.25,above] {$\hat{x}$} (controller.north);
+\end{tikzpicture}%
+}
 \caption{LQG 制御の信号経路。測定 $y$ から推定器が $\hat{x}$ を作り、制御器が入力指令 $u_c$ を計算し、飽和や駆動系を通った実入力 $u_a$ が対象へ入る。線形導出では $u_a=u_c$ とみなすが、飽和がある場合は実入力を推定器の既知入力として扱う。}
 \label{fig:lqg-signal-path}
 \end{figure}

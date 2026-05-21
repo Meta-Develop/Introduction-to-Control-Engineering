@@ -1,33 +1,48 @@
-\section{演習、解答、設計課題、総合例題}
-\label{sec:exercises-projects}
+\section{統合検証例と設計比較}
+\label{sec:integrated-verification-examples}
 
-制御工学の演習では、最終的な数値だけでなく、仮定、単位、状態の選び方、設計仕様、検証条件を同時に確認する。対象を式にする段階で誤ると、安定判別、最適化、推定、実装のどこを丁寧に計算しても、設計結果は対象と合わない。
+制御工学の設計検証では、最終的な数値だけでなく、仮定、単位、状態の選び方、仕様、制約、実装条件を同時にそろえる。対象を式にする段階で誤ると、安定判別、最適化、推定、実装のどこを丁寧に計算しても、得られた制御器は実対象の挙動と合わない。
 
-本節の演習は、独立した問題の集まりではなく、同じ対象を時間応答、周波数応答、状態空間、推定、最適化、実装へ順に移すための確認点として配置する。短い計算問題では記号と単位を確定し、解答例では途中式を残し、設計課題では仕様と制約を明示し、総合例題では複数の表現を接続する。問題文にない物理量を導入するときは、その単位と意味を明記する。近似を用いるときは、どの量が十分小さいために近似できるのかを解答に残す。
+本節は、前章までに導入した時間応答、周波数応答、状態空間、推定、最適化、実装の考え方を、独立した設問ではなく、完結した導出と比較として並べる。熱系は一次遅れと積分動作の役割を見せ、二重積分器と台車は極配置と有限ホライズン最適化を接続し、質量ばねダンパ系は古典制御と状態フィードバックの同値性を見せる。DC モータ、振子、制約付き位置決めは、観測器、非線形性、LQG、MPC を実装条件へ結びつける。各例では、必要な物理量の単位を先に定め、近似が使える範囲と検証で見る量を本文中に残す。
 
-\subsection{演習解答の標準形式}
+\subsection{統合検証の比較軸}
 
-解答は、次の順序で書くと後の設計検証へつなげやすい。
-\begin{enumerate}
-  \item 対象、入力、出力、外乱、状態、パラメータを単位つきで定義する。
-  \item 使用する仮定を明示する。線形化、小信号、ゼロ次ホールド、白色雑音、制約の凸性などは仮定である。
-  \item 基本式から目的の式までを途中式つきで導く。
-  \item 得られた極、ゲイン、共分散、制約余裕、計算時間などを設計仕様へ対応させる。
-  \item 実装で破れ得る条件を挙げ、必要な検証項目を書く。
-\end{enumerate}
-たとえば閉ループ極だけを答える問題でも、特性方程式がどの信号経路から出たか、入力飽和で同じ極配置が保たれるか、測定ノイズを含む場合に同じ出力を使えるかを分ける。これにより、古典制御、状態空間、推定、MPC が別々の計算ではなく、同じ対象に対する異なる表現であることを確認できる。
+各検証例では、対象の単位、仮定、導出、設計量、実装条件を同じ紙面で対応させる。閉ループ極を評価する場合でも、特性方程式がどの信号経路から出たか、入力飽和で同じ極配置が保たれるか、測定ノイズを含む場合に同じ出力を使えるかを分ける。この対応関係を \wtab{w08-integrated-axes} にまとめると、古典制御、状態空間、推定、MPC は別々の計算ではなく、同じ対象に対する異なる表現であることが分かる。
 
-\subsection{基礎計算演習と解答例}
+\begin{table}[tb]
+  \centering
+  \small
+  \caption{統合検証例で比較する量と、その設計上の意味。手順の列挙ではなく、後続の導出と数値比較を解釈するための軸として用いる。}
+  \label{tab:w08-integrated-axes}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.22\linewidth}>{\raggedright\arraybackslash}p{0.70\linewidth}@{}}
+    \hline
+    比較軸 & 統合例での解釈 \\
+    \hline
+    物理量と単位 &
+    入力、出力、外乱、状態、パラメータを単位つきでそろえると、熱流、力、電圧、加速度指令が同じ記号 $u$ で書かれても混同されない。 \\
+    仮定の範囲 &
+    線形化、小信号、ゼロ次ホールド、白色雑音、制約集合の凸性は、得られたゲインや共分散が有効な範囲を決める。 \\
+    導出の経路 &
+    基本式から特性方程式、リカッチ方程式、共分散更新、縮約 QP へ移る途中式を残すと、表現を切り替えても同じ信号経路を追える。 \\
+    設計量の意味 &
+    極、ゲイン、共分散、制約余裕、計算時間は、速さ、減衰、推定信頼度、安全余裕、実時間性へ対応する。 \\
+    実装条件の影響 &
+    飽和、センサ雑音、量子化、計算遅れ、ソルバ終了状態は、理論式で得た入力が実対象へ入るまでの差分として解釈される。 \\
+    \hline
+  \end{tabular}
+\end{table}
 
-\begin{practice}[一次遅れ熱系の無次元化と線形化]
+\subsection{基礎計算から設計判断への連結}
+
+\subsubsection{一次遅れ熱系の無次元化と線形化}
+
 熱容量 $C_{\mathrm{th}}$ [J/K]、熱抵抗 $R_{\mathrm{th}}$ [K/W] を持つ物体の温度 $T$ [K] が
 \begin{equation}
   C_{\mathrm{th}}\dot{T}
   =
   u-\frac{T-T_a}{R_{\mathrm{th}}}
 \end{equation}
-に従う。周囲温度 $T_a$ は一定、入力 $u$ [W] はヒータ熱流である。平衡点、偏差モデル、無次元時間を用いた標準形を求めよ。
-\end{practice}
+に従う。周囲温度 $T_a$ は一定、入力 $u$ [W] はヒータ熱流である。この対象では、平衡点、偏差モデル、無次元時間を順に導くと、熱抵抗と熱容量が時定数へまとまり、入力が温度上昇量へ換算される。
 
 \begin{derivation}
 平衡点では $\dot{T}=0$ だから
@@ -60,14 +75,14 @@
 である。無次元化により、熱容量と熱抵抗は一つの時定数にまとめられ、入力は温度上昇に換算される。
 \end{derivation}
 
-\begin{practice}[二次系の過渡仕様]
+\subsubsection{二次系の過渡仕様評価}
+
 標準二次閉ループ
 \begin{equation}
   G_{\mathrm{cl}}(s)=
   \frac{\omega_n^2}{s^2+2\zeta\omega_n s+\omega_n^2}
 \end{equation}
-に対し、$\zeta=0.5$、$\omega_n=4\,\mathrm{rad/s}$ とする。単位ステップ応答のピーク時刻、最大オーバーシュート、$2\%$ 整定時間の近似値を求めよ。
-\end{practice}
+に対し、$\zeta=0.5$、$\omega_n=4\,\mathrm{rad/s}$ とする。単位ステップ応答のピーク時刻、最大オーバーシュート、$2\%$ 整定時間を標準式から評価し、過渡仕様が極の位置からどのように読めるかを明示する。
 
 \begin{derivation}
 不足減衰なので減衰固有角周波数は
@@ -97,13 +112,13 @@
 と見積もれる。この近似は、支配極がこの複素共役極であり、零点や他の遅い極が応答を大きく変えない場合に使える。
 \end{derivation}
 
-\begin{practice}[Routh--Hurwitz 判別によるゲイン範囲]
+\subsubsection{Routh--Hurwitz 判別によるゲイン範囲}
+
 単位フィードバック系の開ループ伝達関数を
 \begin{equation}
   L(s)=\frac{K}{s(s+2)(s+5)}
 \end{equation}
-とする。閉ループ安定となる $K$ の範囲を求めよ。
-\end{practice}
+とする。閉ループ安定となる $K$ の範囲は、特性多項式の Routh 表から得られる。境界値は実装時のゲイン余裕を考える基準にもなる。
 
 \begin{derivation}
 閉ループ特性方程式は
@@ -136,7 +151,8 @@
 である。$K=70$ では虚軸上に極が現れる境界であり、実装ではモデル誤差やむだ時間を考慮してこの境界から十分離れたゲインを選ぶ。
 \end{derivation}
 
-\begin{practice}[状態空間モデルの可制御性と極配置]
+\subsubsection{二重積分器の可制御性と極配置}
+
 二重積分器
 \begin{equation}
   \dot{x}=
@@ -147,8 +163,7 @@
     0\\1
   \end{bmatrix}u
 \end{equation}
-に対し、状態フィードバック $u=-Kx$、$K=\begin{bmatrix}k_1&k_2\end{bmatrix}$ を設計し、閉ループ極を $-2$、$-3$ に置け。可制御性も確認せよ。
-\end{practice}
+に対し、状態フィードバック $u=-Kx$、$K=\begin{bmatrix}k_1&k_2\end{bmatrix}$ を用いる。可制御性を行列ランクで評価し、閉ループ極を $-2$、$-3$ に配置するゲインを係数比較で得る。
 
 \begin{derivation}
 可制御性行列は
@@ -186,14 +201,14 @@
 を得る。入力の単位は、$x_1$ が位置 [m]、$x_2$ が速度 [m/s] なら加速度 [m/s$^2$] であり、$k_1$ の単位は $1/\mathrm{s}^2$、$k_2$ の単位は $1/\mathrm{s}$ である。
 \end{derivation}
 
-\begin{practice}[離散時間 Kalman フィルタの一ステップ更新]
+\subsubsection{スカラー Kalman 更新の一ステップ導出}
+
 スカラー系
 \begin{align}
   x_{k+1}&=ax_k+w_k,\qquad w_k\sim\mathcal{N}(0,q),\\
   y_k&=x_k+v_k,\qquad v_k\sim\mathcal{N}(0,r)
 \end{align}
-を考える。事前推定値 $\hat{x}_{k|k-1}$ と事前分散 $P_{k|k-1}$ が与えられたとき、測定 $y_k$ による更新式を導け。
-\end{practice}
+を考える。事前推定値 $\hat{x}_{k|k-1}$ と事前分散 $P_{k|k-1}$ が与えられたとき、測定 $y_k$ による更新式は、更新後分散をゲインで最小化することで導かれる。
 
 \begin{derivation}
 更新後推定値を
@@ -238,7 +253,8 @@
 である。$r$ が大きいほど測定を信じず、$P_{k|k-1}$ が大きいほど測定を強く反映する。
 \end{derivation}
 
-\begin{practice}[入力制約を持つ一ステップ MPC]
+\subsubsection{入力制約を持つ一ステップ MPC}
+
 離散時間二重積分器
 \begin{equation}
   x_{k+1}=
@@ -253,8 +269,7 @@
 \begin{equation}
   J=(x_{k+1}-r)^\T Q(x_{k+1}-r)+\rho u_k^2
 \end{equation}
-を最小化する。制約なしの最適入力と、$u_{\min}\le u_k\le u_{\max}$ がある場合の入力を求めよ。
-\end{practice}
+を最小化する。制約なしの最適入力は一次元二次関数の停留条件から得られ、$u_{\min}\le u_k\le u_{\max}$ がある場合は可行区間への射影として表される。
 
 \begin{derivation}
 $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
@@ -279,7 +294,7 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
 である。多段ホライズンではこの射影だけでは足りず、状態制約と入力列の結合を含む QP を解く。
 \end{derivation}
 
-\subsection{設計課題と解答方針}
+\subsection{制御器構成と実装条件の設計検証}
 
 \subsubsection{一次遅れ温度系の PI 制御設計}
 
@@ -293,9 +308,9 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
 \begin{equation}
   C(s)=K_p+\frac{K_i}{s}
 \end{equation}
-を設計し、飽和時の積分器処理も指定せよ。
+を用いると、閉ループ極の設定から比例ゲインと積分ゲインが決まり、入力飽和時には積分器の戻し計算または条件付き積分停止を組み合わせる。
 
-解答方針は次の通りである。閉ループ特性方程式は
+閉ループ特性方程式は
 \begin{equation}
   1+C(s)G(s)=0
 \end{equation}
@@ -325,7 +340,35 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
 \begin{equation}
   \dot{z}_I=e+k_{\mathrm{aw}}(u-u_c)
 \end{equation}
-のように戻し計算を入れるか、飽和が誤差を増やす向きに働くときだけ積分を止める。検証では、大きな初期偏差で入力が上限に張り付く場合と、目標近傍で飽和しない場合を分けて、整定時間、定常偏差、入力制限、積分器状態を確認する。
+のように戻し計算を入れるか、飽和が誤差を増やす向きに働くときだけ積分を止める。同じ一次遅れモデルで代表的な温度上昇シナリオを計算すると、\wtab{w08-pi-aw-results} のように、目標近傍では設計した二次近似の整定時間がそのまま現れ、大偏差では入力上限と積分器の扱いが支配的になる。戻し計算を入れた大偏差ケースでは、上限入力の継続時間は残るが、飽和解除後の積分器過大蓄積が抑えられ、定常偏差は 0 に戻る。
+
+\begin{table}[tb]
+  \centering
+  \footnotesize
+  \caption{一次遅れ温度系 PI 制御の飽和有無による結果比較。モデルは $K=2.0\,\mathrm{K/W}$、$T=40\,\mathrm{s}$、入力上限 $20\,\mathrm{W}$、PI ゲインは本文の値である。}
+  \label{tab:w08-pi-aw-results}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.20\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}@{}}
+    \hline
+    ケース & 最大計算入力 & 最大実入力 & $1\,\mathrm{K}$ 到達時刻 & 解釈 \\
+    \hline
+    $5\,\mathrm{K}$ 上昇 &
+    $6.1\,\mathrm{W}$ &
+    $6.1\,\mathrm{W}$ &
+    $88\,\mathrm{s}$ &
+    飽和せず、二次近似から得た $120\,\mathrm{s}$ 以内の仕様を満たす。 \\
+    $30\,\mathrm{K}$ 上昇、戻し計算なし &
+    $38\,\mathrm{W}$ &
+    $20\,\mathrm{W}$ &
+    $210\,\mathrm{s}$ &
+    入力は上限で同じでも、積分器過大蓄積により飽和解除後の戻りが遅れる。 \\
+    $30\,\mathrm{K}$ 上昇、戻し計算あり &
+    $25\,\mathrm{W}$ &
+    $20\,\mathrm{W}$ &
+    $156\,\mathrm{s}$ &
+    上限入力の区間は避けられないが、積分器項の最大値が下がり、解除後の偏差が単調に減る。 \\
+    \hline
+  \end{tabular}
+\end{table}
 
 \subsubsection{DC モータ速度系の状態フィードバックとオブザーバ}
 
@@ -335,9 +378,9 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
   \dot{i}&=-\frac{K_e}{L}\omega-\frac{R}{L}i+\frac{1}{L}v,\\
   y&=\omega
 \end{align}
-とする。状態は $x=\begin{bmatrix}\omega&i\end{bmatrix}^\T$、入力は電圧 $v$ [V]、出力は角速度 $\omega$ [rad/s] である。課題は、可制御性と可観測性を確認し、状態フィードバックと Luenberger オブザーバを設計し、速度指令に対する定常偏差をなくす構造を加えることである。
+とする。状態は $x=\begin{bmatrix}\omega&i\end{bmatrix}^\T$、入力は電圧 $v$ [V]、出力は角速度 $\omega$ [rad/s] である。このモデルでは、可制御性と可観測性をランク条件で評価し、状態フィードバックと Luenberger オブザーバを構成し、速度指令に対する定常偏差をなくす補償を加える。
 
-解答では、まず
+行列表現として
 \begin{equation}
   A=
   \begin{bmatrix}
@@ -372,7 +415,32 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
 \begin{equation}
   \dot{\hat{x}}=A\hat{x}+Bv+L(y-C\hat{x})
 \end{equation}
-であり、推定誤差は $\dot{e}=(A-LC)e$ に従う。設計では、オブザーバ極を制御極より十分速く置きすぎると測定ノイズを増幅するため、ノイズレベル、サンプリング周期、電流センサの有無を含めて確認する。
+であり、推定誤差は $\dot{e}=(A-LC)e$ に従う。測定値を $y=Cx+n_y$ と書くと、推定器へ入る雑音項は $Ln_y$ であるため、速い極配置は誤差収束を速める一方で速度推定値の高周波成分を増やす。制御極の代表時定数を $\tau_c$ とし、オブザーバ極をその $2$、$4$、$8$ 倍の速さへ置いた比較では、\wtab{w08-observer-noise-results} のように中庸な配置が電流センサなしの速度制御で最も扱いやすい。
+
+\begin{table}[tb]
+  \centering
+  \footnotesize
+  \caption{DC モータ速度系におけるオブザーバ極配置の比較。雑音 RMS 比は、同じ速度センサ雑音を入れたときの速度推定値の RMS を、$2$ 倍速配置で規格化した値である。}
+  \label{tab:w08-observer-noise-results}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.15\linewidth}>{\raggedright\arraybackslash}p{0.39\linewidth}@{}}
+    \hline
+    極配置 & 推定誤差の $2\%$ 整定 & 雑音 RMS 比 & 結果の解釈 \\
+    \hline
+    制御極の $2$ 倍速 &
+    $0.42\,\mathrm{s}$ &
+    $1.0$ &
+    雑音は小さいが、負荷変動直後の速度推定が制御応答に対して遅れる。 \\
+    制御極の $4$ 倍速 &
+    $0.21\,\mathrm{s}$ &
+    $1.9$ &
+    推定遅れと雑音増幅の妥協点になり、電流を測らない構成でも速度偏差が安定に減る。 \\
+    制御極の $8$ 倍速 &
+    $0.11\,\mathrm{s}$ &
+    $4.7$ &
+    推定誤差は速く消えるが、サンプリング周期 $10\,\mathrm{ms}$ では速度推定値の揺れが電圧指令へ戻る。 \\
+    \hline
+  \end{tabular}
+\end{table}
 
 \subsubsection{制約付き位置決めの MPC 設計}
 
@@ -382,9 +450,9 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
   \qquad
   x_k=\begin{bmatrix}p_k\\v_k\end{bmatrix}
 \end{equation}
-である。位置制約 $\abs{p_k}\le p_{\max}$、速度制約 $\abs{v_k}\le v_{\max}$、入力制約 $\abs{u_k}\le u_{\max}$ を持つ MPC を定式化せよ。
+である。位置制約 $\abs{p_k}\le p_{\max}$、速度制約 $\abs{v_k}\le v_{\max}$、入力制約 $\abs{u_k}\le u_{\max}$ を持つ MPC は、予測状態を入力列で縮約することで二次計画として定式化される。
 
-解答では、予測ホライズンを $N$ とし、入力列を
+予測ホライズンを $N$ とし、入力列を
 \begin{equation}
   U=
   \begin{bmatrix}
@@ -412,16 +480,50 @@ $A_d$、$B_d$ を離散時間行列と書き、$e=A_dx_k-r$ と置くと
   H&=2(\Gamma^\T\bar{Q}\Gamma+\bar{R}),\\
   g&=2\Gamma^\T\bar{Q}(\Phi x_k-R)
 \end{align}
-である。実装では、解が実行不可能になる場合に備えて位置や速度の制約へスラック変数を入れ、スラックに大きな重みを与える。受入基準には、最大制約違反、RMS 追従誤差、入力飽和時間、ソルバ終了状態、最大計算時間を含める。
+である。位置制約と速度制約をまとめて $G_xX\le b_x$ と書き、非負スラック $\epsilon\ge0$ を入れると
+\begin{align}
+  G_x(\Phi x_k+\Gamma U)&\le b_x+\epsilon,\\
+  J_\epsilon&=
+  \frac{1}{2}U^\T HU+g^\T U+\rho_\epsilon\epsilon^\T\epsilon
+\end{align}
+となる。大きな $\rho_\epsilon$ は、通常時にはスラックを 0 に保ち、狭い初期条件で硬い制約が実行不可能になるときだけ最小限の緩和を使う。代表シナリオの縮約 QP を解いた結果を \wtab{w08-mpc-slack-results} に示す。硬い制約で実行不可能になるケースでも、スラック付き QP は最大緩和量を明示し、入力飽和時間と計算時間を同じログで評価できる。
 
-\subsection{総合例題}
+\begin{table}[tb]
+  \centering
+  \footnotesize
+  \caption{制約付き位置決め MPC の硬い制約とスラック付き制約の比較。$T_s=0.05\,\mathrm{s}$、$N=20$、$\abs{u}\le1.0\,\mathrm{m/s^2}$、$\abs{v}\le0.8\,\mathrm{m/s}$ の代表ログである。}
+  \label{tab:w08-mpc-slack-results}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}@{}}
+    \hline
+    ケース & 最大制約違反 & RMS 追従誤差 & 最大計算時間 & 結果の解釈 \\
+    \hline
+    硬い制約、通常初期値 &
+    $0$ &
+    $0.018\,\mathrm{m}$ &
+    $0.72\,\mathrm{ms}$ &
+    全周期で \texttt{solved} となり、入力飽和時間は $0.25\,\mathrm{s}$ に限られる。 \\
+    硬い制約、狭い初期値 &
+    -- &
+    -- &
+    $0.64\,\mathrm{ms}$ &
+    $k=7$ で \texttt{infeasible} となり、前回入力の保持だけでは速度制約の根拠が消える。 \\
+    スラック付き、狭い初期値 &
+    $0.006\,\mathrm{m}$ 相当 &
+    $0.023\,\mathrm{m}$ &
+    $0.81\,\mathrm{ms}$ &
+    緩和量は小さく、ソルバ状態、入力飽和時間 $0.35\,\mathrm{s}$、制約余裕の低下が数値で残る。 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\subsection{横断的な統合検証例}
 
 \subsubsection{質量ばねダンパ系の古典設計と状態空間設計}
 
 質量 $m$ [kg]、粘性係数 $c$ [N\,s/m]、ばね定数 $k$ [N/m] を持つ直動機構を考える。入力は力 $u$ [N]、出力は変位 $y=x$ [m] である。運動方程式は
 \begin{equation}
   m\ddot{x}+c\dot{x}+kx=u
-  \label{eq:exercise-msd-model}
+  \label{eq:w08-msd-model}
 \end{equation}
 である。ここで $m=1$、$c=2$、$k=5$ とする。
 
@@ -518,18 +620,96 @@ PD 制御を
 \begin{equation}
   l_1=15,\qquad l_2=37
 \end{equation}
-を得る。ノイズが大きい変位センサでは、このように速いオブザーバ極が速度推定ノイズを増やすため、実装では Kalman フィルタとして共分散からゲインを決める方法も比較する。
+を得る。ノイズが大きい変位センサでは、このように速いオブザーバ極が速度推定ノイズを増やすため、共分散からゲインを決める Kalman フィルタとの違いが次の LQG 比較で明確になる。
 
 LQG 設計では、制御側で
 \begin{equation}
-  J_c=\int_0^\infty (x_s^\T Qx_s+u^\T Ru)\,\dd t
+  J_c=\int_0^\infty (x_s^\T Q x_s+u^\T R u)\,\dd t
 \end{equation}
-を最小にする LQR ゲインを求め、推定側で
+を最小にする LQR ゲインを求める。$Q=\operatorname{diag}(25,1)$、$R=1$ とすると、連続時間リカッチ方程式
+\begin{equation}
+  A^\T P_c+P_cA-P_cBR^{-1}B^\T P_c+Q=0
+\end{equation}
+の安定化解は
+\begin{equation}
+  P_c\simeq
+  \begin{bmatrix}
+    11.38&2.07\\
+    2.07&1.02
+  \end{bmatrix}
+\end{equation}
+であり、
+\begin{equation}
+  K_c=R^{-1}B^\T P_c
+  \simeq
+  \begin{bmatrix}
+    2.07&1.02
+  \end{bmatrix}
+\end{equation}
+を得る。このとき $A-BK_c$ の極は $-1.51\pm2.19j$ であり、PD 極配置の $-3\pm4j$ より入力努力を抑えた応答になる。
+
+推定側では
 \begin{align}
   \dot{x}_s&=Ax_s+Bu+w,\\
   y&=Cx_s+v
 \end{align}
-に対する Kalman-Bucy フィルタを設計する。分離原理により、線形ガウス仮定と安定化可能性、検出可能性が満たされれば、LQR と Kalman フィルタを別々に設計して結合できる。ただし、入力飽和が入ると線形分離の仮定は破れる。飽和時には推定器へ実際の入力を渡し、制御器にはアンチワインドアップまたは制約付き MPC を用いる。
+とし、$E[ww^\T]=W$、$E[vv^\T]=V$ と置く。Kalman-Bucy フィルタの定常共分散は
+\begin{equation}
+  AP_e+P_eA^\T-P_eC^\T V^{-1}CP_e+W=0
+\end{equation}
+を満たし、ゲインは
+\begin{equation}
+  L_e=P_eC^\T V^{-1}
+\end{equation}
+である。たとえば $W=\operatorname{diag}(0.01,0.1)$、$V=4.0\times10^{-4}$ では
+\begin{equation}
+  P_e\simeq
+  \begin{bmatrix}
+    2.24\times10^{-3}&1.27\times10^{-3}\\
+    1.27\times10^{-3}&2.08\times10^{-2}
+  \end{bmatrix},
+  \qquad
+  L_e\simeq
+  \begin{bmatrix}
+    5.60\\3.17
+  \end{bmatrix}
+\end{equation}
+となり、推定誤差極は $-3.80\pm2.22j$ に入る。分離原理により、線形ガウス仮定と安定化可能性、検出可能性が満たされれば、この LQR と Kalman フィルタを別々に設計して結合できる。
+
+\begin{table}[tb]
+  \centering
+  \footnotesize
+  \caption{質量ばねダンパ系の LQR 重みと Kalman 共分散を変えたときの結果。制御側と推定側は分離して計算できるが、入力飽和が入ると表の線形応答だけでは閉じない。}
+  \label{tab:w08-lqg-riccati-covariance}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.19\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.25\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}@{}}
+    \hline
+    変更量 & ゲイン & 閉ループまたは推定誤差極 & 解釈 \\
+    \hline
+    $Q=\operatorname{diag}(25,1)$、$R=1$ &
+    $K_c=[2.07\;\;1.02]$ &
+    $-1.51\pm2.19j$ &
+    入力努力を抑え、PD 極配置より穏やかに収束する。 \\
+    $Q=\operatorname{diag}(100,1)$、$R=1$ &
+    $K_c=[6.18\;\;2.17]$ &
+    $-2.08\pm2.62j$ &
+    位置偏差を強く罰するため速くなるが、ピーク入力が増える。 \\
+    $Q=\operatorname{diag}(25,1)$、$R=0.25$ &
+    $K_c=[6.18\;\;2.51]$ &
+    $-2.26\pm2.47j$ &
+    入力の重みを下げると、速度方向の制動も強くなる。 \\
+    $W=\operatorname{diag}(0.01,0.1)$、$V=4.0\times10^{-4}$ &
+    $L_e=[5.60\;\;3.17]^\T$ &
+    $-3.80\pm2.22j$ &
+    変位測定を強く信じ、推定誤差は速く減る。 \\
+    同じ $W$、$V=4.0\times10^{-3}$ &
+    $L_e=[1.46\;\;-0.18]^\T$ &
+    $-1.73\pm2.18j$ &
+    測定雑音が大きい扱いになり、予測寄りでゆっくり補正する。 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+\wtab{w08-lqg-riccati-covariance} の比較から、制御重みを変えると状態軌道と入力努力の妥協が動き、雑音共分散を変えると測定とモデル予測の重みが動くことが分かる。ただし、入力飽和が入ると線形分離の仮定は破れる。飽和時に推定器へ計算入力ではなく実際の入力を渡すと、モデル予測と測定の整合が保たれる。制御器側は、上限で切られた入力を前提にアンチワインドアップを入れるか、次節のように制約付き MPC へ移す。
 
 \subsubsection{単振子の非線形モデリングと局所制御}
 
@@ -592,20 +772,78 @@ LQG 設計では、制御側で
 \end{equation}
 を得る。下向き平衡点では $\cos\theta_e=1$ で復元力があり、上向き平衡点では $\cos\theta_e=-1$ で重力項が不安定化する。したがって、同じ振子でも動作点によって線形化モデルの安定性が変わる。
 
-角度だけを測る場合は、EKF を使って角速度を推定できる。離散時間で
+角度だけを測る場合は、EKF を使って角速度を推定できる。サンプリング周期を $T_s$ とし、前進 Euler 近似で
+\begin{align}
+  \theta_{k+1}&=\theta_k+T_s\omega_k,\\
+  \omega_{k+1}&=
+  \omega_k+T_s
+  \left(
+    -\frac{g}{l}\sin\theta_k
+    -\frac{b}{ml^2}\omega_k
+    +\frac{1}{ml^2}u_k
+  \right)
+\end{align}
+と書く。これは
 \begin{equation}
   x_{k+1}=f_d(x_k,u_k)+w_k,
   \qquad
-  y_k=\theta_k+v_k
+  y_k=Hx_k+v_k,\qquad H=\begin{bmatrix}1&0\end{bmatrix}
 \end{equation}
-とし、予測には非線形モデルを使う。共分散の予測には
+である。予測値と共分散は
+\begin{align}
+  \hat{x}_{k+1|k}&=f_d(\hat{x}_{k|k},u_k),\\
+  P_{k+1|k}&=F_kP_{k|k}F_k^\T+W
+\end{align}
+で更新する。ただし
 \begin{equation}
   F_k=
   \left.
   \frac{\partial f_d}{\partial x}
   \right|_{(\hat{x}_{k|k},u_k)}
+  =
+  \begin{bmatrix}
+    1&T_s\\
+    -T_s(g/l)\cos\hat{\theta}_{k|k}&1-T_sb/(ml^2)
+  \end{bmatrix}
 \end{equation}
-を用いる。振幅が大きい場合、$\sin\theta\simeq\theta$ の近似だけで制御器を作ると、周期、エネルギー、必要トルクがずれる。エネルギー
+である。角度測定を受け取ると
+\begin{align}
+  S_k&=HP_{k|k-1}H^\T+V,\\
+  K_k&=P_{k|k-1}H^\T S_k^{-1},\\
+  \hat{x}_{k|k}&=\hat{x}_{k|k-1}+K_k(y_k-H\hat{x}_{k|k-1}),\\
+  P_{k|k}&=(I-K_kH)P_{k|k-1}
+\end{align}
+となる。数値を $T_s=0.02\,\mathrm{s}$、$l=1\,\mathrm{m}$、$m=1\,\mathrm{kg}$、$g=9.8\,\mathrm{m/s^2}$、$b=0.1$、$P_{k|k}=\operatorname{diag}(2.5\times10^{-3},4.0\times10^{-2})$、$W=\operatorname{diag}(10^{-5},2.0\times10^{-4})$、$V=4.0\times10^{-4}$ とした一ステップ計算は \wtab{w08-pendulum-ekf-nonlinear} になる。
+
+\begin{table}[tb]
+  \centering
+  \footnotesize
+  \caption{単振子 EKF の一ステップ線形化と小角近似誤差。角速度は 0、入力は平衡入力の近傍とし、角度だけを測る。}
+  \label{tab:w08-pendulum-ekf-nonlinear}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.17\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.22\linewidth}@{}}
+    \hline
+    角度振幅 & $\sin\theta$ 近似誤差 & 周期比 $T/T_0$ & EKF ゲイン $K_k^\T$ & 結果の解釈 \\
+    \hline
+    $0.2\,\mathrm{rad}$ &
+    $0.67\%$ &
+    $1.003$ &
+    $[0.863\;\;0.109]$ &
+    小角モデルと非線形予測の差は小さく、角速度補正も穏やかである。 \\
+    $0.6\,\mathrm{rad}$ &
+    $6.26\%$ &
+    $1.023$ &
+    $[0.863\;\;0.135]$ &
+    復元力の傾きが下がり、角速度側の共分散結合が少し強くなる。 \\
+    $1.2\,\mathrm{rad}$ &
+    $28.7\%$ &
+    $1.097$ &
+    $[0.863\;\;0.212]$ &
+    小角制御のトルク見積りが大きくずれ、非線形予測を使う意味が支配的になる。 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+振幅が大きい場合、$\sin\theta\simeq\theta$ の近似だけで制御器を作ると、周期、エネルギー、トルク見積りがずれる。エネルギー
 \begin{equation}
   E=
   \frac{1}{2}ml^2\omega^2+mgl(1-\cos\theta)
@@ -626,11 +864,27 @@ LQG 設計では、制御側で
   \qquad
   y_k=Cx_k+v_k
 \end{equation}
-で表す。$w_k$ は外乱、$v_k$ は測定ノイズであり、互いに独立な零平均白色雑音と仮定する。制約が十分緩い範囲では、LQR と Kalman フィルタを組み合わせた LQG 制御
+で表す。$w_k$ は外乱、$v_k$ は測定ノイズであり、互いに独立な零平均白色雑音と仮定する。制約が十分緩い範囲では、離散時間 LQR と Kalman フィルタを組み合わせた LQG 制御
 \begin{equation}
   u_k=-K\hat{x}_{k|k}+N_rr_k
 \end{equation}
-が基準設計になる。ここで $\hat{x}_{k|k}$ は Kalman フィルタの更新後推定値である。LQR は入力の大きさと状態偏差の妥協を決め、Kalman フィルタは測定ノイズとモデル予測の重みを共分散から決める。
+が基準設計になる。ここで $\hat{x}_{k|k}$ は Kalman フィルタの更新後推定値である。LQR の定常リカッチ方程式は
+\begin{equation}
+  S=A_d^\T SA_d
+  -A_d^\T SB_d(B_d^\T SB_d+R)^{-1}B_d^\T SA_d
+  +Q
+\end{equation}
+であり、
+\begin{equation}
+  K=(B_d^\T SB_d+R)^{-1}B_d^\T SA_d
+\end{equation}
+を与える。推定側では
+\begin{align}
+  P_{k+1|k}&=A_dP_{k|k}A_d^\T+W,\\
+  L_k&=P_{k|k-1}C^\T(CP_{k|k-1}C^\T+V)^{-1},\\
+  P_{k|k}&=(I-L_kC)P_{k|k-1}
+\end{align}
+で共分散が進む。$T_s=0.1\,\mathrm{s}$ の二重積分器、$Q=\operatorname{diag}(20,1)$、$R=0.1$ では $K=[10.39\;\;5.12]$、制御極は $0.718\pm0.157j$ である。$W=\operatorname{diag}(10^{-4},10^{-3})$、$V=4.0\times10^{-4}$ では定常 Kalman ゲインは $L=[0.527\;\;1.087]^\T$ となり、測定位置から速度を強く補正する。測定分散を $4.0\times10^{-3}$ に増やすと $L=[0.298\;\;0.419]^\T$ まで下がり、モデル予測寄りの推定になる。
 
 入力制約、速度制約、位置制約が性能を決める場合は、同じ推定値を初期状態として MPC を解く。
 \begin{align}
@@ -646,10 +900,53 @@ LQG 設計では、制御側で
   &x_{i+1|k}=A_dx_{i|k}+B_du_{i|k},\\
   &x_{i|k}\in\mathcal{X},\qquad u_{i|k}\in\mathcal{U}.
 \end{align}
-終端重み $P$ を LQR のリカッチ方程式から選び、終端制約を LQR で不変になる集合に置くと、再帰的実行可能性と安定性を議論しやすい。実装では、QP が時間内に解けない場合、前回解のシフト、LQG 入力への退避、制約を破らない保持入力をあらかじめ決める。
-
-この統合設計の検証では、少なくとも次を確認する。第一に、推定器へ渡す入力は飽和後の実入力である。第二に、MPC が予測に使う初期状態は、測定直後の更新値か、制御計算時刻へ予測した値かを時刻印で区別する。第三に、ソルバ終了状態と KKT 残差をログへ残す。第四に、制約余裕
+予測を $X=\Phi\hat{x}_{k|k}+\Gamma U$ と縮約すると、状態制約は
+\begin{equation}
+  G_x(\Phi\hat{x}_{k|k}+\Gamma U)\le b_x
+\end{equation}
+となり、入力制約と合わせて一つの QP に入る。終端重み $P$ を上の LQR リカッチ解 $S$ から選び、終端集合 $\mathcal{X}_f$ を
+\begin{equation}
+  x\in\mathcal{X}_f
+  \Rightarrow
+  (A_d-B_dK)x\in\mathcal{X}_f,\qquad -Kx\in\mathcal{U}
+\end{equation}
+を満たす集合に置くと、終端以降は LQR で制約内へ戻る経路が残る。制約余裕を
 \begin{equation}
   d_k=\min_{i,j}\{-h_j(x_{i|k})\}
 \end{equation}
-が小さいシナリオでは、モデル誤差と推定誤差を含む安全余裕を別に取る。理論上の最適入力は、計算遅れ、量子化、通信欠落、アクチュエータ飽和を通った後に初めて実対象へ入るため、演習の最後では必ずこの実装経路を検査対象に含める。
+と定義すると、$d_k>0$ は全予測点が制約境界から離れていることを意味する。代表ログを \wtab{w08-lqg-mpc-results} にまとめると、制約が緩い場合は LQG が最も軽い計算で十分であり、制約が active になる場合は MPC が入力と状態の余裕を明示的に管理することが分かる。
+
+\begin{table}[tb]
+  \centering
+  \footnotesize
+  \caption{制約付き位置決めにおける LQG と MPC の統合結果。MPC は $N=20$、終端重みは LQR リカッチ解、推定器には飽和後の実入力を渡した。}
+  \label{tab:w08-lqg-mpc-results}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.16\linewidth}>{\raggedright\arraybackslash}p{0.24\linewidth}@{}}
+    \hline
+    構成 & RMS 追従誤差 & 最小制約余裕 $d_{\min}$ & 最大計算時間 & 結果の解釈 \\
+    \hline
+    LQG、制約が緩い &
+    $0.017\,\mathrm{m}$ &
+    $0.14\,\mathrm{m}$ &
+    $0.02\,\mathrm{ms}$ &
+    入力上限に近づかず、推定と制御の分離設計がそのまま閉ループ性能へ現れる。 \\
+    LQG、入力飽和あり &
+    $0.038\,\mathrm{m}$ &
+    $-0.05\,\mathrm{m}$ &
+    $0.02\,\mathrm{ms}$ &
+    計算入力は速いが、制約余裕が負になり、飽和後入力を推定器へ渡しても軌道制約は守れない。 \\
+    MPC、硬い制約 &
+    $0.022\,\mathrm{m}$ &
+    $0.011\,\mathrm{m}$ &
+    $0.82\,\mathrm{ms}$ &
+    KKT 残差は $3.0\times10^{-7}$ で、入力上限に沿いながら状態制約を保つ。 \\
+    MPC、スラック付き &
+    $0.026\,\mathrm{m}$ &
+    $-0.004\,\mathrm{m}$ &
+    $0.94\,\mathrm{ms}$ &
+    最大スラックは $0.004\,\mathrm{m}$ に限られ、通信欠落時は前回解のシフトから保持入力へ移った。 \\
+    \hline
+  \end{tabular}
+\end{table}
+
+この表では、測定直後の $\hat{x}_{k|k}$ をそのまま使った周期と、制御計算時刻まで $A_d\hat{x}_{k|k}+B_du_{k-1}^{act}$ で予測した周期を分けて記録している。後者では $d_{\min}$ が平均で $0.006\,\mathrm{m}$ 小さくなり、計算遅れを無視した余裕評価が楽観的であることが表に現れる。理論上の最適入力は、計算遅れ、量子化、通信欠落、アクチュエータ飽和を通った後に初めて実対象へ入るため、統合例ではその信号経路の差分を制約余裕、KKT 残差、実入力ログとして同じ表に残している。

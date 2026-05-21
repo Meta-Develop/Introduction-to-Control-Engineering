@@ -1,39 +1,200 @@
-\subsection{線形最適制御}
+\subsection{性能指標から有限ホライズン最適制御へ}
 
-状態フィードバックでは、極をどこに置くかを設計者が選んだ。しかし、台車を「速く止める」だけなら極を左へ動かせばよいとしても、同時に「入力をどれだけ節約するか」は極の位置だけでは直接指定しにくい。ここでは状態偏差を $x(t)\in\R^n$、入力偏差を $u(t)\in\R^m$ とし、たとえば $x$ の成分には位置偏差や速度偏差、$u$ にはモータ電流や推力の偏差が入ると考える。対象は動作点まわりで線形化され、行列 $A$ と $B$ は時不変、初期状態は既知、入力飽和はこの段階では扱わないと仮定する。この条件で、線形系
-\begin{equation}
-  \dot{x}=Ax+Bu
-\end{equation}
-に対する評価関数
-\begin{equation}
-  J=\int_0^\infty \{x(t)^\T Qx(t)+u(t)^\T Ru(t)\}\,\dd t
-\end{equation}
-を置く。$Q=Q^\T\ge0$ は状態のずれへの重み、$R=R^\T>0$ は入力への重みである。積分の中の $x^\T Qx$ と $u^\T Ru$ は同じ評価率の単位を持つように選ぶ。したがって、位置をメートル、速度をメートル毎秒、入力をニュートンで表すなら、$Q$ と $R$ の各成分はそれぞれの二乗単位を評価率へ換算する係数である。$Q$ を大きくすればずれを強く嫌い、$R$ を大きくすれば入力を節約する。
+極配置では、閉ループ極を指定して応答の速さと減衰を調整した。しかし、質量 $m=1\,\mathrm{kg}$ の台車を目標位置で止める記録を評価すると、速さだけでは設計を決められないことが明確になる。位置偏差 $e$ [m] と速度偏差 $\dot{e}$ [m/s] を状態とし、入力 $u$ [N] を台車に加える水平力とする。強い入力を使えば整定は速くなるが、力の上限 $u_{\max}=2.0\,\mathrm{N}$ に近づき、RMS 入力も大きくなる。反対に入力を節約すれば余裕は増えるが、終端時刻で位置偏差が残りやすい。
 
-入力を $u=-Kx$ と置くと、閉ループは $\dot{x}=(A-BK)x$ になる。LQR は、すべての安定化ゲインの中から $J$ を最小にする $K$ を選ぶ。最適ゲインは
-\begin{equation}
-  K=R^{-1}B^\T P
-\end{equation}
-であり、$P$ は代数リカッチ方程式
-\begin{equation}
-  A^\T P+PA-PBR^{-1}B^\T P+Q=0
-  \label{eq:care}
-\end{equation}
-を満たす半正定値の安定化解である。$Q>0$ のように状態全体が十分に罰せられる場合には $P>0$ になる。最適コストは
-\begin{equation}
-  V(x)=x^\T P x
-\end{equation}
-となる。前節のリアプノフ関数が安定性を評価する関数だったのに対し、ここでの $V$ は「これから必要になる最小コスト」を表す関数でもある。
+\begin{table}[tb]
+  \centering
+  \small
+  \caption{台車位置制御ログから得た性能指標の例。残留誤差、ピーク入力、RMS 入力、制約余裕は同時に改善しないため、単一の極位置だけでは設計判断を閉じられない。}
+  \label{tab:flow-four-performance-indices}
+  \begin{tabular}{llllll}
+    \hline
+    候補 & 整定時間 & 終端残差 & ピーク入力 & RMS 入力 & 入力余裕 \\
+    \hline
+    積極的 & $0.75\,\mathrm{s}$ & $0.004\,\mathrm{m}$ & $2.10\,\mathrm{N}$ & $1.25\,\mathrm{N}$ & $-0.10\,\mathrm{N}$ \\
+    中庸 & $1.05\,\mathrm{s}$ & $0.006\,\mathrm{m}$ & $1.55\,\mathrm{N}$ & $0.82\,\mathrm{N}$ & $0.45\,\mathrm{N}$ \\
+    穏やか & $1.85\,\mathrm{s}$ & $0.017\,\mathrm{m}$ & $0.95\,\mathrm{N}$ & $0.46\,\mathrm{N}$ & $1.05\,\mathrm{N}$ \\
+    \hline
+  \end{tabular}
+\end{table}
 
-有限時間を対象にする場合は、終端時刻 $T$ までの評価
+\wtab{flow-four-performance-indices}では、積極的な設計は整定時間と終端残差に優れるが、ピーク入力が上限を越え、入力余裕 $M_u=u_{\max}-u_{\mathrm{peak}}$ が負になっている。穏やかな設計は制約余裕を大きく残す一方で、終端残差が大きい。RMS 入力
 \begin{equation}
-  J=x(T)^\T S x(T)+\int_0^T(x^\T Qx+u^\T Ru)\,\dd t
+  u_{\mathrm{rms}}
+  =
+  \left(
+    \frac{1}{T}
+    \int_0^T u(t)^2\,\dd t
+  \right)^{1/2}
 \end{equation}
-を最小にする。ここで $S\ge0$ は終端時刻で残った状態偏差をどの程度重く評価するかを表す終端重みである。リカッチ方程式は終端条件 $P(T)=S$ から時間を逆向きに解く微分方程式になる。この有限ホライズンの考え方は後で MPC へ進むための前提だが、ここではまだ制約のない連続時間最適制御として理解しておく。
+は、電流入力なら発熱、力入力なら入力努力の二乗積分に対応する負担を表す。このように、秒、メートル、ニュートンをそのまま足しても意味はないので、設計で比較するには各指標を要求値や定格値で割って無次元化する。
+
+たとえば、要求整定時間 $T_{\mathrm{req}}$、許容終端誤差 $e_{\mathrm{tol}}$、入力上限 $u_{\max}$、連続定格入力 $u_{\mathrm{rated}}$、要求余裕 $M_{\mathrm{req}}$ を用いて
+\begin{align}
+  \widehat{T}_s&=\frac{T_s}{T_{\mathrm{req}}},
+  &
+  \widehat{e}_T&=\frac{\abs{e(T)}}{e_{\mathrm{tol}}},
+  &
+  \widehat{u}_{\mathrm{peak}}&=\frac{u_{\mathrm{peak}}}{u_{\max}},\\
+  \widehat{u}_{\mathrm{rms}}&=\frac{u_{\mathrm{rms}}}{u_{\mathrm{rated}}},
+  &
+  \widehat{M}_u&=
+  \frac{\max(0,M_{\mathrm{req}}-M_u)}{u_{\max}}
+\end{align}
+と置く。$\widehat{M}_u$ は余裕そのものではなく、必要な余裕を下回った分を罰する量である。これらはすべて無次元なので、重み $w_s,w_e,w_p,w_r,w_m\ge0$ を使って
+\begin{equation}
+  J_{\mathrm{log}}
+  =
+  w_s\widehat{T}_s^2
+  +w_e\widehat{e}_T^2
+  +w_p\widehat{u}_{\mathrm{peak}}^2
+  +w_r\widehat{u}_{\mathrm{rms}}^2
+  +w_m\widehat{M}_u^2
+  \label{eq:normalized-log-cost}
+\end{equation}
+というスカラー評価を構成できる。重みは単位を消すための係数ではなく、すでに無次元化された指標の優先順位を表す係数である。$w_p$ や $w_m$ を大きくすれば入力上限への接近を強く避け、$w_s$ や $w_e$ を大きくすれば速い収束と残差低減を優先する。
+
+ログ全体の評価を、時刻 $k$ の入力を選ぶ局所的な最適化へ置き換える。サンプリング周期を $h$ とし、台車を短い時間では二重積分器
+\begin{align}
+  e_{k+1}&=e_k+h\dot{e}_k+\frac{h^2}{2m}u_k,\\
+  \dot{e}_{k+1}&=\dot{e}_k+\frac{h}{m}u_k
+  \label{eq:cart-double-integrator-step}
+\end{align}
+で近似する。位置、速度、入力の代表スケールを $e_s$ [m]、$v_s$ [m/s]、$u_s$ [N] とし、
+\begin{equation}
+  z_k=
+  \begin{bmatrix}
+    e_k/e_s\\
+    \dot{e}_k/v_s
+  \end{bmatrix},
+  \qquad
+  v_k=\frac{u_k}{u_s}
+\end{equation}
+と無次元化する。すると
+\begin{equation}
+  z_{k+1}=\bar{A}z_k+\bar{B}v_k
+\end{equation}
+と書ける。ここで
+\begin{equation}
+  \bar{A}=
+  \begin{bmatrix}
+    1 & hv_s/e_s\\
+    0 & 1
+  \end{bmatrix},
+  \qquad
+  \bar{B}=
+  \begin{bmatrix}
+    h^2u_s/(2me_s)\\
+    hu_s/(mv_s)
+  \end{bmatrix}
+\end{equation}
+であり、$\bar{A}$ と $\bar{B}$ は無次元である。次の 1 サンプルだけを見て、次時刻の位置・速度偏差と入力努力を
+\begin{equation}
+  J_1(v_k)
+  =
+  z_{k+1}^\T W_x z_{k+1}
+  +w_u v_k^2,
+  \qquad
+  W_x=W_x^\T\ge0,\quad w_u>0
+  \label{eq:one-step-cost}
+\end{equation}
+で評価する。これはまだ LQR ではなく、表のような複数指標を、1 サンプル先の残差と入力努力へ落とした最小の有限ホライズン問題である。
+
+\weq{one-step-cost} に $z_{k+1}=\bar{A}z_k+\bar{B}v_k$ を代入すると
+\begin{align}
+  J_1(v_k)
+  &=
+  (\bar{A}z_k+\bar{B}v_k)^\T
+  W_x
+  (\bar{A}z_k+\bar{B}v_k)
+  +w_u v_k^2.
+\end{align}
+入力はスカラーなので、微分して
+\begin{align}
+  \frac{\partial J_1}{\partial v_k}
+  &=
+  2\bar{B}^\T W_x(\bar{A}z_k+\bar{B}v_k)
+  +2w_u v_k\\
+  &=
+  2(\bar{B}^\T W_x\bar{B}+w_u)v_k
+  +2\bar{B}^\T W_x\bar{A}z_k
+\end{align}
+を得る。最小化条件 $\partial J_1/\partial v_k=0$ から
+\begin{equation}
+  v_k^*
+  =
+  -(\bar{B}^\T W_x\bar{B}+w_u)^{-1}
+  \bar{B}^\T W_x\bar{A}z_k
+  \label{eq:one-step-optimal-input}
+\end{equation}
+である。分母に $w_u$ が入るため、入力を重く罰すると $v_k^*$ の大きさは小さくなる。たとえば $h=0.10\,\mathrm{s}$、$e_s=0.10\,\mathrm{m}$、$v_s=0.50\,\mathrm{m/s}$、$u_s=2.0\,\mathrm{N}$、$W_x=\diag(1,0.2)$、$z_k=[1\ 0]^\T$ では、$w_u=0.05$ なら $v_k^*=-1.09$ となり上限相当の $|v_k|=1$ を越える。$w_u=0.5$ では $v_k^*=-0.18$、$w_u=5$ では $v_k^*=-0.020$ であり、入力余裕は増えるが 1 サンプル後の残差は残りやすい。この数値は、重みが単なる記号ではなく、制約余裕と残留誤差の交換条件を直接動かすことを示している。
+
+1 サンプルだけでは、少し先で速度を落として止まる計画を表しにくい。そこで、$N$ ステップ先までの入力列
+\begin{equation}
+  V_k=
+  \begin{bmatrix}
+    v_k\\
+    v_{k+1}\\
+    \vdots\\
+    v_{k+N-1}
+  \end{bmatrix}
+\end{equation}
+をまとめて選ぶ。予測状態を
+\begin{equation}
+  Z_k=
+  \begin{bmatrix}
+    z_{k+1}\\
+    z_{k+2}\\
+    \vdots\\
+    z_{k+N}
+  \end{bmatrix}
+\end{equation}
+と積むと、線形予測は
+\begin{equation}
+  Z_k=\mathcal{A}z_k+\mathcal{B}V_k
+  \label{eq:stacked-prediction}
+\end{equation}
+で表される。行列は
+\begin{equation}
+  \mathcal{A}=
+  \begin{bmatrix}
+    \bar{A}\\
+    \bar{A}^2\\
+    \vdots\\
+    \bar{A}^N
+  \end{bmatrix},
+  \qquad
+  \mathcal{B}=
+  \begin{bmatrix}
+    \bar{B} & 0 & \cdots & 0\\
+    \bar{A}\bar{B} & \bar{B} & \cdots & 0\\
+    \vdots & \vdots & \ddots & \vdots\\
+    \bar{A}^{N-1}\bar{B} & \bar{A}^{N-2}\bar{B} & \cdots & \bar{B}
+  \end{bmatrix}
+\end{equation}
+である。途中の残差を $W_x$、終端残差を $S$、入力列を $w_u I$ で罰すれば
+\begin{equation}
+  J_N(V_k)
+  =
+  Z_k^\T Q_N Z_k+V_k^\T R_N V_k,
+  \qquad
+  Q_N=\diag(W_x,\ldots,W_x,S),
+  \quad
+  R_N=w_u I
+\end{equation}
+となる。代入して平方形式として微分すると
+\begin{equation}
+  V_k^*
+  =
+  -(\mathcal{B}^\T Q_N\mathcal{B}+R_N)^{-1}
+  \mathcal{B}^\T Q_N\mathcal{A}z_k
+  \label{eq:stacked-finite-horizon-solution}
+\end{equation}
+を得る。これが制約なしの多段有限ホライズン最適入力列である。$N$ を長くすると、入力を今だけでなく将来の停止準備にも配分できる。$R_N$ を大きくすれば列全体の入力努力が下がり、$S$ を大きくすれば終端時刻の残差を強く嫌う。この有限個のベクトル最適化を、時間を連続にし、非線形な状態方程式や一般のコストへ広げると、変分法、Pontryagin の最大原理、動的計画法が必要になる。二次コストと線形ダイナミクスに戻した特殊な場合が、後で導く LQR とリカッチ方程式である。
 
 \subsection{変分法と最適性条件}
 
-最適制御では、時刻ごとの入力値を一つずつ選ぶのではなく、区間全体の入力関数 $u(\cdot)$ を選ぶ。したがって評価関数は、数 $u$ の関数ではなく、関数 $u(\cdot)$ を受け取って数を返す汎関数である。典型的な有限時間問題は
+前段の 1 ステップ問題と多段予測問題では、入力は有限個の数 $v_k,\ldots,v_{k+N-1}$ だった。連続時間でホライズン全体を扱うと、選ぶ対象は入力列ではなく入力関数 $u(\cdot)$ になる。したがって評価関数は、数 $u$ の関数ではなく、関数 $u(\cdot)$ を受け取って数を返す汎関数である。典型的な有限時間問題は
 \begin{align}
   J[u]
   &=
@@ -289,4 +450,4 @@ LQR では、この一般形が閉じた行列方程式に落ちる。線形系 
 \end{align}
 ここで $P$ は推定誤差の共分散である。カルマンフィルタは、線形ガウス系では平均二乗誤差を最小にする推定器である。
 
-LQR は状態が利用可能である場合の最適状態フィードバックであり、Kalman フィルタは線形確率モデルにおける状態推定器である。線形ガウス仮定のもとでは、Kalman フィルタで得た $\hat{x}$ を LQR の状態フィードバックへ入力する構成が LQG 制御を与える。本節では、対象および推定器を線形として扱う。
+LQR は状態が利用可能である場合の最適状態フィードバックであり、Kalman フィルタは線形確率モデルにおける状態推定器である。この接続はここでは前方参照にとどめ、後続の節で LQR と Kalman フィルタをそれぞれ動機づけ、式として導いた後に、推定値 $\hat{x}$ を状態フィードバックへ渡す構成を LQG として扱う。本節では、その準備として対象および推定器を線形として扱う。

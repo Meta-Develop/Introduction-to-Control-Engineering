@@ -29,8 +29,7 @@ $F_1(s)=\mathcal{L}\{f_1(t)\}$、$F_2(s)=\mathcal{L}\{f_2(t)\}$ が同じ領域�
 である。
 \end{theorem}
 
-\begin{derivation}
-定義へそのまま代入すると
+線形性は、ラプラス変換の定義にそのまま代入して確認できる。
 \begin{align}
   \mathcal{L}\{a f_1+b f_2\}
   &=\int_0^\infty \{a f_1(t)+b f_2(t)\}e^{-st}\,\dd t\\
@@ -39,7 +38,6 @@ $F_1(s)=\mathcal{L}\{f_1(t)\}$、$F_2(s)=\mathcal{L}\{f_2(t)\}$ が同じ領域�
   &=aF_1(s)+bF_2(s)
 \end{align}
 となる。
-\end{derivation}
 
 線形性により、入力または応答を複数の成分に分解した場合でも、各成分の変換を加算することで全体の変換が得られる。
 
@@ -57,7 +55,6 @@ $f$ が区分的に連続微分可能で、$f$ と $\dot{f}$ のラプラス変�
 である。
 \end{formula}
 
-\begin{derivation}
 定義より
 \begin{equation}
   \mathcal{L}\{\dot{f}\}=\int_0^\infty \dot{f}(t)e^{-st}\,\dd t
@@ -86,7 +83,6 @@ $f$ が区分的に連続微分可能で、$f$ と $\dot{f}$ のラプラス変�
   &=s\{sF(s)-f(0)\}-\dot{f}(0)\\
   &=s^2F(s)-sf(0)-\dot{f}(0).
 \end{align}
-\end{derivation}
 
 微分公式では、微分に対応する $s$ 倍の項に加えて初期値項が現れる。初期値が 0 でない場合、この項は零入力応答を構成する。
 
@@ -103,8 +99,7 @@ $f$ のラプラス変換を $F(s)$ とし、
 である。
 \end{formula}
 
-\begin{derivation}
-定義から始めると
+この積分公式は、定義から積分順序を入れ替えることで得られる。
 \begin{equation}
   \mathcal{L}\{h(t)\}
   =\int_0^\infty \left(\int_0^t f(\tau)\,\dd\tau\right)e^{-st}\,\dd t
@@ -120,7 +115,6 @@ $f$ のラプラス変換を $F(s)$ とし、
   &=\frac{1}{s}F(s).
 \end{align}
 したがって時間領域の累積は、$s$ 領域では $1/s$ 倍に対応する。
-\end{derivation}
 
 特に、時刻 $0$ から一定値 $u_0$ を加えるステップ状の信号では
 \begin{align}
@@ -160,8 +154,7 @@ $a\ge0$ とする。このとき
 を得る。
 \end{formula}
 
-\begin{derivation}
-定義に代入し、$\tau=t-a$ と置換する。
+時間移動の公式は、定義に代入し、$\tau=t-a$ と置換して確かめる。
 \begin{align}
   \mathcal{L}\{H(t-a)f(t-a)\}
   &=\int_0^\infty H(t-a)f(t-a)e^{-st}\,\dd t\\
@@ -171,7 +164,6 @@ $a\ge0$ とする。このとき
   &=e^{-as}F(s).
 \end{align}
 したがって、時間領域で $a$ 秒だけ遅らせる操作は、$s$ 領域では因子 $e^{-as}$ を掛ける操作に対応する。
-\end{derivation}
 
 時間移動の公式では、$H(t-a)$ を含めることが本質的である。$f(t-a)$ だけを書くと、$0\le t<a$ で $f$ の負時刻側を参照する形になり、一側ラプラス変換で扱う因果信号の仮定と合わない。制御の応答計算で遅れた入力を扱うときは、遅れた信号を $H(t-a)u_0(t-a)$ と書き、遅れる前の信号 $u_0$ が時刻 0 から定義された因果信号であることを明示する。
 
@@ -189,7 +181,6 @@ $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存
 となり、複素平面では周波数方向の移動として解釈できる。
 \end{formula}
 
-\begin{derivation}
 定義から
 \begin{align}
   \mathcal{L}\{e^{\beta t}f(t)\}
@@ -198,7 +189,6 @@ $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存
   &=F(s-\beta)
 \end{align}
 である。収束条件は、元の変換で複素変数を $s-\beta$ に置き換えた条件 $\operatorname{Re}(s-\beta)>\alpha$ になる。
-\end{derivation}
 
 \begin{example}[遅れたステップ入力に対する一次遅れ応答]
 一次遅れ系
@@ -211,8 +201,7 @@ $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存
   \tau\mathcal{L}\{\dot{y}\}+\mathcal{L}\{y\}
   &=K\mathcal{L}\{u\},\\
   \tau sY(s)+Y(s)&=KU(s),\\
-  (\tau s+1)Y(s)&=KU(s),\\
-  Y(s)&=\frac{K}{\tau s+1}U(s).
+  (\tau s+1)Y(s)&=KU(s).
 \end{align}
 入力が時刻 $a\ge0$ で大きさ $u_0$ へ変わる遅れたステップ
 \begin{equation}
@@ -225,17 +214,20 @@ $\beta$ を複素定数とする。$F(s)$ が $\operatorname{Re}s>\alpha$ で存
 である。したがって
 \begin{align}
   Y(s)
-  &=\frac{K}{\tau s+1}\frac{u_0e^{-as}}{s}\\
+  &=\frac{K}{\tau s+1}U(s)\\
   &=e^{-as}\frac{K u_0}{s(\tau s+1)}.
   \label{eq:first-order-delayed-step-laplace}
 \end{align}
 遅れ因子 $e^{-as}$ を除いた部分は
-\begin{equation}
+\begin{align}
   \frac{K u_0}{s(\tau s+1)}
-  =
+  &=
+  \frac{K u_0}{s}
+  -\frac{K u_0\tau}{\tau s+1}\\
+  &=
   \frac{K u_0}{s}
   -\frac{K u_0}{s+1/\tau}
-\end{equation}
+\end{align}
 である。\weq{constant-laplace} と、指数移動の公式を $f(t)=1$、$\beta=-1/\tau$ に適用して得られる
 \begin{equation}
   \mathcal{L}\{e^{-t/\tau}\}=\frac{1}{s+1/\tau}
@@ -272,7 +264,6 @@ $f(t)$ が $t=0$ で右連続で、ラプラス変換が十分大きな実数 $s
 が成り立つ。
 \end{theorem}
 
-\begin{derivation}
 正の実数 $s$ について
 \begin{equation}
   sF(s)=\int_0^\infty s f(t)e^{-st}\,\dd t
@@ -296,7 +287,6 @@ $s\to\infty$ とすると、固定した $\xi$ に対して $\xi/s\to0$ であ�
   \lim_{s\to\infty}sF(s)=f(0)\int_0^\infty e^{-\xi}\,\dd\xi=f(0)
 \end{equation}
 を得る。
-\end{derivation}
 
 初期値の定理では、$s\to\infty$ において重み $e^{-st}$ が時刻 $0$ 近傍へ集中することを用いている。
 
@@ -309,7 +299,6 @@ $f$ が区分的に連続微分可能で、$f(t)$ が有限の極限 $f_\infty$ 
 が成り立つ。
 \end{theorem}
 
-\begin{derivation}
 微分公式より
 \begin{equation}
   \mathcal{L}\{\dot{f}(t)\}=sF(s)-f(0)
@@ -330,7 +319,6 @@ $f$ が区分的に連続微分可能で、$f(t)$ が有限の極限 $f_\infty$ 
   \lim_{s\to0}sF(s)=f_\infty
 \end{equation}
 を得る。
-\end{derivation}
 
 最終値の定理には極の条件が必要である。$sF(s)$ が虚軸上に極を持つ場合には持続振動により時間極限が存在しない。$sF(s)$ が原点に極を持つ場合には出力が有界な最終値へ収束しない。
 
@@ -389,7 +377,6 @@ $F(s)=N(s)/D(s)$ が真にプロパーで、分母が互いに異なる一次因
 である。
 \end{formula}
 
-\begin{derivation}
 $F(s)$ を
 \begin{equation}
   F(s)=\frac{A_i}{s-p_i}+\sum_{\ell\neq i}\frac{A_\ell}{s-p_\ell}
@@ -399,7 +386,6 @@ $F(s)$ を
   (s-p_i)F(s)=A_i+\sum_{\ell\neq i}A_\ell\frac{s-p_i}{s-p_\ell}
 \end{equation}
 である。$s\to p_i$ とすると、右辺の和の各項は分子が 0 になるため消え、$A_i$ だけが残る。これが \weq{heaviside-simple-poles} である。
-\end{derivation}
 
 \begin{example}[単純な実極]
 \begin{equation}

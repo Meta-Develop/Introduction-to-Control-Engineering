@@ -69,7 +69,74 @@
 
 可制御行列は、倒立振子のように入力が直接すべての状態へ入らない系で重要になる。台車へ加える力はまず台車速度に作用し、力学的な結合を通じて振子角へ伝わる。この「何回 $A$ を通ると別の状態方向へ届くか」を、$B,AB,A^2B,\ldots$ が数えている。
 
-二状態の例では、$B$ は入力が瞬時に押す方向であり、$AB$ はその変化が対象の内部結合を一回通った後に現れる方向である。これらが平面上で同一直線に重なるなら、入力で作れる状態変化は一次元に閉じる。可観測性でも同様に、$C^\T$ は出力がその瞬間に測っている方向、$A^\T C^\T$ は出力微分に現れる方向を表す。後の図\ref{fig:state-space-geometry-examples} の右上パネルでは、この対応を同じ状態平面上で示す。
+二状態の例では、$B$ は入力が瞬時に押す方向であり、$AB$ はその変化が対象の内部結合を一回通った後に現れる方向である。これらが平面上で同一直線に重なるなら、入力で作れる状態変化は一次元に閉じる。可観測性でも同様に、$C^\T$ は出力がその瞬間に測っている方向、$A^\T C^\T$ は出力微分に現れる方向を表す。図\ref{fig:controllability-observability-examples} は、この対応を正規化した状態平面上で比較したものである。図の矢印は方向だけを表し、実際の状態量の単位やスケールは各モデルの状態定義に依存する。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.96\linewidth,bb=0 0 1512 1296]{figures/controllability_observability_examples.png}
+\caption{可制御性、可観測性、PBH 条件の幾何的な比較。左上は $A=\left[\begin{smallmatrix}0&1\\-2&-0.4\end{smallmatrix}\right]$、$B=\left[\begin{smallmatrix}0\\1\end{smallmatrix}\right]$ としたとき、$B$ と $AB$ が二次元平面を張り $\rank\mathcal{C}=2$ となる例を示す。右上は $B$ と $AB$ が同一直線上に残り、$x_2$ 方向が到達不能になるため $\rank\mathcal{C}=1$ へ落ちる例である。左下は $C=\left[\begin{smallmatrix}1&0\end{smallmatrix}\right]$ としたとき、$C^\T$ と $A^\T C^\T$ が二次元平面を張り $\rank\mathcal{O}=2$ となる例を示す。右下は $A=\operatorname{diag}(1,-2)$、$B=C^\T=e_2$ としたとき、不安定固有方向 $e_1$ が入力方向にも測定方向にも含まれず、$\lambda=1$ の PBH 行列ランクが $1<2$ へ低下する例である。}
+\label{fig:controllability-observability-examples}
+\end{figure}
+
+図\ref{fig:controllability-observability-examples} の各パネルは、矢印の幾何とランク計算が同じ判定を与えることを数値で示している。左上では
+\begin{equation}
+  A=\begin{bmatrix}0&1\\-2&-0.4\end{bmatrix},\qquad
+  B=\begin{bmatrix}0\\1\end{bmatrix},\qquad
+  AB=\begin{bmatrix}1\\-0.4\end{bmatrix}
+\end{equation}
+なので、
+\begin{equation}
+  \mathcal{C}=\begin{bmatrix}B&AB\end{bmatrix}
+  =\begin{bmatrix}0&1\\1&-0.4\end{bmatrix},\qquad
+  \rank\mathcal{C}=2
+\end{equation}
+である。二つの列は同一直線上になく、入力方向と一回内部結合を通った方向が平面全体を張る。右上では
+\begin{equation}
+  A=\begin{bmatrix}0.55&0\\0&-0.2\end{bmatrix},\qquad
+  B=\begin{bmatrix}1\\0\end{bmatrix},\qquad
+  AB=\begin{bmatrix}0.55\\0\end{bmatrix}
+\end{equation}
+となり、
+\begin{equation}
+  \mathcal{C}
+  =\begin{bmatrix}1&0.55\\0&0\end{bmatrix},\qquad
+  \rank\mathcal{C}=1
+\end{equation}
+である。到達可能部分空間は $x_1$ 軸だけに閉じ、$q=e_2$ 方向の成分は $q^\T B=q^\T AB=0$ のまま入力から外れる。
+
+左下の可観測な例では同じ $A$ に対して $C=\begin{bmatrix}1&0\end{bmatrix}$ とおくため、
+\begin{equation}
+  CA=\begin{bmatrix}0&1\end{bmatrix},\qquad
+  \mathcal{O}=\begin{bmatrix}C\\CA\end{bmatrix}
+  =\begin{bmatrix}1&0\\0&1\end{bmatrix},\qquad
+  \rank\mathcal{O}=2
+\end{equation}
+である。測定が直接見る方向 $C^\T$ と、出力微分に現れる方向 $A^\T C^\T$ が直交する二方向を作るので、初期状態の二成分を出力履歴から分けられる。
+
+右下では
+\begin{equation}
+  A=\operatorname{diag}(1,-2),\qquad
+  B=C^\T=e_2,\qquad C=\begin{bmatrix}0&1\end{bmatrix}
+\end{equation}
+であり、不安定固有方向は $e_1$、入力と測定が向く方向は安定固有方向 $e_2$ である。$\lambda=1$ では
+\begin{equation}
+  \begin{bmatrix}\lambda I-A&B\end{bmatrix}_{\lambda=1}
+  =
+  \begin{bmatrix}0&0&0\\0&3&1\end{bmatrix},\qquad
+  \begin{bmatrix}\lambda I-A\\C\end{bmatrix}_{\lambda=1}
+  =
+  \begin{bmatrix}0&0\\0&3\\0&1\end{bmatrix}
+\end{equation}
+となり、どちらの PBH 行列もランクは $1<2$ である。一方、$\lambda=-2$ では
+\begin{equation}
+  \begin{bmatrix}\lambda I-A&B\end{bmatrix}_{\lambda=-2}
+  =
+  \begin{bmatrix}-3&0&0\\0&0&1\end{bmatrix},\qquad
+  \begin{bmatrix}\lambda I-A\\C\end{bmatrix}_{\lambda=-2}
+  =
+  \begin{bmatrix}-3&0\\0&0\\0&1\end{bmatrix}
+\end{equation}
+となり、どちらもランクは $2$ である。したがって問題は安定な $-2$ モードではなく、不安定な $\lambda=1$ モードが入力にも出力にも現れない点にある。$e_1$ 方向では $q^\T B=0$ なので状態フィードバックを入れてもその極を左半平面へ移せず、$Ce_1=0$ なのでオブザーバ補正を入れてもその推定誤差モードを減衰させられない。この不安定な隠れ方向が、安定化可能性と検出可能性を同時に失わせる。
 
 \subsubsection{PBH 可制御性判別}
 

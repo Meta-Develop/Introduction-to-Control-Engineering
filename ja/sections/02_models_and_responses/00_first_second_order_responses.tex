@@ -48,14 +48,14 @@ ON--OFF の切替だけで操作すると、誤差が小さくなった後も入
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.86\linewidth,bb=0 0 1296 756]{figures/time_response_first_order.png}
+\includegraphics[width=\linewidth,bb=0 0 1296 756]{figures/time_response_first_order.png}
 \caption{正規化した一次遅れ応答。$y/(Ku_0)=1-e^{-t/\tau}$ において時定数 $\tau$ だけを変えており、各曲線は $t=\tau$ で $1-e^{-1}$ に達する。}
 \label{fig:first-order-time-response}
 \end{figure}
 
 \begin{figure}[tb]
 \centering
-\includegraphics[width=0.86\linewidth,bb=0 0 1296 756]{figures/time_response_second_order.png}
+\includegraphics[width=\linewidth,bb=0 0 1296 756]{figures/time_response_second_order.png}
 \caption{$\omega_n=2\,\mathrm{rad/s}$ を固定し、減衰比 $\zeta$ を変えた標準二次系の単位ステップ応答。減衰比により振動、オーバーシュート、整定の速さが変わる。}
 \label{fig:time-response-examples}
 \end{figure}
@@ -315,8 +315,7 @@ $\zeta>1$ なら二つの極は相異なる負の実数である。便宜上
 \weq{rise-time-first-crossing} は初回定常値到達時刻、\weq{peak-time} と \weq{maximum-overshoot} は標準二次系では厳密な式である。一方、整定時間の式は、減衰包絡 $e^{-\zeta\omega_n t}$ が $2\%$ または $5\%$ 程度まで小さくなる時刻を使った近似である。
 \end{formula}
 
-\begin{derivation}
-\weq{transient-normalized-step} の中括弧を一つの正弦波にまとめる。$\phi=\arccos\zeta$ とおくと、$\sin\phi=\sqrt{1-\zeta^2}$ であるから
+\weq{transient-normalized-step} の中括弧は、次のように一つの正弦波へまとめられる。$\phi=\arccos\zeta$ とおくと、$\sin\phi=\sqrt{1-\zeta^2}$ であるから
 \begin{align}
   \cos\omega_d t
   +\frac{\zeta}{\sqrt{1-\zeta^2}}\sin\omega_d t
@@ -379,7 +378,6 @@ $\zeta>1$ なら二つの極は相異なる負の実数である。便宜上
   t_s^{(0.05)}\simeq\frac{3}{\zeta\omega_n}
 \end{equation}
 となる。
-\end{derivation}
 
 \begin{example}[標準二次系の過渡仕様]
 単位ステップ入力に対する標準二次系

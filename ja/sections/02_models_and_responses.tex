@@ -1,5 +1,93 @@
 \section{古典制御と時間応答}
 
+床の上を走るロボット、温度がゆっくり変わる部屋、水を入れる水槽を観察すると、測定値は時刻とともに連続的に変化する。ロボットでは車輪の回転量から位置と向きを推定し、温度制御では温度計の値から加熱量を決め、水位制御では水面の高さから流入量を調整する。どの場合も、現在の値だけでなく、どのくらい速く目標へ近づくか、行き過ぎるか、外乱の後に元へ戻るかを時間のグラフとして確かめる必要がある。
+
+たとえば差動二輪ロボットでは、左右の車輪が少し進んだ量を測り、上から見た位置と向きを逐次更新する。時刻 $k$ の姿勢を
+\begin{equation}
+  q_k=\begin{bmatrix}x_k&y_k&\theta_k\end{bmatrix}^\T
+\end{equation}
+とし、車輪間隔を $b$、左車輪と右車輪の移動量をそれぞれ $\Delta s_L,\Delta s_R$ とする。図\ref{fig:mobile-robot-odometry} は、世界座標系の中でロボット本体座標系と車輪移動量が姿勢更新へ入る関係を示している。
+
+\begin{figure}[tb]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small,>=Latex]
+  \coordinate (origin) at (0,0);
+  \coordinate (posek) at (3.0,1.55);
+  \coordinate (posenext) at (6.0,3.0);
+  \def\heading{28}
+  \def\nextheading{44}
+
+  \draw[->,line width=0.45pt] (-0.3,0) -- (8.4,0) node[below] {$X$};
+  \draw[->,line width=0.45pt] (0,-0.3) -- (0,4.6) node[left] {$Y$};
+  \node[below left] at (origin) {$O$};
+
+  \draw[densely dashed,line width=0.45pt] (posek) -- (posenext)
+    node[midway,above,sloped] {車輪移動から推定した移動};
+  \draw[densely dashed,line width=0.35pt] (posek) -- (3.0,0)
+    node[below] {$x_k$};
+  \draw[densely dashed,line width=0.35pt] (posek) -- (0,1.55)
+    node[left] {$y_k$};
+
+  \draw[->,line width=0.45pt] ($(posek)+(0:0.55)$)
+    arc[start angle=0,end angle=\heading,radius=0.55];
+  \node at ($(posek)+(15:0.82)$) {$\theta_k$};
+  \draw[->,line width=0.45pt,densely dashed] ($(posek)+(\heading:1.25)$)
+    arc[start angle=\heading,end angle=\nextheading,radius=1.25];
+  \node at ($(posek)+(37:1.55)$) {$\Delta\theta$};
+
+  \begin{scope}[shift={(posek)},rotate=\heading]
+    \draw[fill=black!5,line width=0.45pt,rounded corners=1pt]
+      (-0.65,-0.38) rectangle (0.65,0.38);
+    \draw[fill=black!25,line width=0.4pt] (-0.35,0.43) rectangle (0.35,0.57);
+    \draw[fill=black!25,line width=0.4pt] (-0.35,-0.57) rectangle (0.35,-0.43);
+    \draw[->,line width=0.55pt] (0,0) -- (1.05,0) node[right] {$x_B$};
+    \draw[->,line width=0.55pt] (0,0) -- (0,0.9) node[above] {$y_B$};
+    \draw[<->,line width=0.4pt] (-0.78,-0.5) -- (-0.78,0.5)
+      node[midway,left] {$b$};
+    \draw[->,line width=0.45pt] (0.42,0.50) -- (1.18,0.50)
+      node[right] {$\Delta s_L$};
+    \draw[->,line width=0.45pt] (0.42,-0.50) -- (1.45,-0.50)
+      node[right] {$\Delta s_R$};
+    \node[align=center] at (0,-0.95) {本体座標系\\$\mathcal{B}_k$};
+  \end{scope}
+
+  \fill (posek) circle (1.6pt);
+  \node[anchor=south east,align=right] at ($(posek)+(-0.15,0.15)$)
+    {$q_k=[x_k,y_k,\theta_k]^\T$};
+  \fill (posenext) circle (1.6pt);
+  \node[anchor=west,align=left] at ($(posenext)+(0.15,0.05)$)
+    {$q_{k+1}$};
+
+  \node[draw,align=left,inner sep=4pt,minimum width=3.0cm] at (6.4,0.9)
+    {測定値\\$\Delta s_L,\Delta s_R$\\$\Longrightarrow$\\姿勢更新};
+\end{tikzpicture}%
+}
+\caption{差動二輪ロボットの上面図とオドメトリ更新。左右車輪の移動量から、世界座標系における位置 $(x_k,y_k)$ と向き $\theta_k$ を更新する。}
+\label{fig:mobile-robot-odometry}
+\end{figure}
+
+左右の車輪移動量から、ロボット中心の移動量と向きの変化を
+\begin{align}
+  \Delta s&=\frac{\Delta s_R+\Delta s_L}{2},
+  \label{eq:odometry-increments}\\
+  \Delta\theta&=\frac{\Delta s_R-\Delta s_L}{b}
+\end{align}
+と近似する。小さな時間刻みでは、その区間の代表的な向きを
+\begin{equation}
+  \theta_k+\frac{\Delta\theta}{2}
+\end{equation}
+とみなすと、姿勢更新は
+\begin{align}
+  x_{k+1}&=x_k+\Delta s\cos\left(\theta_k+\frac{\Delta\theta}{2}\right),\\
+  y_{k+1}&=y_k+\Delta s\sin\left(\theta_k+\frac{\Delta\theta}{2}\right),\\
+  \theta_{k+1}&=\theta_k+\Delta\theta
+  \label{eq:odometry-pose-update}
+\end{align}
+となる。この式は、測定された一つ一つの変化量を足し込みながら状態を更新する最も基本的な例である。ただし、車輪の滑り、センサ誤差、床面の凹凸があると、推定した位置は時間とともにずれる。したがって制御では、全状態を扱う前に、まず位置、角度、温度、水位、偏差のような一つの測定成分が時間に対してどのように応答するかを調べる必要がある。
+
+この章では、そのための最小単位として一次遅れ、二次遅れ、ラプラス変換、伝達関数、ブロック線図、閉ループ応答を扱う。時間応答の速さは極の位置と結び付き、外乱やノイズの入り方はブロック線図で区別される。ロボットの全姿勢や複数の内部状態を同時に扱う方法は後の状態空間表現で扱うが、ここでは一つの出力または誤差の時間応答を正確に読むことを出発点にする。
+
 \input{sections/02_models_and_responses/00_first_second_order_responses}
 \input{sections/02_models_and_responses/01_laplace_transfer_functions}
 \input{sections/02_models_and_responses/02_block_diagrams_closed_loop}

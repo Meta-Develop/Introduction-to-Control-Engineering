@@ -156,7 +156,21 @@
   y(t)&=\begin{bmatrix}1&0\end{bmatrix}x(t)
   \label{eq:msd-physical-realization}
 \end{align}
-となる。この状態空間モデルから伝達関数を計算する。ここでは
+となる。
+
+\begin{derivation}
+同じモデルであることは、伝達関数を計算する前に状態を消去しても確かめられる。ここでは固定端に対する線形ばねと線形粘性ダンパを仮定し、$M$ の単位を $\mathrm{kg}$、$c$ の単位を $\mathrm{N\,s/m}$、$k$ の単位を $\mathrm{N/m}$、入力 $u$ の単位を $\mathrm{N}$、変位 $q$ と出力 $y$ の単位を $\mathrm{m}$ とする。出力式から $y=x_1=q$、したがって $\dot{y}=x_2$ である。状態方程式の第2行を用いると
+\begin{align}
+  \ddot{y}
+  &=\dot{x}_2
+  =
+  -\frac{k}{M}x_1-\frac{c}{M}x_2+\frac{1}{M}u,\\
+  M\ddot{y}+c\dot{y}+ky&=u
+\end{align}
+となり、入出力微分方程式 \weq{msd-io-for-realization} に戻る。逆向きには、入出力式に $x_1=y$、$x_2=\dot{y}$ を置けば同じ状態方程式を得る。この消去で零初期状態の入力から出力への写像は保たれるが、$x_2$ が速度 $\mathrm{m/s}$ であること、初期速度が作る自然応答、運動エネルギーと位置エネルギーの分担は伝達関数だけからは明示されない。内部状態を消すとは、外から見える変位応答を残し、内部に蓄えられた情報の名前と単位を隠す操作である。
+\end{derivation}
+
+この状態空間モデルから伝達関数を計算する。ここでは
 \begin{equation}
   sI-A=
   \begin{bmatrix}

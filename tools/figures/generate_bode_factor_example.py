@@ -33,6 +33,11 @@ BREAKS = (
     (ZERO_W, r"実零点 $\omega_z=2$"),
     (OMEGA_N, r"二次極 $\omega_n=20$"),
 )
+PHASE_WINDOWS = (
+    (0.1 * POLE_W, 10.0 * POLE_W, r"$\omega_p:-90^\circ$"),
+    (0.1 * ZERO_W, 10.0 * ZERO_W, r"$\omega_z:+90^\circ$"),
+    (0.1 * OMEGA_N, 10.0 * OMEGA_N, r"$\omega_n:-180^\circ$"),
+)
 
 
 def make_logspace(start_exp: float, stop_exp: float, count: int):
@@ -157,6 +162,10 @@ def main() -> None:
     phase = unwrapped_phase_deg(response)
     gain_asymptote = asymptotic_gain_db(omega)
     phase_asymptote = asymptotic_phase_deg(omega)
+    exact_color = "#1f77b4"
+    asymptote_color = "#d62728"
+    break_color = "#4b4b4b"
+    transition_color = "#5f6368"
 
     plt.rcParams.update(
         {
@@ -175,32 +184,35 @@ def main() -> None:
         2, 1, figsize=(7.2, 5.6), sharex=True, constrained_layout=False
     )
 
-    gain_ax.semilogx(omega, gain, color="#1f77b4", linewidth=2.0, label="厳密")
+    gain_ax.semilogx(omega, gain, color=exact_color, linewidth=2.2, label="厳密")
     gain_ax.semilogx(
         omega,
         gain_asymptote,
-        color="#d62728",
+        color=asymptote_color,
         linestyle="--",
-        linewidth=1.6,
+        linewidth=1.8,
         label="漸近",
     )
     gain_ax.set_ylabel("ゲイン [dB]")
+    gain_ax.set_ylim(-145.0, 65.0)
+    gain_ax.set_axisbelow(True)
     gain_ax.grid(True, which="both", color="#d0d0d0", linewidth=0.7, alpha=0.7)
     gain_ax.legend(loc="upper right")
     gain_ax.text(
         0.015,
         0.06,
         (
-            r"$L(s)=5\dfrac{1+s/\omega_z}{(s/\omega_0)(1+s/\omega_p)"
-            r"\{1+2\zeta s/\omega_n+(s/\omega_n)^2\}}$"
+            r"$L(s)=5\dfrac{1+s/\omega_z}{(s/\omega_0)(1+s/\omega_p)F_2(s)}$"
             "\n"
-            r"$\omega_0=1,\ \omega_p=0.2,\ \omega_z=2,\ "
+            r"$F_2(s)=1+2\zeta s/\omega_n+(s/\omega_n)^2$"
+            "\n"
+            r"$\omega_0=1,\ K=5,\ \omega_p=0.2,\ \omega_z=2,\ "
             r"\omega_n=20\ \mathrm{rad/s},\ \zeta=0.5$"
         ),
         transform=gain_ax.transAxes,
         va="bottom",
         ha="left",
-        fontsize=7.4,
+        fontsize=8.0,
         bbox={
             "boxstyle": "round,pad=0.25",
             "facecolor": "white",
@@ -209,35 +221,87 @@ def main() -> None:
         },
     )
 
-    phase_ax.semilogx(omega, phase, color="#1f77b4", linewidth=2.0, label="厳密")
+    phase_ax.semilogx(omega, phase, color=exact_color, linewidth=2.2, label="厳密")
     phase_ax.semilogx(
         omega,
         phase_asymptote,
-        color="#d62728",
+        color=asymptote_color,
         linestyle="--",
-        linewidth=1.6,
+        linewidth=1.8,
         label="漸近",
     )
     phase_ax.set_ylabel("位相 [deg]")
     phase_ax.set_xlabel(r"角周波数 $\omega$ [rad/s]")
+    phase_ax.set_ylim(-292.0, -82.0)
+    phase_ax.set_yticks([-90, -120, -150, -180, -210, -240, -270])
+    phase_ax.set_axisbelow(True)
     phase_ax.grid(True, which="both", color="#d0d0d0", linewidth=0.7, alpha=0.7)
-    phase_ax.legend(loc="lower left")
+    phase_ax.legend(loc="upper right")
 
     for ax in (gain_ax, phase_ax):
         for frequency, label in BREAKS:
-            ax.axvline(frequency, color="#555555", linestyle=":", linewidth=1.0)
+            ax.axvline(
+                frequency,
+                color=break_color,
+                linestyle=":",
+                linewidth=1.1,
+                alpha=0.8,
+                zorder=0,
+            )
 
     for frequency, label in BREAKS:
         gain_ax.text(
             frequency,
-            0.98,
+            1.015,
             label,
             transform=gain_ax.get_xaxis_transform(),
-            rotation=90,
-            va="top",
-            ha="right",
-            color="#444444",
+            va="bottom",
+            ha="center",
+            color=break_color,
             fontsize=8,
+            clip_on=False,
+            bbox={
+                "boxstyle": "round,pad=0.18",
+                "facecolor": "white",
+                "alpha": 0.9,
+                "edgecolor": "none",
+            },
+        )
+
+    for row, (start, stop, label) in enumerate(PHASE_WINDOWS):
+        y = -286.0 + 6.0 * row
+        phase_ax.hlines(
+            y,
+            start,
+            stop,
+            color=transition_color,
+            linewidth=1.8,
+            alpha=0.9,
+            zorder=3,
+        )
+        phase_ax.vlines(
+            (start, stop),
+            y - 1.7,
+            y + 1.7,
+            color=transition_color,
+            linewidth=1.2,
+            alpha=0.9,
+            zorder=3,
+        )
+        phase_ax.text(
+            math.sqrt(start * stop),
+            y + 2.0,
+            label,
+            va="bottom",
+            ha="center",
+            color=transition_color,
+            fontsize=8,
+            bbox={
+                "boxstyle": "round,pad=0.12",
+                "facecolor": "white",
+                "alpha": 0.86,
+                "edgecolor": "none",
+            },
         )
 
     finalize_figure(fig, output_path)

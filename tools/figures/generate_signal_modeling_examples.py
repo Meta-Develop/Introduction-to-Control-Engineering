@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate signal-role, linearization, and Euler-step examples."""
+"""Generate linearization and Euler-step examples."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 try:
     import numpy as np
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
-    raise SystemExit("numpy is required to generate the signal-modeling figure") from exc
+    raise SystemExit("numpy is required to generate the signal-modeling figures") from exc
 
 try:
     import matplotlib
@@ -16,9 +16,8 @@ try:
     matplotlib.use("Agg")
     from matplotlib import font_manager
     import matplotlib.pyplot as plt
-    from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 except ImportError as exc:  # pragma: no cover - figure generation requires it.
-    raise SystemExit("matplotlib is required to generate the signal-modeling figure") from exc
+    raise SystemExit("matplotlib is required to generate the signal-modeling figures") from exc
 
 from figure_style import finalize_figure
 
@@ -66,113 +65,6 @@ def configure_fonts() -> None:
     plt.rcParams["axes.unicode_minus"] = False
 
 
-def add_box(
-    axis,
-    xy,
-    width,
-    height,
-    text,
-    facecolor,
-    edgecolor="#333333",
-    fontsize=10,
-) -> None:
-    box = FancyBboxPatch(
-        xy,
-        width,
-        height,
-        boxstyle="round,pad=0.018,rounding_size=0.018",
-        linewidth=1.2,
-        edgecolor=edgecolor,
-        facecolor=facecolor,
-    )
-    axis.add_patch(box)
-    axis.text(
-        xy[0] + width / 2,
-        xy[1] + height / 2,
-        text,
-        ha="center",
-        va="center",
-        fontsize=fontsize,
-        linespacing=1.35,
-    )
-
-
-def add_arrow(axis, start, end, label, color="#333333", text_offset=(0.0, 0.0)) -> None:
-    arrow = FancyArrowPatch(
-        start,
-        end,
-        arrowstyle="-|>",
-        mutation_scale=13,
-        linewidth=1.5,
-        color=color,
-        shrinkA=4,
-        shrinkB=4,
-    )
-    axis.add_patch(arrow)
-    if label:
-        axis.text(
-            (start[0] + end[0]) / 2 + text_offset[0],
-            (start[1] + end[1]) / 2 + text_offset[1],
-            label,
-            ha="center",
-            va="center",
-            fontsize=9,
-            color=color,
-            bbox={"boxstyle": "round,pad=0.18", "facecolor": "white", "edgecolor": "none"},
-        )
-
-
-def draw_signal_path(axis) -> None:
-    axis.set_axis_off()
-    axis.set_xlim(0.0, 1.0)
-    axis.set_ylim(0.0, 1.0)
-    axis.set_title("Signal roles and entry points", loc="left", fontweight="bold")
-
-    add_box(axis, (0.04, 0.62), 0.13, 0.18, "Reference\n$r=25\\,^{\\circ}$C", "#eef5ff")
-    add_box(axis, (0.22, 0.62), 0.15, 0.18, "Controller\n$e=r-y_m$", "#f8f0ff")
-    add_box(axis, (0.43, 0.62), 0.17, 0.18, "Actuator\n$u_c\\to u$", "#fff5e8")
-    add_box(
-        axis,
-        (0.66, 0.56),
-        0.20,
-        0.30,
-        "Plant\nstate $x=T$\noutput $y=T$",
-        "#edf7ed",
-    )
-    add_box(axis, (0.69, 0.18), 0.17, 0.17, "Sensor\n$y_m=y+n_T$", "#f7f7f7")
-
-    add_arrow(axis, (0.17, 0.71), (0.22, 0.71), "", "#1f77b4")
-    add_arrow(axis, (0.37, 0.71), (0.43, 0.71), "command $u_c$ [-]", "#9467bd", (0.0, -0.075))
-    add_arrow(axis, (0.60, 0.71), (0.66, 0.71), "input $u$ [W]", "#ff7f0e", (0.0, -0.075))
-    add_arrow(axis, (0.86, 0.68), (0.96, 0.68), "output $y$ [$^{\\circ}$C]", "#2ca02c", (0.0, 0.07))
-    add_arrow(axis, (0.78, 0.56), (0.78, 0.35), "", "#2ca02c")
-    add_arrow(axis, (0.69, 0.27), (0.37, 0.62), "measurement $y_m$ [$^{\\circ}$C]", "#555555", (-0.04, -0.05))
-    add_arrow(axis, (0.74, 0.93), (0.74, 0.86), "disturbance $d=(T_a,d_q)$\n[$^{\\circ}$C, W]", "#d62728", (-0.02, 0.02))
-    add_arrow(axis, (0.55, 0.24), (0.69, 0.27), "noise $n_T$ [$^{\\circ}$C]", "#8c564b", (-0.01, -0.06))
-
-    axis.text(
-        0.04,
-        0.19,
-        (
-            "Example: $R_{th}=2.0$ K/W, $C_{th}=10$ J/K, "
-            "$\\eta=0.5$ W/V$^2$, $T_a=20\\,^{\\circ}$C"
-        ),
-        ha="left",
-        va="center",
-        fontsize=9,
-        color="#333333",
-    )
-    axis.text(
-        0.04,
-        0.08,
-        r"Plant equation: $C_{th}\dot{T}=-(T-T_a)/R_{th}+u+d_q,\quad y_m=y+n_T$",
-        ha="left",
-        va="center",
-        fontsize=9,
-        color="#333333",
-    )
-
-
 def draw_linearization(axis) -> None:
     deviations = np.linspace(-1.6, 1.6, 401)
     exact = ETA * ((V_E + deviations) ** 2 - V_E**2) / C_TH
@@ -208,7 +100,7 @@ def draw_linearization(axis) -> None:
         ha="left",
         va="bottom",
         fontsize=9,
-        bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "#bbbbbb"},
+        bbox={"facecolor": "white", "edgecolor": "#bbbbbb"},
     )
 
 
@@ -263,14 +155,13 @@ def draw_euler_step(axis) -> None:
         ha="right",
         va="top",
         fontsize=9,
-        bbox={"boxstyle": "round,pad=0.25", "facecolor": "white", "edgecolor": "#bbbbbb"},
+        bbox={"facecolor": "white", "edgecolor": "#bbbbbb"},
     )
 
 
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     output_dir = repo_root / "ja" / "figures"
-    paths_output_path = output_dir / "signal_modeling_paths.png"
     linearization_output_path = output_dir / "signal_modeling_linearization.png"
     euler_output_path = output_dir / "signal_modeling_euler_step.png"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -286,13 +177,6 @@ def main() -> None:
             "savefig.dpi": 180,
         }
     )
-
-    paths_fig, signal_axis = plt.subplots(figsize=(8.0, 3.4), constrained_layout=False)
-    draw_signal_path(signal_axis)
-    paths_fig.subplots_adjust(left=0.02, right=0.99, bottom=0.05, top=0.98)
-    finalize_figure(paths_fig, paths_output_path, layout="none")
-    plt.close(paths_fig)
-    print(paths_output_path)
 
     linearization_fig, linearization_axis = plt.subplots(
         figsize=(7.2, 4.2), constrained_layout=False

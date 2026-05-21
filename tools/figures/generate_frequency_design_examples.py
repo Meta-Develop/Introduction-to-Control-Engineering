@@ -29,6 +29,14 @@ ROOT_K_MAX = 95.0
 SENSITIVITY_K_VALUES = (0.3, 1.0, 3.0)
 
 
+PANEL_BOX = {
+    "boxstyle": "round,pad=0.25",
+    "facecolor": "white",
+    "alpha": 0.9,
+    "edgecolor": "#bbbbbb",
+}
+
+
 def nyquist_omega() -> np.ndarray:
     negative = -np.geomspace(80.0, 0.01, 700)
     positive = np.geomspace(0.01, 80.0, 700)
@@ -80,13 +88,28 @@ def add_curve_arrow(ax, x_values, y_values, index: int, color: str) -> None:
     )
 
 
+def add_panel_label(ax, label: str, text: str) -> None:
+    ax.text(
+        0.03,
+        0.97,
+        f"{label} {text}",
+        transform=ax.transAxes,
+        ha="left",
+        va="top",
+        fontsize=8.5,
+        weight="bold",
+        bbox=PANEL_BOX,
+        zorder=8,
+    )
+
+
 def plot_nyquist(ax) -> None:
     omega = nyquist_omega()
     colors = ("#1f77b4", "#ff7f0e", "#2ca02c")
     labels = (
-        r"$K=0.6$: $Z=1$",
-        r"$K=1.0$: 境界",
-        r"$K=2.0$: $Z=0$",
+        r"$K=0.6$: 不安定",
+        r"$K=1.0$: 限界",
+        r"$K=2.0$: 安定",
     )
 
     for gain, color, label in zip(NYQUIST_K_VALUES, colors, labels):
@@ -94,13 +117,22 @@ def plot_nyquist(ax) -> None:
         ax.plot(response.real, response.imag, color=color, linewidth=1.8, label=label)
         start = response[0]
         ax.plot(start.real, start.imag, marker="o", color=color, markersize=3.0)
+        arrow_index = 470 if gain < 1.0 else 430
+        add_curve_arrow(ax, response.real, response.imag, arrow_index, color)
 
     response = unstable_first_order_loop(omega, 2.0)
-    add_curve_arrow(ax, response.real, response.imag, 455, "#2ca02c")
     add_curve_arrow(ax, response.real, response.imag, 865, "#2ca02c")
 
     ax.scatter([-1.0], [0.0], marker="x", s=90, color="#d62728", linewidths=2.0, zorder=5)
     ax.text(-1.0, -0.14, r"$-1$", color="#d62728", ha="center", va="top", fontsize=9)
+    ax.annotate(
+        r"$\omega:-\infty\to+\infty$",
+        xy=(-1.92, 0.34),
+        xytext=(-2.28, 0.78),
+        arrowprops={"arrowstyle": "->", "color": "#444444", "linewidth": 1.0},
+        color="#444444",
+        fontsize=8,
+    )
     ax.axhline(0.0, color="#777777", linewidth=0.8)
     ax.axvline(0.0, color="#777777", linewidth=0.8)
     ax.set_aspect("equal", adjustable="box")
@@ -111,20 +143,16 @@ def plot_nyquist(ax) -> None:
     ax.set_title(r"(a) ナイキスト曲線, $L_K(s)=K/(s-1)$")
     ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
     ax.legend(loc="upper right", fontsize=7.2)
+    add_panel_label(ax, "(a)", r"Nyquist: $K/(s-1)$")
     ax.text(
         0.03,
         0.05,
-        r"$P=1$" "\n" r"$K>1$: $-1$ を反時計回りに1周",
+        r"$P=1$" "\n" r"$K>1$: $N=-1$, $Z=N+P=0$",
         transform=ax.transAxes,
         ha="left",
         va="bottom",
         fontsize=8,
-        bbox={
-            "boxstyle": "round,pad=0.25",
-            "facecolor": "white",
-            "alpha": 0.88,
-            "edgecolor": "#bbbbbb",
-        },
+        bbox=PANEL_BOX,
     )
 
 
@@ -134,6 +162,7 @@ def plot_root_locus(ax) -> None:
     stable = gains <= ROOT_K_LIMIT
 
     ax.axvspan(-5.2, 0.0, color="#e8f2fb", alpha=0.65, label="安定半平面")
+    ax.axvspan(0.0, 1.4, color="#fdeaea", alpha=0.45, label="不安定半平面")
     ax.axvline(0.0, color="#777777", linewidth=0.9)
     ax.axhline(0.0, color="#777777", linewidth=0.8)
 
@@ -158,6 +187,8 @@ def plot_root_locus(ax) -> None:
     ax.scatter([0.0, 0.0], [crossing, -crossing], marker="o", s=45, color="#d62728", zorder=5)
     ax.text(0.10, crossing, r"$K=48$", color="#d62728", va="bottom", fontsize=8)
     ax.text(0.10, -crossing, r"$K=48$", color="#d62728", va="top", fontsize=8)
+    ax.text(-4.55, 3.15, r"安定: $0<K<48$", color="#174a7c", fontsize=8)
+    ax.text(0.48, 0.82, r"不安定: $K>48$", color="#b22222", fontsize=8, rotation=90)
 
     for gain in (8.0, 24.0):
         root_set = roots_for_gain(gain)
@@ -170,12 +201,19 @@ def plot_root_locus(ax) -> None:
         xytext=(roots[190, 2].real, roots[190, 2].imag),
         arrowprops={"arrowstyle": "->", "color": "#1f77b4", "linewidth": 1.2},
     )
+    ax.annotate(
+        "",
+        xy=(roots[170, 1].real, roots[170, 1].imag),
+        xytext=(roots[115, 1].real, roots[115, 1].imag),
+        arrowprops={"arrowstyle": "->", "color": "#1f77b4", "linewidth": 1.2},
+    )
     ax.set_xlim(-4.8, 1.25)
     ax.set_ylim(-3.8, 3.8)
     ax.set_xlabel(r"実部 $\sigma$ [1/s]")
     ax.set_ylabel(r"虚部 [rad/s]")
     ax.set_title(r"(b) 根軌跡, $G(s)=1/\{s(s+2)(s+4)\}$")
     ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
+    add_panel_label(ax, "(b)", r"Root locus: $1/\{s(s+2)(s+4)\}$")
     ax.text(
         0.03,
         0.05,
@@ -184,12 +222,7 @@ def plot_root_locus(ax) -> None:
         ha="left",
         va="bottom",
         fontsize=8,
-        bbox={
-            "boxstyle": "round,pad=0.25",
-            "facecolor": "white",
-            "alpha": 0.88,
-            "edgecolor": "#bbbbbb",
-        },
+        bbox=PANEL_BOX,
     )
 
 
@@ -197,6 +230,7 @@ def plot_sensitivity(ax) -> None:
     omega = np.logspace(-2.0, 2.0, 1000)
     colors = ("#1f77b4", "#ff7f0e", "#2ca02c")
     ms_lines = []
+    peak_points = []
 
     for gain, color in zip(SENSITIVITY_K_VALUES, colors):
         sensitivity, complementary = sensitivity_response(omega, gain)
@@ -217,12 +251,34 @@ def plot_sensitivity(ax) -> None:
             linestyle="--",
             label=rf"$|T|$, $K={gain:g}$",
         )
-        ms_lines.append(rf"$K={gain:g}$: $M_s={np.max(sensitivity_db):.1f}$ dB")
+        peak_index = int(np.argmax(sensitivity_db))
+        peak_points.append((omega[peak_index], sensitivity_db[peak_index], color))
+        ms_lines.append(rf"$K={gain:g}$: $M_s={sensitivity_db[peak_index]:.1f}$ dB")
 
     ax.axhline(0.0, color="#777777", linewidth=0.8)
     ax.axvspan(0.01, 0.18, color="#e8f2fb", alpha=0.55)
-    ax.text(0.014, -34.0, "外乱抑制\n低周波域", fontsize=8, color="#174a7c")
-    ax.text(16.0, -13.0, "ノイズ・未モデル\n高周波域", fontsize=8, color="#555555")
+    ax.axvspan(6.0, 100.0, color="#f3f3f3", alpha=0.55)
+    for peak_omega, peak_db, color in peak_points:
+        ax.scatter([peak_omega], [peak_db], s=24, color=color, zorder=5)
+    ax.annotate(
+        r"$K\uparrow$: 低周波 $|S|\downarrow$",
+        xy=(0.055, -30.0),
+        xytext=(0.035, -18.0),
+        arrowprops={"arrowstyle": "->", "color": "#174a7c", "linewidth": 1.0},
+        color="#174a7c",
+        fontsize=8,
+    )
+    ax.annotate(
+        r"$K\uparrow$: $M_s\uparrow$, $|T|$帯域$\uparrow$",
+        xy=(1.55, 5.0),
+        xytext=(0.22, 4.7),
+        arrowprops={"arrowstyle": "->", "color": "#444444", "linewidth": 1.0},
+        color="#444444",
+        fontsize=8,
+        bbox=PANEL_BOX,
+    )
+    ax.text(0.014, -37.0, "外乱抑制\n低周波域", fontsize=8, color="#174a7c")
+    ax.text(17.0, -13.0, "ノイズ・未モデル\n高周波域", fontsize=8, color="#555555")
     ax.set_xlim(0.01, 100.0)
     ax.set_ylim(-42.0, 16.0)
     ax.set_xlabel(r"角周波数 $\omega$ [rad/s]")
@@ -230,6 +286,7 @@ def plot_sensitivity(ax) -> None:
     ax.set_title(r"(c) 感度関数のトレードオフ, $L_K(s)=K/\{s(s+1)\}$")
     ax.grid(True, which="both", color="#d0d0d0", linewidth=0.7, alpha=0.7)
     ax.legend(loc="upper right", ncol=3, fontsize=7.1)
+    add_panel_label(ax, "(c)", r"Sensitivity tradeoff: $K/\{s(s+1)\}$")
     ax.text(
         0.03,
         0.05,
@@ -238,12 +295,7 @@ def plot_sensitivity(ax) -> None:
         ha="left",
         va="bottom",
         fontsize=8,
-        bbox={
-            "boxstyle": "round,pad=0.25",
-            "facecolor": "white",
-            "alpha": 0.88,
-            "edgecolor": "#bbbbbb",
-        },
+        bbox=PANEL_BOX,
     )
 
 

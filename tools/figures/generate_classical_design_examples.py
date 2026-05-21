@@ -305,46 +305,94 @@ def plot_pi_windup(response_ax, input_ax) -> None:
     response_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
     response_ax.legend(loc="upper right", fontsize=7.4)
 
+    input_ax.axhline(
+        PID_U_MAX,
+        color="#555555",
+        linestyle=":",
+        linewidth=1.0,
+        label=r"$u_{\max}$",
+    )
+    input_ax.axhline(
+        PID_U_MIN,
+        color="#555555",
+        linestyle=":",
+        linewidth=1.0,
+        label=r"$u_{\min}$",
+    )
+    input_ax.plot(
+        time,
+        without_aw["calculated"],
+        color="#d62728",
+        linewidth=1.7,
+        label=r"なし: $u_c$",
+    )
     input_ax.plot(
         time,
         without_aw["control"],
         color="#d62728",
-        linewidth=1.8,
-        label=r"$u$, なし",
-    )
-    input_ax.plot(
-        time,
-        with_aw["control"],
-        color="#1f77b4",
-        linewidth=1.8,
-        label=r"$u$, バック計算",
+        linewidth=1.5,
+        linestyle="-.",
+        label=r"なし: $u$",
     )
     input_ax.plot(
         time,
         without_aw["integral"],
         color="#d62728",
-        linewidth=1.4,
+        linewidth=1.35,
         linestyle="--",
-        label=r"$\eta$, なし",
+        alpha=0.82,
+        label=r"なし: $\eta$",
+    )
+    input_ax.plot(
+        time,
+        with_aw["calculated"],
+        color="#1f77b4",
+        linewidth=1.7,
+        label=r"バック: $u_c$",
+    )
+    input_ax.plot(
+        time,
+        with_aw["control"],
+        color="#1f77b4",
+        linewidth=1.5,
+        linestyle="-.",
+        label=r"バック: $u$",
     )
     input_ax.plot(
         time,
         with_aw["integral"],
         color="#1f77b4",
-        linewidth=1.4,
+        linewidth=1.35,
         linestyle="--",
-        label=r"$\eta$, バック計算",
+        alpha=0.82,
+        label=r"バック: $\eta$",
     )
-    input_ax.axhline(PID_U_MAX, color="#777777", linestyle=":", linewidth=1.0)
-    input_ax.axhline(PID_U_MIN, color="#777777", linestyle=":", linewidth=1.0)
     input_ax.axvline(PID_REFERENCE_SWITCH, color="#777777", linestyle="--", linewidth=1.0)
-    input_ax.set_title(r"(d) 飽和入力と積分状態")
+    input_ax.text(
+        PID_TIME_STOP - 0.25,
+        PID_U_MAX + 0.08,
+        r"$u_{\max}=1$",
+        ha="right",
+        va="bottom",
+        fontsize=8,
+        color="#444444",
+    )
+    input_ax.text(
+        PID_TIME_STOP - 0.25,
+        PID_U_MIN - 0.08,
+        r"$u_{\min}=0$",
+        ha="right",
+        va="top",
+        fontsize=8,
+        color="#444444",
+    )
+    input_ax.set_title(r"(d) 計算入力 $u_c$ と適用入力 $u$")
     input_ax.set_xlabel(r"時間 $t$ [s]")
     input_ax.set_ylabel(r"入力・積分状態 [-]")
     input_ax.set_xlim(0.0, PID_TIME_STOP)
-    input_ax.set_ylim(-0.55, 6.2)
+    input_ax.set_ylim(-0.9, 7.05)
     input_ax.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.7)
-    input_ax.legend(loc="upper right", ncol=2, fontsize=7.0)
+    input_ax.legend(loc="upper right", ncol=2, fontsize=6.2, framealpha=0.88)
 
 
 def main() -> None:

@@ -1,50 +1,8 @@
 \subsection{平衡点、偏差変数、線形化}
 
-ロボットアームをある姿勢の近くで動かす、熱板をある温度の近くに保つ、モータをある回転速度の近くで使う、という設計では、対象が取りうるすべての状態を同じ精度で表す必要はない。選んだ動作点の近くで、位置や温度が少しずれたときに変化率がどれだけ変わるか、入力を少し増やしたときに速度や温度の変化率がどれだけ変わるか、という局所的な入力効果の傾きがまず必要になる。制御器はこの傾きを使って、小さなずれを小さな入力変更で打ち消す。
+一定速度で回るモータ、一定温度に保つ熱系、一定水位に保つタンクのように、制御対象は選んだ定常条件の近くで運転されることが多い。この場合、設計で必要になるのは絶対値そのものだけではなく、測定値が目標とする定常条件からどれだけ外れ、その小さな偏差に入力変更がどの程度効くかである。非線形モデルを全領域で扱う代わりに、まず基準となる動作点を定め、その点からの偏差を変数に取り直し、動作点近傍で有効な局所モデルを構成する。
 
-最初は状態も入力も 1 つだけの系
-\begin{equation}
-  \dot{x}=f(x,u)
-\end{equation}
-で考える。基準にしたい値を $x_e$、その値を保つ一定入力を $u_e$ とする。もしその点で状態が止まるなら
-\begin{equation}
-  f(x_e,u_e)=0
-  \label{eq:scalar-equilibrium-condition}
-\end{equation}
-である。実際の状態と入力がこの基準から少しずれているとき、
-\begin{equation}
-  x=x_e+\tilde{x},
-  \qquad
-  u=u_e+\tilde{u}
-\end{equation}
-と書く。$x_e$ は一定値なので $\dot{x}=\dot{\tilde{x}}$ であり、元の式へ代入すると
-\begin{equation}
-  \dot{\tilde{x}}=f(x_e+\tilde{x},u_e+\tilde{u})
-\end{equation}
-となる。ここで基準点では \eqref{eq:scalar-equilibrium-condition} が成り立つため、同じ 0 を引いて
-\begin{equation}
-  \dot{\tilde{x}}
-  =f(x_e+\tilde{x},u_e+\tilde{u})-f(x_e,u_e)
-\end{equation}
-と書ける。この差は、点 $(x_e,u_e)$ の近くでグラフを接線で見ることに対応する。そこで局所的な傾きを
-\begin{equation}
-  a=\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)},
-  \qquad
-  b=\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}
-\end{equation}
-と置けば、小さい $\tilde{x}$、$\tilde{u}$ に対して
-\begin{equation}
-  f(x_e+\tilde{x},u_e+\tilde{u})-f(x_e,u_e)
-  \simeq a\tilde{x}+b\tilde{u}
-\end{equation}
-である。したがって、動作点近傍の偏差は
-\begin{equation}
-  \dot{\tilde{x}}\simeq a\tilde{x}+b\tilde{u}
-  \label{eq:scalar-linearization}
-\end{equation}
-で近似できる。ここで $a$ は状態のずれが変化率に現れる強さ、$b$ は入力変更が変化率へ効く強さである。非線形性を消したのではなく、選んだ点の近くで一次の傾きだけを残している。
-
-この基準点とずれの考えを、多変数の状態方程式で使えるように定義として固定する。
+この基準となる定常条件を形式化するため、次の平衡点を用いる。
 
 \begin{definition}[平衡点]
 時間に陽に依存しない系 $\dot{x}=f(x,u)$ において、一定入力 $u_e$ と状態 $x_e$ が
@@ -65,7 +23,7 @@
 を満たす組を平衡点として扱う。周囲温度や負荷トルクが変われば、同じ入力でも平衡点は変わりうる。時間に陽に依存するモデルや周期的に動く基準運動では、厳密には一点の平衡点ではなく基準軌道のまわりで偏差を考えるが、本節ではまず一定値に留まる動作点を扱う。
 
 \begin{definition}[偏差変数]
-制御では、絶対値そのものと同時に平衡点からのずれを見る。そこで
+制御では絶対値より平衡点からのずれを見る。そこで
 \begin{equation}
   \tilde{x}=x-x_e,
   \qquad
@@ -80,8 +38,6 @@
   \dot{\tilde{x}}=\frac{\dd}{\dd t}(x-x_e)=\dot{x}
 \end{equation}
 である。出力も同じ考えで、$y_e=g(x_e,u_e)$ と置けば $\tilde{y}=y-y_e$ を出力偏差として使える。
-
-状態が複数あると、式 \eqref{eq:scalar-linearization} の傾き $a$、$b$ は 1 つの数では足りない。各状態の変化率 $f_i$ が、各状態 $x_j$ と各入力 $u_j$ にどれだけ反応するかをすべて並べる必要がある。この傾きの表がヤコビアンである。
 
 \begin{definition}[ヤコビアン]
 ベクトル値関数 $f(x,u)\in\R^n$ の各成分を各変数で偏微分して並べた行列をヤコビアンという。$x\in\R^n$、$u\in\R^m$ なら
@@ -121,20 +77,15 @@ $x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ を $\dot{x}=f(x,u)$ に代入する。$x_
 \begin{equation}
   \dot{\tilde{x}}=f(x_e+\tilde{x},u_e+\tilde{u})
 \end{equation}
-となる。平衡点の式 $0=f(x_e,u_e)$ を右辺から引いても値は変わらないので
-\begin{equation}
-  \dot{\tilde{x}}
-  =f(x_e+\tilde{x},u_e+\tilde{u})-f(x_e,u_e)
-\end{equation}
-である。多変数のテイラー展開を一次まで使うと
+となる。多変数のテイラー展開を一次まで使うと
 \begin{align}
-  f(x_e+\tilde{x},u_e+\tilde{u})-f(x_e,u_e)
-  &=
-    \left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)}\tilde{x}
+  f(x_e+\tilde{x},u_e+\tilde{u})
+  &=f(x_e,u_e)
+    +\left.\frac{\pp f}{\pp x}\right|_{(x_e,u_e)}\tilde{x}
     +\left.\frac{\pp f}{\pp u}\right|_{(x_e,u_e)}\tilde{u}
     +\text{二次以上の項}.
 \end{align}
-この消去は、選んだ $(x_e,u_e)$ が平衡点であることに依存する。平衡点でない点を基準にすると、テイラー展開には $f(x_e,u_e)$ という定数項が残り、偏差原点 $\tilde{x}=0$ は止まる点にならない。平衡点近傍だけを見る一次近似では二次以上の項を捨てるので
+平衡点の定義より $f(x_e,u_e)=0$ である。もし選んだ $(x_e,u_e)$ が平衡点でなければ、この定数項が残り、偏差モデルは原点へ留まらない。平衡点近傍だけを見る一次近似では二次以上の項を捨てるので
 \begin{equation}
   \dot{\tilde{x}}\simeq A\tilde{x}+B\tilde{u}
 \end{equation}
@@ -164,13 +115,11 @@ $x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ を $\dot{x}=f(x,u)$ に代入する。$x_
     \left(-\frac{T_e+\tilde{T}-T_a}{R_{\mathrm{th}}}
     +\eta(v_e+\tilde{v})^2\right)\\
   &=\frac{1}{C_{\mathrm{th}}}
-    \left(\underbrace{-\frac{T_e-T_a}{R_{\mathrm{th}}}
-    +\eta v_e^2}_{\text{平衡条件により }0}
+    \left(-\frac{T_e-T_a}{R_{\mathrm{th}}}
     -\frac{\tilde{T}}{R_{\mathrm{th}}}
-    +2\eta v_e\tilde{v}
-    +\eta\tilde{v}^2\right).
+    +\eta v_e^2+2\eta v_e\tilde{v}+\eta\tilde{v}^2\right).
 \end{align}
-平衡点を選んだ効果は、上の括弧内の定数項が消えることに現れる。残るのは偏差に比例する項と、入力偏差の二乗項であり、
+平衡条件により $-(T_e-T_a)/R_{\mathrm{th}}+\eta v_e^2=0$ なので
 \begin{equation}
   \dot{\tilde{T}}
   =-\frac{1}{R_{\mathrm{th}}C_{\mathrm{th}}}\tilde{T}
