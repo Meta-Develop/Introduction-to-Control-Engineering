@@ -26,7 +26,7 @@
 
 正定値行列は、ベクトルの重み付き大きさを作る行列である。$P>0$ なら $x^\T P x$ は $x\ne0$ で常に正になる。半正定値 $P\ge0$ では 0 になる方向が残る。評価関数や共分散行列で正定値性が重要になるのは、距離や不確かさを破綻なく測るためである。
 
-\begin{figure}[tb]
+\begin{figure}[!t]
 \centering
 \includegraphics[width=0.94\linewidth,bb=0 0 1296 1152]{figures/state_space_geometry_examples.png}
 \caption{二状態モデル $A=\left[\begin{smallmatrix}0&1\\-2&-3\end{smallmatrix}\right]$、$b=\left[\begin{smallmatrix}0&1\end{smallmatrix}\right]^\T$、$C=\left[\begin{smallmatrix}1&0\end{smallmatrix}\right]$ に対する状態空間の幾何。左上は $K=\left[\begin{smallmatrix}18&6\end{smallmatrix}\right]$ による閉ループ軌道、右上は可制御方向 $B,AB$ と可観測方向 $C^\T,A^\T C^\T$、左下は $L=\left[\begin{smallmatrix}10&10\end{smallmatrix}\right]^\T$ による推定誤差軌道、右下は $A-bK$ に対する $V=x^\T Px$ のレベル集合を示す。}
@@ -83,6 +83,70 @@ $r_u=0$ の推定状態フィードバックでは、$\hat{x}=x-e_x$ なので
   \dot{x}=(A-BK)x+BK e_x
 \end{equation}
 も得られる。したがって、状態の流れは $A-BK$、推定誤差の流れは $A-LC$ によって分かれ、図の軌道と楕円レベル集合は、可制御・可観測な二次元幾何の上で閉ループ安定性を評価している。Lyapunov 関数 $V=x^\T Px$ の楕円が軌道に沿って小さくなるという見方は、後の LQR で二次形式の価値関数を最小化する見方と同じ幾何を使っている。
+
+\subsubsection{離散時間リアプノフ方程式による数値検算}
+
+サンプル値系では、安定性を微分ではなく一ステップ差分で読む。推定誤差の更新を
+\begin{equation}
+  e_{k+1}=F e_k
+\end{equation}
+とし、二次形式
+\begin{equation}
+  V_k=e_k^\T P e_k,\qquad P=P^\T>0
+\end{equation}
+を用いると、
+\begin{align}
+  V_{k+1}-V_k
+  &=e_{k+1}^\T P e_{k+1}-e_k^\T P e_k\\
+  &=(F e_k)^\T P(F e_k)-e_k^\T P e_k\\
+  &=e_k^\T(F^\T P F-P)e_k
+\end{align}
+である。したがって、任意の $Q>0$ に対して
+\begin{equation}
+  F^\T P F-P=-Q
+\end{equation}
+を満たす $P>0$ があれば、
+\begin{equation}
+  V_{k+1}-V_k=-e_k^\T Qe_k<0\qquad(e_k\ne0)
+\end{equation}
+となり、離散時間でも楕円レベル集合が一ステップごとに内側へ移る。
+
+前節の離散時間オブザーバで得た
+\begin{equation}
+  F=A_d-L_d C_d\simeq
+  \begin{bmatrix}
+    0.31277&0.08611\\
+    -0.50387&0.73262
+  \end{bmatrix}
+\end{equation}
+に対して $Q=I$ とおく。離散時間リアプノフ方程式を解くと
+\begin{equation}
+  P\simeq
+  \begin{bmatrix}
+    1.95004&-0.82627\\
+    -0.82627&1.96478
+  \end{bmatrix}
+\end{equation}
+であり、$P$ の固有値は約 $1.13111,2.78371$ なので $P>0$ である。初期推定誤差を
+$e_0=\begin{bmatrix}0.20&-0.10\end{bmatrix}^\T$ とすると、
+\begin{equation}
+  F e_0\simeq
+  \begin{bmatrix}0.05394\\-0.17404\end{bmatrix}
+\end{equation}
+で、次の数値になる。
+\begin{equation}
+  \begin{array}{c|c}
+    \text{量} & \text{値}\\\hline
+    V_0=e_0^\T P e_0 & 0.13070\\
+    V_1=(F e_0)^\T P(F e_0) & 0.08070\\
+    V_1-V_0 & -0.05000\\
+    -e_0^\T e_0 & -0.05000
+  \end{array}
+\end{equation}
+この表は、$F^\T P F-P=-I$ という行列等式が、実際の一ステップ更新で
+$V_1-V_0=-e_0^\T e_0$ という減少量として現れることを表している。連続時間で
+$\dot{V}<0$ と読んだ楕円の内向きの流れは、離散時間では「各サンプルで $V_k$ が減る」
+という計算に置き換わる。
 
 \subsection{状態空間の式変形を省略しない}
 

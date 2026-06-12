@@ -177,19 +177,19 @@ def draw_signal_path(axis: plt.Axes) -> None:
     axis.set_axis_off()
     axis.set_xlim(0.0, 1.0)
     axis.set_ylim(0.0, 1.0)
-    add_panel_label(axis, "(a) fixed complementary-filter signal path")
+    add_panel_label(axis, "(a) 固定ゲイン相補フィルタ")
 
-    draw_box(axis, (0.06, 0.66), r"gyro rate $\omega_m$", 0.23)
-    draw_box(axis, (0.39, 0.66), r"integrate $\hat{\theta}^-_k$", 0.25)
+    draw_box(axis, (0.06, 0.66), "ジャイロ角速度\n" r"$\omega_m$", 0.23)
+    draw_box(axis, (0.39, 0.66), "積分予測\n" r"$\hat{\theta}^-_k$", 0.25)
     draw_box(axis, (0.72, 0.66), r"$\alpha\hat{\theta}^-_k$", 0.20)
-    draw_box(axis, (0.06, 0.28), r"accel tilt $\theta_{\rm acc}$", 0.23)
+    draw_box(axis, (0.06, 0.28), "加速度傾き\n" r"$\theta_{\rm acc}$", 0.23)
     draw_box(axis, (0.39, 0.28), r"$(1-\alpha)\theta_{\rm acc}$", 0.25)
-    draw_box(axis, (0.74, 0.44), r"sum $\hat{\theta}_k$", 0.20)
+    draw_box(axis, (0.74, 0.44), "和\n" r"$\hat{\theta}_k$", 0.20)
 
     draw_arrow(axis, (0.29, 0.74), (0.39, 0.74))
-    draw_arrow(axis, (0.64, 0.74), (0.72, 0.74), r"slow drift")
+    draw_arrow(axis, (0.64, 0.74), (0.72, 0.74), "ドリフト")
     draw_arrow(axis, (0.29, 0.36), (0.39, 0.36))
-    draw_arrow(axis, (0.64, 0.36), (0.74, 0.48), r"fast correction")
+    draw_arrow(axis, (0.64, 0.36), (0.74, 0.48), "速い補正")
     draw_arrow(axis, (0.92, 0.66), (0.86, 0.60))
 
     axis.text(
@@ -215,14 +215,14 @@ def draw_traces(axis: plt.Axes, data: dict[str, np.ndarray | float]) -> None:
     assert isinstance(theta_gyro, np.ndarray)
     assert isinstance(theta_hat, np.ndarray)
 
-    add_panel_label(axis, "(b) before/after filtering")
-    axis.plot(time, theta_true, color="#222222", linewidth=2.1, label="true angle")
-    axis.plot(time, theta_gyro, color="#D55E00", linewidth=1.5, linestyle="--", label="gyro integration")
-    axis.plot(time, theta_acc, color="#56B4E9", linewidth=0.9, alpha=0.48, label="accelerometer tilt")
-    axis.plot(time, theta_hat, color="#009E73", linewidth=2.0, label="complementary filter")
+    add_panel_label(axis, "(b) フィルタ前後の比較")
+    axis.plot(time, theta_true, color="#222222", linewidth=2.1, label="真の角度")
+    axis.plot(time, theta_gyro, color="#D55E00", linewidth=1.5, linestyle="--", label="ジャイロ積分")
+    axis.plot(time, theta_acc, color="#56B4E9", linewidth=0.9, alpha=0.48, label="加速度傾き")
+    axis.plot(time, theta_hat, color="#009E73", linewidth=2.0, label="相補フィルタ")
     axis.set_xlim(0.0, T_FINAL)
     axis.set_ylim(-0.35, 0.38)
-    axis.set_ylabel(r"Angle $\theta$ [rad]")
+    axis.set_ylabel(r"角度 $\theta$ / rad")
     axis.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.75)
     axis.legend(loc="lower left", ncols=2, frameon=True)
 
@@ -244,7 +244,7 @@ def draw_uncertainty_band(axis: plt.Axes, data: dict[str, np.ndarray | float]) -
 
     add_panel_label(
         axis,
-        "(c) residual error band",
+        "(c) 残差誤差帯",
         y=1.035,
         va="bottom",
     )
@@ -254,7 +254,7 @@ def draw_uncertainty_band(axis: plt.Axes, data: dict[str, np.ndarray | float]) -
         2.0 * sigma,
         color="#CC79A7",
         alpha=0.24,
-        label=r"covariance band $\pm2\sigma$",
+        label=r"共分散帯 $\pm2\sigma$",
     )
     axis.plot(time, error, color="#0072B2", linewidth=1.7, label=r"$\hat{\theta}-\theta$")
     for center in (5.6, 12.2):
@@ -265,13 +265,13 @@ def draw_uncertainty_band(axis: plt.Axes, data: dict[str, np.ndarray | float]) -
         color="#D55E00",
         linewidth=1.1,
         linestyle=":",
-        label="scaled accel contamination",
+        label="加速度外乱(縮尺)",
     )
     axis.axhline(0.0, color="#666666", linewidth=0.8)
     axis.set_xlim(0.0, T_FINAL)
     axis.set_ylim(-0.17, 0.17)
-    axis.set_xlabel(r"Time $t$ [s]")
-    axis.set_ylabel(r"Angle error [rad]")
+    axis.set_xlabel(r"時刻 $t$ / s")
+    axis.set_ylabel(r"角度誤差 [rad]")
     axis.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.75)
     axis.legend(loc="upper right", frameon=True)
 
@@ -309,7 +309,7 @@ def draw_covariance_ellipse(axis: plt.Axes) -> None:
 
     add_panel_label(
         axis,
-        "(d) angle-bias covariance",
+        "(d) 角度・バイアス共分散",
         y=1.035,
         va="bottom",
     )
@@ -318,7 +318,7 @@ def draw_covariance_ellipse(axis: plt.Axes) -> None:
             (0.0, 0.0),
             quiet_covariance,
             scale=2.0,
-            label="nearly steady",
+            label="ほぼ定常",
             color="#009E73",
         )
     )
@@ -327,7 +327,7 @@ def draw_covariance_ellipse(axis: plt.Axes) -> None:
             (0.0, 0.0),
             accelerating_covariance,
             scale=2.0,
-            label="during acceleration",
+            label="加速中",
             color="#D55E00",
         )
     )
@@ -336,8 +336,8 @@ def draw_covariance_ellipse(axis: plt.Axes) -> None:
     axis.set_xlim(-0.15, 0.15)
     axis.set_ylim(-0.050, 0.050)
     axis.set_aspect("equal", adjustable="box")
-    axis.set_xlabel(r"Angle error [rad]")
-    axis.set_ylabel(r"Gyro bias error [rad/s]")
+    axis.set_xlabel(r"角度誤差 [rad]")
+    axis.set_ylabel(r"ジャイロバイアス誤差 [rad/s]")
     axis.grid(True, color="#d0d0d0", linewidth=0.7, alpha=0.75)
     axis.legend(loc="upper right", frameon=True)
 
@@ -359,7 +359,7 @@ def main() -> None:
 
     plt.rcParams.update(
         {
-            "font.family": "DejaVu Sans",
+            "font.family": ["Noto Sans CJK JP", "Noto Sans", "DejaVu Sans"],
             "font.size": 10,
             "axes.labelsize": 10,
             "legend.fontsize": 8,

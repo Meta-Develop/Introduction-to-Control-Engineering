@@ -139,275 +139,126 @@ $f_{k-1}(x,u)=A_{k-1}x+B_{k-1}u$、$h_k(x)=C_kx$ の場合、ヤコビアンは�
 一方、$\hat{x}_{k|k-1}$ が 0 に近いと $H_k\simeq0$ となり、$K_k$ も小さくなる。測定 $y_k=x_k^2+v_k$ は状態の大きさに関する情報を持つが、符号を区別しない。単一の接線と単一の正規分布で表す EKF は、この大域的な二峰性を表せない。したがって、この例では「非線形測定を線形化して使う」という利点と、「線形化点の周辺でしか情報を正しく読めない」という限界が同時に現れる。
 \end{example}
 
-\subsection{UKF と粒子フィルタによる非線形ベイズ推定}
-
-EKF は非線形写像を接線で近似する。これに対して、Unscented Kalman フィルタ（UKF）は、分布を代表する少数の点を非線形写像へ通し、その通過後の平均と共分散を計算する。さらに粒子フィルタは、平均と共分散だけでなく、事後分布そのものを重み付きサンプルの集合で近似する。三つの方法はいずれも、ベイズフィルタの予測
+\begin{example}[差動二輪ロボットの外部位置測定による EKF 更新]
+オドメトリだけで進む差動二輪ロボットでは、車輪すべりやジャイロバイアスによって経路全体が少しずつ横へずれる。ここに、天井カメラ、測位マーカ、またはランドマーク照合から得られる外部位置測定を時々入れると、非線形予測と線形 Kalman 更新の役割を具体的に見られる。状態を
 \begin{equation}
-  p(x_k\mid y_{1:k-1})
+  x_k=
+  \begin{bmatrix}
+    p_{x,k}\\p_{y,k}\\\theta_k
+  \end{bmatrix}
+\end{equation}
+とし、サンプリング間の走行距離を $\Delta s_k$、向きの変化を $\Delta\theta_k$ とする。予測は、前節のオドメトリと同じく
+\begin{align}
+  \hat{p}_{x,k|k-1}
+  &=
+  \hat{p}_{x,k-1|k-1}
+  +\Delta s_k\cos\psi_k,\\
+  \hat{p}_{y,k|k-1}
+  &=
+  \hat{p}_{y,k-1|k-1}
+  +\Delta s_k\sin\psi_k,\\
+  \hat{\theta}_{k|k-1}
+  &=
+  \hat{\theta}_{k-1|k-1}+\Delta\theta_k,
+  \qquad
+  \psi_k=\hat{\theta}_{k-1|k-1}+\frac{\Delta\theta_k}{2}
+\end{align}
+で進める。この式は $\cos\psi_k,\sin\psi_k$ を含むので、平均値は非線形に伝搬する。一方、姿勢誤差が位置誤差へどう移るかは、現在の予測点のヤコビアン
+\begin{equation}
+  F_k
   =
-  \int p(x_k\mid x_{k-1},u_{k-1})
-  p(x_{k-1}\mid y_{1:k-1})\,\dd x_{k-1}
+  \begin{bmatrix}
+    1&0&-\Delta s_k\sin\psi_k\\
+    0&1& \Delta s_k\cos\psi_k\\
+    0&0&1
+  \end{bmatrix}
 \end{equation}
-と更新
+で共分散へ入る。たとえば前向きに長く走るほど、第三列の大きさが増え、向きの不確かさが横方向の位置不確かさへ写る。
+
+外部測定が位置だけを返す場合を
 \begin{equation}
-  p(x_k\mid y_{1:k})
+  y_k=
+  \begin{bmatrix}
+    z_{x,k}\\z_{y,k}
+  \end{bmatrix}
   =
-  \frac{p(y_k\mid x_k)p(x_k\mid y_{1:k-1})}
-       {p(y_k\mid y_{1:k-1})}
+  h(x_k)+v_k,
+  \qquad
+  h(x_k)=
+  \begin{bmatrix}
+    p_{x,k}\\p_{y,k}
+  \end{bmatrix},
+  \qquad
+  R_k=\sigma_z^2 I
 \end{equation}
-を近似する方法である。違いは、事後分布を単一の正規分布と接線で表すか、シグマ点で表すか、粒子集合で表すかにある。
-
-\begin{definition}[Unscented 変換とシグマ点]
-平均 $\bar{x}\in\R^n$、共分散 $P=P^\T\ge0$ をもつ確率変数 $x$ を、非線形写像 $z=g(x)$ へ通すことを考える。UKF ではまず
+と書く。予測測定と革新は
 \begin{equation}
-  \lambda=\alpha^2(n+\kappa)-n
+  \hat{y}_{k|k-1}=
+  \begin{bmatrix}
+    \hat{p}_{x,k|k-1}\\
+    \hat{p}_{y,k|k-1}
+  \end{bmatrix},
+  \qquad
+  \nu_k=
+  \begin{bmatrix}
+    z_{x,k}-\hat{p}_{x,k|k-1}\\
+    z_{y,k}-\hat{p}_{y,k|k-1}
+  \end{bmatrix}
 \end{equation}
-を定め、行列平方根 $S$ を
+であり、測定ヤコビアンは
 \begin{equation}
-  SS^\T=(n+\lambda)P
+  H_k=
+  \begin{bmatrix}
+    1&0&0\\
+    0&1&0
+  \end{bmatrix}
 \end{equation}
-で選ぶ。$S_{:i}$ を $S$ の第 $i$ 列とすると、$2n+1$ 個のシグマ点を
+である。したがって革新共分散とゲインは
 \begin{align}
-  \chi^{(0)}&=\bar{x},\\
-  \chi^{(i)}&=\bar{x}+S_{:i}\qquad(i=1,\ldots,n),\\
-  \chi^{(i+n)}&=\bar{x}-S_{:i}\qquad(i=1,\ldots,n)
-\end{align}
-と置く。重みは
-\begin{align}
-  W_m^{(0)}&=\frac{\lambda}{n+\lambda},\\
-  W_c^{(0)}&=\frac{\lambda}{n+\lambda}+1-\alpha^2+\beta,\\
-  W_m^{(i)}&=W_c^{(i)}=\frac{1}{2(n+\lambda)}
-  \qquad(i=1,\ldots,2n)
-\end{align}
-である。ここで $\alpha$ はシグマ点の広がり、$\kappa$ は補助的なスケール、$\beta$ は事前分布の形に関する調整量である。
-\end{definition}
-
-各シグマ点を
-\begin{equation}
-  \zeta^{(i)}=g(\chi^{(i)})
-\end{equation}
-で写像した後、出力側の平均と共分散を
-\begin{align}
-  \bar{z}
-  &\simeq \sum_{i=0}^{2n}W_m^{(i)}\zeta^{(i)},\\
-  P_z
-  &\simeq \sum_{i=0}^{2n}W_c^{(i)}
-  \left(\zeta^{(i)}-\bar{z}\right)
-  \left(\zeta^{(i)}-\bar{z}\right)^\T
-\end{align}
-で近似する。この操作を Unscented 変換という。シグマ点はもとの平均と共分散を再現するように置かれているので、非線形写像の曲がりを、ヤコビアンを計算せずに平均と共分散へ反映できる。ただし、UKF も最終的には単一の平均と共分散に戻すため、多峰性や強い非ガウス性をそのまま保持する方法ではない。
-
-UKF の予測は、EKF と同じ非線形確率モデル
-\begin{align}
-  x_k&=f_{k-1}(x_{k-1},u_{k-1})+w_{k-1},\\
-  y_k&=h_k(x_k)+v_k
-\end{align}
-を仮定して書ける。$w_{k-1}$ と $v_k$ は平均 0、共分散 $Q_{k-1}$、$R_k$ をもつ加法ノイズとする。時刻 $k-1$ の推定値 $\hat{x}_{k-1|k-1}$、共分散 $P_{k-1|k-1}$ からシグマ点 $\chi_{k-1|k-1}^{(i)}$ を作り、
-\begin{equation}
-  \chi_{k|k-1}^{(i)}
-  =
-  f_{k-1}(\chi_{k-1|k-1}^{(i)},u_{k-1})
-\end{equation}
-で伝搬する。予測平均と予測共分散は
-\begin{align}
-  \hat{x}_{k|k-1}
-  &=\sum_{i=0}^{2n}W_m^{(i)}\chi_{k|k-1}^{(i)},\\
-  P_{k|k-1}
-  &=\sum_{i=0}^{2n}W_c^{(i)}
-  \left(\chi_{k|k-1}^{(i)}-\hat{x}_{k|k-1}\right)
-  \left(\chi_{k|k-1}^{(i)}-\hat{x}_{k|k-1}\right)^\T
-  +Q_{k-1}
-\end{align}
-である。ノイズが加法的でない場合は、状態とノイズを合わせた拡大状態に対してシグマ点を作り、同じ考え方で伝搬する。
-
-測定更新では、予測シグマ点を測定写像へ通して
-\begin{equation}
-  \gamma_k^{(i)}=h_k(\chi_{k|k-1}^{(i)})
-\end{equation}
-とし、予測測定、革新共分散、状態と測定の交差共分散を
-\begin{align}
-  \hat{y}_{k|k-1}
-  &=\sum_{i=0}^{2n}W_m^{(i)}\gamma_k^{(i)},\\
   S_k
-  &=\sum_{i=0}^{2n}W_c^{(i)}
-  \left(\gamma_k^{(i)}-\hat{y}_{k|k-1}\right)
-  \left(\gamma_k^{(i)}-\hat{y}_{k|k-1}\right)^\T
-  +R_k,\\
-  C_k
-  &=\sum_{i=0}^{2n}W_c^{(i)}
-  \left(\chi_{k|k-1}^{(i)}-\hat{x}_{k|k-1}\right)
-  \left(\gamma_k^{(i)}-\hat{y}_{k|k-1}\right)^\T
+  &=
+  H_kP_{k|k-1}H_k^\T+\sigma_z^2I,\\
+  K_k
+  &=
+  P_{k|k-1}H_k^\T S_k^{-1}
+  =
+  \begin{bmatrix}
+    P^-_{xx}&P^-_{xy}\\
+    P^-_{yx}&P^-_{yy}\\
+    P^-_{\theta x}&P^-_{\theta y}
+  \end{bmatrix}
+  S_k^{-1}
 \end{align}
-で計算する。Kalman ゲインと更新式は
-\begin{align}
-  K_k&=C_kS_k^{-1},\\
-  \hat{x}_{k|k}
-  &=\hat{x}_{k|k-1}+K_k(y_k-\hat{y}_{k|k-1}),\\
-  P_{k|k}
-  &=P_{k|k-1}-K_kS_kK_k^\T
-\end{align}
-である。EKF では $F_k,H_k$ というヤコビアンを作ってから線形 Kalman フィルタへ戻るが、UKF では $2n+1$ 個の点を実際に $f,h$ へ通してから Kalman 型の更新へ戻る。
-
-粒子フィルタでは、事後分布を
-\begin{equation}
-  p(x_k\mid y_{1:k})
-  \simeq
-  \sum_{i=1}^{N}W_k^{(i)}\delta(x_k-x_k^{(i)})
-\end{equation}
-のように、粒子 $x_k^{(i)}$ と正規化重み $W_k^{(i)}$ の集合で表す。ここで
-\begin{equation}
-  W_k^{(i)}\ge0,\qquad
-  \sum_{i=1}^{N}W_k^{(i)}=1
-\end{equation}
-であり、$\delta$ は一点に質量を置く Dirac のデルタである。この近似のもとで、任意の関数 $\varphi(x)$ の期待値は
-\begin{equation}
-  E[\varphi(x_k)\mid y_{1:k}]
-  \simeq
-  \sum_{i=1}^{N}W_k^{(i)}\varphi(x_k^{(i)})
-\end{equation}
-で計算する。したがって平均と共分散も
+となる。ここで $P^-_{ij}$ は $P_{k|k-1}$ の成分である。更新は
 \begin{align}
   \hat{x}_{k|k}
-  &=\sum_{i=1}^{N}W_k^{(i)}x_k^{(i)},\\
+  &=
+  \hat{x}_{k|k-1}+K_k\nu_k,\\
   P_{k|k}
-  &=\sum_{i=1}^{N}W_k^{(i)}
-  (x_k^{(i)}-\hat{x}_{k|k})(x_k^{(i)}-\hat{x}_{k|k})^\T
+  &=
+  (I-K_kH_k)P_{k|k-1}(I-K_kH_k)^\T
+  +K_kR_kK_k^\T
 \end{align}
-で得られる。
+である。位置しか測っていなくても、第三行に $P^-_{\theta x},P^-_{\theta y}$ が入るため、予測で生じた位置と向きの相関を通して姿勢も補正される。これは「位置測定から突然角度を測った」わけではなく、非線形オドメトリが作った共分散の傾きを使って、位置ずれを最も起こしやすい向き誤差へ戻しているという解釈である。
 
-重要度サンプリングでは、提案分布
+測定の信頼度を変えると補正の大きさも変わる。たとえば $x$ 方向だけを見て $P^-_{xx}=0.20^2\,\mathrm{m}^2$ とすると、測定標準偏差が $\sigma_z=0.05\,\mathrm{m}$ のとき
 \begin{equation}
-  q(x_k\mid x_{k-1}^{(i)},y_k)
-\end{equation}
-から粒子 $x_k^{(i)}$ を発生させる。重みは、目標とするベイズ更新の密度と、実際に粒子を発生させた密度の比で補正するので、
-\begin{equation}
-  \tilde{W}_k^{(i)}
+  \frac{P^-_{xx}}{P^-_{xx}+\sigma_z^2}
   =
-  W_{k-1}^{(i)}
-  \frac{
-    p(y_k\mid x_k^{(i)})
-    p(x_k^{(i)}\mid x_{k-1}^{(i)},u_{k-1})
-  }{
-    q(x_k^{(i)}\mid x_{k-1}^{(i)},y_k)
-  }
+  \frac{0.04}{0.04+0.0025}
+  \simeq0.94
 \end{equation}
-となる。最後に
+であり、外部測定に近い位置へ強く寄る。測定標準偏差が $\sigma_z=0.50\,\mathrm{m}$ なら
 \begin{equation}
-  W_k^{(i)}
-  =
-  \frac{\tilde{W}_k^{(i)}}
-       {\sum_{j=1}^{N}\tilde{W}_k^{(j)}}
+  \frac{0.04}{0.04+0.25}
+  \simeq0.14
 \end{equation}
-で正規化する。特に、提案分布として状態遷移そのもの
-\begin{equation}
-  q(x_k\mid x_{k-1}^{(i)},y_k)
-  =
-  p(x_k\mid x_{k-1}^{(i)},u_{k-1})
-\end{equation}
-を使う bootstrap 粒子フィルタでは、
-\begin{equation}
-  \tilde{W}_k^{(i)}
-  =
-  W_{k-1}^{(i)}p(y_k\mid x_k^{(i)})
-\end{equation}
-に簡単化される。すなわち、モデルで粒子を予測し、測定に合っている粒子ほど大きな重みを与える。
-
-粒子フィルタの実装では、重みの退化を監視する必要がある。観測を繰り返すと、多くの粒子の重みがほぼ 0 になり、ごく少数の粒子だけが分布を代表する状態になりやすい。この状態を粒子の退化という。退化の粗い指標として有効サンプルサイズ
-\begin{equation}
-  N_\text{eff}
-  =
-  \frac{1}{\sum_{i=1}^{N}(W_k^{(i)})^2}
-\end{equation}
-を用いる。重みがすべて等しいと $N_\text{eff}=N$ であり、一つの粒子だけが重みを持つと $N_\text{eff}=1$ である。通常は、ある $\rho\in(0,1)$ に対して
-\begin{equation}
-  N_\text{eff}<\rho N
-\end{equation}
-となったときにリサンプリングを行う。
-
-リサンプリングでは、現在の粒子集合から重み $W_k^{(i)}$ に比例して祖先を選び、新しい粒子集合を
-\begin{equation}
-  \bar{x}_k^{(j)}=x_k^{(a_j)},\qquad
-  \bar{W}_k^{(j)}=\frac{1}{N}
-\end{equation}
-で作り直す。ここで $a_j$ は確率
-\begin{equation}
-  \Pr(a_j=i)=W_k^{(i)}
-\end{equation}
-で選ばれる祖先の番号である。リサンプリングは、重い粒子を複製し、軽い粒子を捨てることで重みの退化を抑える。ただし、同じ粒子の複製が増えすぎると粒子の多様性が失われる。これをサンプル枯渇という。プロセスノイズを適切に入れる、観測を使ったよい提案分布を選ぶ、必要なら正則化を加える、といった設計が重要になる。
-
-計算量の観点では、EKF は各時刻でヤコビアン、行列積、革新共分散の逆行列を計算するため、状態次元と測定次元が大きい場合には行列計算が支配的になる。一方で、モデル評価は基本的に平均点のまわりで済む。UKF はヤコビアンを不要にする代わりに、各時刻で少なくとも $2n+1$ 回の状態遷移評価と測定評価を行うため、状態次元が大きい、または $f,h$ が重い場合には EKF より高価になりやすい。粒子フィルタは $N$ 個の粒子に対してモデル評価と尤度評価を行うので、計算量は粒子数にほぼ比例する。低次元で多峰性が重要な問題では有効だが、高次元状態では必要粒子数が急に増え、実時間制御の周期に収めることが難しくなる。
-
-したがって、非線形性が弱く、推定誤差が小さく保たれ、ヤコビアンを信頼できるなら EKF が最も簡潔である。測定や状態遷移が滑らかだが曲率の影響が無視できず、かつ事後分布がほぼ単峰の正規分布で表せるなら UKF が候補になる。$y=x^2+v$ のように測定から複数の状態候補が残る場合、接線近似や単一ガウス近似では本質的なあいまいさを表せないので、粒子フィルタのような重み付きサンプル表現が適している。ただし、粒子フィルタは計算資源、尤度モデル、リサンプリング方式に強く依存するため、低次元または粗い仮説選択を含む推定で特に使いやすい。
-
-非線形制御と非線形推定では、同じ「局所近似」と「集合」の言葉が何度も現れる。図\ref{fig:nonlinear-geometry-estimation-examples}は、この対応を正規化した減衰振子と二次測定の例で並べたものである。上段では
-\begin{equation}
-  \dot{\theta}=\omega,\qquad
-  \dot{\omega}=-\sin\theta-0.35\omega,\qquad
-  V(\theta,\omega)=\frac{1}{2}\omega^2+1-\cos\theta
-\end{equation}
-を用いる。左上の位相図で橙色の長方形は $\abs{\theta}\le0.55\,\mathrm{rad}$、$\abs{\omega}\le1.0\,\mathrm{rad/s}$ の局所線形化領域を表す。準位線は $V$ の値を表し、同じ準位集合の内側に解が残るかどうかが Lyapunov 的な検査になる。右上では $\dot{V}=-0.35\omega^2$ なので、$\dot{V}=0$ の集合は $\omega=0$ 全体である。しかしその直線上の点がすべて不変集合になるわけではなく、エネルギー準位 $c<2$ の内側では最大不変集合が下向き平衡点だけになる。
-
-下段では、平均
-\begin{equation}
-  \bar{x}=\begin{bmatrix}0.55\\0.05\end{bmatrix},\qquad
-  P=
-  \begin{bmatrix}
-    0.35^2&0.018\\
-    0.018&0.25^2
-  \end{bmatrix}
-\end{equation}
-をもつ予測分布と、測定
-\begin{equation}
-  y=h(x)+v,\qquad h(x)=x_1^2+0.35x_2,\qquad y=0.55,\qquad R=0.08^2
-\end{equation}
-を用いる。EKF は $\bar{x}$ でのヤコビアン
-\begin{equation}
-  H=\left.\frac{\pp h}{\pp x}\right|_{\bar{x}}
-  =\begin{bmatrix}1.10&0.35\end{bmatrix}
-\end{equation}
-によって測定曲線を接線で置き換え、その接線に対して楕円を更新する。UKF は同じ平均と共分散から $2n+1=5$ 個のシグマ点を置き、粒子フィルタは多くの粒子を非線形な尤度で重み付けする。したがって、EKF の計算が軽い理由と、強く曲がった測定で粒子雲が曲線状に残る理由は、同じ図の中で比較できる。
-
-\begin{figure}[tb]
-\centering
-\includegraphics[width=0.95\linewidth,bb=0 0 1440 1332]{figures/nonlinear_geometry_estimation_examples.png}
-\caption{非線形位相図、Lyapunov 準位集合、局所線形化領域、EKF の線形化楕円、UKF シグマ点、粒子雲の対応。上段は減衰係数 $0.35$ の正規化振子で、$V=2$ が上向き平衡点を通る境界になる。下段は $h(x)=x_1^2+0.35x_2$、$y=0.55$、$R=0.08^2$ の測定更新で、接線近似とサンプル表現の違いを示している。}
-\label{fig:nonlinear-geometry-estimation-examples}
-\end{figure}
-
-図\ref{fig:nonlinear-geometry-estimation-examples}の数値は、局所近似と集合による判定を具体的に結び付けている。橙色の局所線形化領域の端である $\theta=0.55\,\mathrm{rad}$ では
-\begin{equation}
-  \frac{\abs{\sin 0.55-0.55}}{0.55}
-  =
-  \frac{\abs{0.5227-0.55}}{0.55}
-  \simeq 4.97\times10^{-2}
-\end{equation}
-であり、小角近似 $\sin\theta\simeq\theta$ の相対誤差は約 $5.0\,\%$ である。この値は、橙色の長方形が「完全な線形領域」ではなく、数パーセント程度の曲率を許した局所モデルの作業領域であることを示す。エネルギー関数については
-\begin{equation}
-  V(\pi,0)
-  =
-  \frac{1}{2}0^2+1-\cos\pi
-  =
-  2
-\end{equation}
-となるため、$c=1.8$ の準位集合は上向き平衡点 $(\pi,0)$ を含まない。さらに $\dot{V}=0$ は $\omega=0$ の直線全体で成り立つが、その直線上で運動が止まり続けるには同時に $\dot{\omega}=-\sin\theta=0$ も必要である。したがって $c<2$ の内側で残る最大不変集合は下向き平衡点 $(0,0)$ だけであり、LaSalle の議論では $\dot{V}=0$ の集合そのものではなく、その中の最大不変集合を見る。
-
-下段の測定写像でも、同じ局所化が接線として現れる。$h(x)=x_1^2+0.35x_2$ なので
-\begin{equation}
-  \left.\frac{\pp h}{\pp x}\right|_{\bar{x}}
-  =
-  \begin{bmatrix}
-    2\bar{x}_1&0.35
-  \end{bmatrix}
-  =
-  \begin{bmatrix}
-    1.10&0.35
-  \end{bmatrix}
-\end{equation}
-である。また、平均点での予測測定は $h(\bar{x})=0.55^2+0.35\cdot0.05=0.32$ であり、実測 $y=0.55$ との差は $0.23$ である。EKF はこの差を $H$ が張る接線方向の線形革新として扱うため、曲がった尤度集合を一つの楕円で表す。一方、UKF のシグマ点と粒子フィルタの粒子雲は、同じ測定曲線の曲率をサンプルの配置と重みに残す。
+となり、更新は主にオドメトリ予測を保つ。反対に、すべりを疑ってプロセスノイズを大きくし、$P_{k|k-1}$ を膨らませると、同じ測定でも $K_k$ は大きくなる。したがって $Q$ は「どれだけ予測を疑うか」、$R$ は「どれだけ測定を疑うか」を決める設計量であり、革新 $\nu_k$ が大きすぎるときは $\nu_k^\T S_k^{-1}\nu_k$ を見て外れ値や線形化の破れを疑う。
+\end{example}
 
 \subsection{ESKF}
 
-誤差状態 Kalman フィルタ（error-state Kalman filter; ESKF）は、状態そのものを線形化した座標で持つのではなく、非線形な名目状態と、その近くの小さな誤差状態を分けて扱う EKF である。姿勢を四元数 $q$ または回転行列 $R\in\SO(3)$ で表す場合、$q$ には $\norm{q}=1$、$R$ には $R^\T R=I$ と $\det R=1$ という制約がある。通常の EKF のように四元数の 4 成分へ補正量を直接足すと、この制約から外れやすい。ESKF では、姿勢本体は曲面上の名目状態として積分し、共分散は小角度誤差 $\delta\theta\in\R^3$ のような最小座標に持たせる。
+誤差状態 Kalman フィルタ（error-state Kalman filter; ESKF）は、状態そのものを線形化した座標で持つのではなく、非線形な名目状態と、その近くの小さな誤差状態を分けて扱う EKF である。姿勢を四元数 $q$ または回転行列 $R\in\SO(3)$ で表す場合、$q$ には $\norm{q}=1$、$R$ には $R^\T R=I$ と $\det R=1$ という制約がある。通常の EKF のように四元数の 4 成分へ補正量を直接足すと、この制約から外れやすい。足した後に四元数を正規化しても、補正の一部は単位球面の半径方向へ消え、共分散には物理的な姿勢誤差ではない 4 成分目の広がりが残りうる。さらに、補正後の名目姿勢が変わると、その近くの接平面も変わるため、古い座標で持った共分散をそのまま次の時刻へ使うと、局所誤差の意味がずれやすい。ESKF では、姿勢本体は曲面上の名目状態として積分し、共分散は小角度誤差 $\delta\theta\in\R^3$ のような最小座標に持たせる。測定更新で得た小さい誤差を名目状態へ注入し、その直後に誤差平均を 0 へ戻すことで、共分散を常に現在の名目姿勢の接空間に置き直す。
 
 図\ref{fig:flow6-eskf-structure}は、この分離を信号経路として表したものである。IMU 測定は上段の名目状態を多様体上で非線形に伝搬し、同じ測定から下段の誤差状態モデルと共分散伝搬も決まる。外部測定が入ると、名目状態から予測測定を作って革新を計算し、その革新で接空間上の誤差状態を更新する。得られた $\widehat{\delta x}$ は名目状態へ注入され、誤差平均は 0 にリセットされる。この流れにより、姿勢本体は常に $\SO(3)$ または単位四元数上に残り、共分散は名目姿勢の近くの小さい誤差だけを表し続ける。
 
@@ -697,6 +548,56 @@ IMU の測定モデルを
 \end{equation}
 を使うことが多い。補正角が十分小さい場合は $G_r\simeq I$ としても大きな差は出にくいが、大きな革新を頻繁に注入する実装では、リセットヤコビアンを省くと共分散の整合性が悪くなる。
 
+\subsubsection{ESKF の数値トレース}
+
+式だけでは、名目姿勢と誤差状態を分ける利点を数量として追いにくい。ここでは、ピッチ角だけを取り出した 1 次元の姿勢更新で、IMU 予測、共分散、革新、注入、リセットを数値で追う。ジャイロ積分だけで進む名目角は、未補償のジャイロバイアスによって少しずつ真値から離れる。一方、加速度計から得る傾きは重力方向を使うため低速時にはロールとピッチを拘束できるが、並進加速度が混ざると重力方向そのものからずれる。この二つの限界を、ESKF は「予測をどれだけ疑うか」を $P^-_{\theta,k}$、「加速度計の傾きをどれだけ信じるか」を $R_{\theta,k}$ として分けて扱う。
+
+数値例では、時刻 $t=4.0\,\mathrm{s}$ で真のピッチ角が $0.55^\circ$、ジャイロ積分で得た名目予測が $1.56^\circ$、加速度計から作った傾き測定が $-0.20^\circ$ であったとする。このとき革新は
+\begin{equation}
+  \nu_{\theta,k}
+  =
+  y_{\theta,k}-\hat{\theta}^{-}_k
+  =
+  -1.76^\circ
+\end{equation}
+であり、更新直前の姿勢標準偏差は $\sqrt{P^-_{\theta,k}}=1.52^\circ$ まで増えている。ピッチだけに限定すると、誤差状態の測定モデルは
+\begin{equation}
+  \nu_{\theta,k}
+  \simeq
+  \delta\theta_k+v_{\theta,k}
+\end{equation}
+なので
+\begin{align}
+  S_{\theta,k}&=P^-_{\theta,k}+R_{\theta,k},\\
+  K_{\theta,k}&=P^-_{\theta,k}S_{\theta,k}^{-1},\\
+  \widehat{\delta\theta}_k&=K_{\theta,k}\nu_{\theta,k},\\
+  P^+_{\theta,k}
+  &=(1-K_{\theta,k})^2P^-_{\theta,k}
+    +K_{\theta,k}^2R_{\theta,k}
+\end{align}
+で更新できる。たとえば加速度計の傾き標準偏差を $1.20^\circ$ と仮定する標準設定では、$K_{\theta,k}=0.62$、$\widehat{\delta\theta}_k=-1.09^\circ$、$\sqrt{P^+_{\theta,k}}=0.94^\circ$ となる。この小角度を名目姿勢へ
+\begin{equation}
+  \hat{q}^{+}
+  =
+  \hat{q}^{-}\otimes\delta q(\widehat{\delta\theta}_k)
+\end{equation}
+として注入し、直後に誤差平均を
+\begin{equation}
+  \delta\theta\leftarrow0
+\end{equation}
+へ戻す。今回の 1 次元トレースでは補正角が小さいため $G_{r,\theta\theta}\simeq1$ と近似し、共分散はほぼ $P^+_{\theta,k}$ のまま現在の名目姿勢まわりの誤差幅として読み替えられる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.98\linewidth,bb=0 0 1512 1116]{figures/flow6_eskf_numeric_trace.png}
+\caption{ESKF の 1 次元姿勢更新トレース。ジャイロ積分で名目姿勢がドリフトし、同時に姿勢共分散が増える。加速度計から得た傾き測定の革新で小角度誤差 $\widehat{\delta\theta}$ を推定し、名目姿勢へ注入してから誤差平均を 0 へリセットする。測定を強く信頼すると加速度外乱にも寄りやすく、測定を疑うとジャイロドリフトが残りやすい。}
+\label{fig:flow6-eskf-numeric-trace}
+\end{figure}
+
+図\ref{fig:flow6-eskf-numeric-trace}では、上段左に真値、ジャイロ積分だけの名目予測、注入後の名目姿勢を重ねている。上段右では、更新前の標準偏差が時間とともに増え、測定更新で小さくなった後、再びジャイロノイズとバイアス不確かさで増える。下段左は測定信頼度を変えたときの Kalman ゲインであり、加速度計を強く信頼する $0.60^\circ$ 設定では $K=0.87$、標準設定では $K=0.62$、急加速中として疑う $3.50^\circ$ 設定では $K=0.16$ になる。同じ革新 $-1.76^\circ$ でも、注入する局所姿勢誤差はそれぞれ $-1.53^\circ$、$-1.09^\circ$、$-0.28^\circ$ に変わる。
+
+下段右は、この重み付けが破綻モードの解釈を決めることを示している。加速度計を強く信頼すると、ジャイロドリフトによる $1.01^\circ$ の予測誤差は大きく消えるが、加速度計の傾きに $-0.75^\circ$ の非重力加速度成分が混ざっていると、その外乱にも引かれる。反対に加速度計を強く疑うと、外乱には引かれにくいが、更新後も正の姿勢誤差が残る。したがって、静止または低加速度で重力方向が信頼できる時刻は $R_{\theta,k}$ を小さくでき、急加速、振動、衝突、センサ飽和が疑われる時刻は $R_{\theta,k}$ を大きくするか革新を棄却する必要がある。重力方向だけではヨー角を拘束できないため、ヨーのジャイロドリフトには磁気方位、外部姿勢、位置変化から得た方位情報など、別の測定が必要になる。
+
 \subsubsection{EKF との関係と適用条件}
 
 ESKF は EKF と別のベイズ更新を使う方法ではない。予測、革新、Kalman ゲイン、Joseph 形式の共分散更新は EKF と同じであり、違いは線形化する座標である。通常の EKF は状態 $x$ の足し算
@@ -853,3 +754,269 @@ ESKF の姿勢更新
 \end{theorem}
 
 この定理は、力を一つずつ座標軸へ分解する代わりに、エネルギーから運動方程式を得るための定式化である。単振子の導出では、$L=T-V$ を書き、$\pp L/\pp\dot{\theta}$、$\pp L/\pp\theta$ を実際に計算して代入している。
+
+\subsection{UKF と粒子フィルタによる非線形ベイズ推定}
+
+EKF は非線形写像を接線で近似する。これに対して、Unscented Kalman フィルタ（UKF）は、分布を代表する少数の点を非線形写像へ通し、その通過後の平均と共分散を計算する。さらに粒子フィルタは、平均と共分散だけでなく、事後分布そのものを重み付きサンプルの集合で近似する。三つの方法はいずれも、ベイズフィルタの予測
+\begin{equation}
+  p(x_k\mid y_{1:k-1})
+  =
+  \int p(x_k\mid x_{k-1},u_{k-1})
+  p(x_{k-1}\mid y_{1:k-1})\,\dd x_{k-1}
+\end{equation}
+と更新
+\begin{equation}
+  p(x_k\mid y_{1:k})
+  =
+  \frac{p(y_k\mid x_k)p(x_k\mid y_{1:k-1})}
+       {p(y_k\mid y_{1:k-1})}
+\end{equation}
+を近似する方法である。違いは、事後分布を単一の正規分布と接線で表すか、シグマ点で表すか、粒子集合で表すかにある。
+
+\begin{definition}[Unscented 変換とシグマ点]
+平均 $\bar{x}\in\R^n$、共分散 $P=P^\T\ge0$ をもつ確率変数 $x$ を、非線形写像 $z=g(x)$ へ通すことを考える。UKF ではまず
+\begin{equation}
+  \lambda=\alpha^2(n+\kappa)-n
+\end{equation}
+を定め、行列平方根 $S$ を
+\begin{equation}
+  SS^\T=(n+\lambda)P
+\end{equation}
+で選ぶ。$S_{:i}$ を $S$ の第 $i$ 列とすると、$2n+1$ 個のシグマ点を
+\begin{align}
+  \chi^{(0)}&=\bar{x},\\
+  \chi^{(i)}&=\bar{x}+S_{:i}\qquad(i=1,\ldots,n),\\
+  \chi^{(i+n)}&=\bar{x}-S_{:i}\qquad(i=1,\ldots,n)
+\end{align}
+と置く。重みは
+\begin{align}
+  W_m^{(0)}&=\frac{\lambda}{n+\lambda},\\
+  W_c^{(0)}&=\frac{\lambda}{n+\lambda}+1-\alpha^2+\beta,\\
+  W_m^{(i)}&=W_c^{(i)}=\frac{1}{2(n+\lambda)}
+  \qquad(i=1,\ldots,2n)
+\end{align}
+である。ここで $\alpha$ はシグマ点の広がり、$\kappa$ は補助的なスケール、$\beta$ は事前分布の形に関する調整量である。
+\end{definition}
+
+各シグマ点を
+\begin{equation}
+  \zeta^{(i)}=g(\chi^{(i)})
+\end{equation}
+で写像した後、出力側の平均と共分散を
+\begin{align}
+  \bar{z}
+  &\simeq \sum_{i=0}^{2n}W_m^{(i)}\zeta^{(i)},\\
+  P_z
+  &\simeq \sum_{i=0}^{2n}W_c^{(i)}
+  \left(\zeta^{(i)}-\bar{z}\right)
+  \left(\zeta^{(i)}-\bar{z}\right)^\T
+\end{align}
+で近似する。この操作を Unscented 変換という。シグマ点はもとの平均と共分散を再現するように置かれているので、非線形写像の曲がりを、ヤコビアンを計算せずに平均と共分散へ反映できる。ただし、UKF も最終的には単一の平均と共分散に戻すため、多峰性や強い非ガウス性をそのまま保持する方法ではない。
+
+UKF の予測は、EKF と同じ非線形確率モデル
+\begin{align}
+  x_k&=f_{k-1}(x_{k-1},u_{k-1})+w_{k-1},\\
+  y_k&=h_k(x_k)+v_k
+\end{align}
+を仮定して書ける。$w_{k-1}$ と $v_k$ は平均 0、共分散 $Q_{k-1}$、$R_k$ をもつ加法ノイズとする。時刻 $k-1$ の推定値 $\hat{x}_{k-1|k-1}$、共分散 $P_{k-1|k-1}$ からシグマ点 $\chi_{k-1|k-1}^{(i)}$ を作り、
+\begin{equation}
+  \chi_{k|k-1}^{(i)}
+  =
+  f_{k-1}(\chi_{k-1|k-1}^{(i)},u_{k-1})
+\end{equation}
+で伝搬する。予測平均と予測共分散は
+\begin{align}
+  \hat{x}_{k|k-1}
+  &=\sum_{i=0}^{2n}W_m^{(i)}\chi_{k|k-1}^{(i)},\\
+  P_{k|k-1}
+  &=\sum_{i=0}^{2n}W_c^{(i)}
+  \left(\chi_{k|k-1}^{(i)}-\hat{x}_{k|k-1}\right)
+  \left(\chi_{k|k-1}^{(i)}-\hat{x}_{k|k-1}\right)^\T
+  +Q_{k-1}
+\end{align}
+である。ノイズが加法的でない場合は、状態とノイズを合わせた拡大状態に対してシグマ点を作り、同じ考え方で伝搬する。
+
+測定更新では、予測シグマ点を測定写像へ通して
+\begin{equation}
+  \gamma_k^{(i)}=h_k(\chi_{k|k-1}^{(i)})
+\end{equation}
+とし、予測測定、革新共分散、状態と測定の交差共分散を
+\begin{align}
+  \hat{y}_{k|k-1}
+  &=\sum_{i=0}^{2n}W_m^{(i)}\gamma_k^{(i)},\\
+  S_k
+  &=\sum_{i=0}^{2n}W_c^{(i)}
+  \left(\gamma_k^{(i)}-\hat{y}_{k|k-1}\right)
+  \left(\gamma_k^{(i)}-\hat{y}_{k|k-1}\right)^\T
+  +R_k,\\
+  C_k
+  &=\sum_{i=0}^{2n}W_c^{(i)}
+  \left(\chi_{k|k-1}^{(i)}-\hat{x}_{k|k-1}\right)
+  \left(\gamma_k^{(i)}-\hat{y}_{k|k-1}\right)^\T
+\end{align}
+で計算する。Kalman ゲインと更新式は
+\begin{align}
+  K_k&=C_kS_k^{-1},\\
+  \hat{x}_{k|k}
+  &=\hat{x}_{k|k-1}+K_k(y_k-\hat{y}_{k|k-1}),\\
+  P_{k|k}
+  &=P_{k|k-1}-K_kS_kK_k^\T
+\end{align}
+である。EKF では $F_k,H_k$ というヤコビアンを作ってから線形 Kalman フィルタへ戻るが、UKF では $2n+1$ 個の点を実際に $f,h$ へ通してから Kalman 型の更新へ戻る。
+
+粒子フィルタでは、事後分布を
+\begin{equation}
+  p(x_k\mid y_{1:k})
+  \simeq
+  \sum_{i=1}^{N}W_k^{(i)}\delta(x_k-x_k^{(i)})
+\end{equation}
+のように、粒子 $x_k^{(i)}$ と正規化重み $W_k^{(i)}$ の集合で表す。ここで
+\begin{equation}
+  W_k^{(i)}\ge0,\qquad
+  \sum_{i=1}^{N}W_k^{(i)}=1
+\end{equation}
+であり、$\delta$ は一点に質量を置く Dirac のデルタである。この近似のもとで、任意の関数 $\varphi(x)$ の期待値は
+\begin{equation}
+  E[\varphi(x_k)\mid y_{1:k}]
+  \simeq
+  \sum_{i=1}^{N}W_k^{(i)}\varphi(x_k^{(i)})
+\end{equation}
+で計算する。したがって平均と共分散も
+\begin{align}
+  \hat{x}_{k|k}
+  &=\sum_{i=1}^{N}W_k^{(i)}x_k^{(i)},\\
+  P_{k|k}
+  &=\sum_{i=1}^{N}W_k^{(i)}
+  (x_k^{(i)}-\hat{x}_{k|k})(x_k^{(i)}-\hat{x}_{k|k})^\T
+\end{align}
+で得られる。
+
+重要度サンプリングでは、提案分布
+\begin{equation}
+  q(x_k\mid x_{k-1}^{(i)},y_k)
+\end{equation}
+から粒子 $x_k^{(i)}$ を発生させる。重みは、目標とするベイズ更新の密度と、実際に粒子を発生させた密度の比で補正するので、
+\begin{equation}
+  \tilde{W}_k^{(i)}
+  =
+  W_{k-1}^{(i)}
+  \frac{
+    p(y_k\mid x_k^{(i)})
+    p(x_k^{(i)}\mid x_{k-1}^{(i)},u_{k-1})
+  }{
+    q(x_k^{(i)}\mid x_{k-1}^{(i)},y_k)
+  }
+\end{equation}
+となる。最後に
+\begin{equation}
+  W_k^{(i)}
+  =
+  \frac{\tilde{W}_k^{(i)}}
+       {\sum_{j=1}^{N}\tilde{W}_k^{(j)}}
+\end{equation}
+で正規化する。特に、提案分布として状態遷移そのもの
+\begin{equation}
+  q(x_k\mid x_{k-1}^{(i)},y_k)
+  =
+  p(x_k\mid x_{k-1}^{(i)},u_{k-1})
+\end{equation}
+を使う bootstrap 粒子フィルタでは、
+\begin{equation}
+  \tilde{W}_k^{(i)}
+  =
+  W_{k-1}^{(i)}p(y_k\mid x_k^{(i)})
+\end{equation}
+に簡単化される。すなわち、モデルで粒子を予測し、測定に合っている粒子ほど大きな重みを与える。
+
+粒子フィルタの実装では、重みの退化を監視する必要がある。観測を繰り返すと、多くの粒子の重みがほぼ 0 になり、ごく少数の粒子だけが分布を代表する状態になりやすい。この状態を粒子の退化という。退化の粗い指標として有効サンプルサイズ
+\begin{equation}
+  N_\text{eff}
+  =
+  \frac{1}{\sum_{i=1}^{N}(W_k^{(i)})^2}
+\end{equation}
+を用いる。重みがすべて等しいと $N_\text{eff}=N$ であり、一つの粒子だけが重みを持つと $N_\text{eff}=1$ である。通常は、ある $\rho\in(0,1)$ に対して
+\begin{equation}
+  N_\text{eff}<\rho N
+\end{equation}
+となったときにリサンプリングを行う。
+
+リサンプリングでは、現在の粒子集合から重み $W_k^{(i)}$ に比例して祖先を選び、新しい粒子集合を
+\begin{equation}
+  \bar{x}_k^{(j)}=x_k^{(a_j)},\qquad
+  \bar{W}_k^{(j)}=\frac{1}{N}
+\end{equation}
+で作り直す。ここで $a_j$ は確率
+\begin{equation}
+  \Pr(a_j=i)=W_k^{(i)}
+\end{equation}
+で選ばれる祖先の番号である。リサンプリングは、重い粒子を複製し、軽い粒子を捨てることで重みの退化を抑える。ただし、同じ粒子の複製が増えすぎると粒子の多様性が失われる。これをサンプル枯渇という。プロセスノイズを適切に入れる、観測を使ったよい提案分布を選ぶ、必要なら正則化を加える、といった設計が重要になる。
+
+計算量の観点では、EKF は各時刻でヤコビアン、行列積、革新共分散の逆行列を計算するため、状態次元と測定次元が大きい場合には行列計算が支配的になる。一方で、モデル評価は基本的に平均点のまわりで済む。UKF はヤコビアンを不要にする代わりに、各時刻で少なくとも $2n+1$ 回の状態遷移評価と測定評価を行うため、状態次元が大きい、または $f,h$ が重い場合には EKF より高価になりやすい。粒子フィルタは $N$ 個の粒子に対してモデル評価と尤度評価を行うので、計算量は粒子数にほぼ比例する。低次元で多峰性が重要な問題では有効だが、高次元状態では必要粒子数が急に増え、実時間制御の周期に収めることが難しくなる。
+
+したがって、非線形性が弱く、推定誤差が小さく保たれ、ヤコビアンを信頼できるなら EKF が最も簡潔である。測定や状態遷移が滑らかだが曲率の影響が無視できず、かつ事後分布がほぼ単峰の正規分布で表せるなら UKF が候補になる。$y=x^2+v$ のように測定から複数の状態候補が残る場合、接線近似や単一ガウス近似では本質的なあいまいさを表せないので、粒子フィルタのような重み付きサンプル表現が適している。ただし、粒子フィルタは計算資源、尤度モデル、リサンプリング方式に強く依存するため、低次元または粗い仮説選択を含む推定で特に使いやすい。
+
+非線形制御と非線形推定では、同じ「局所近似」と「集合」の言葉が何度も現れる。図\ref{fig:nonlinear-geometry-estimation-examples}は、この対応を正規化した減衰振子と二次測定の例で並べたものである。上段では
+\begin{equation}
+  \dot{\theta}=\omega,\qquad
+  \dot{\omega}=-\sin\theta-0.35\omega,\qquad
+  V(\theta,\omega)=\frac{1}{2}\omega^2+1-\cos\theta
+\end{equation}
+を用いる。左上の位相図で橙色の長方形は $\abs{\theta}\le0.55\,\mathrm{rad}$、$\abs{\omega}\le1.0\,\mathrm{rad/s}$ の局所線形化領域を表す。準位線は $V$ の値を表し、同じ準位集合の内側に解が残るかどうかが Lyapunov 的な検査になる。右上では $\dot{V}=-0.35\omega^2$ なので、$\dot{V}=0$ の集合は $\omega=0$ 全体である。しかしその直線上の点がすべて不変集合になるわけではなく、エネルギー準位 $c<2$ の内側では最大不変集合が下向き平衡点だけになる。
+
+下段では、平均
+\begin{equation}
+  \bar{x}=\begin{bmatrix}0.55\\0.05\end{bmatrix},\qquad
+  P=
+  \begin{bmatrix}
+    0.35^2&0.018\\
+    0.018&0.25^2
+  \end{bmatrix}
+\end{equation}
+をもつ予測分布と、測定
+\begin{equation}
+  y=h(x)+v,\qquad h(x)=x_1^2+0.35x_2,\qquad y=0.55,\qquad R=0.08^2
+\end{equation}
+を用いる。EKF は $\bar{x}$ でのヤコビアン
+\begin{equation}
+  H=\left.\frac{\pp h}{\pp x}\right|_{\bar{x}}
+  =\begin{bmatrix}1.10&0.35\end{bmatrix}
+\end{equation}
+によって測定曲線を接線で置き換え、その接線に対して楕円を更新する。UKF は同じ平均と共分散から $2n+1=5$ 個のシグマ点を置き、粒子フィルタは多くの粒子を非線形な尤度で重み付けする。したがって、EKF の計算が軽い理由と、強く曲がった測定で粒子雲が曲線状に残る理由は、同じ図の中で比較できる。
+
+\begin{figure}[tb]
+\centering
+\includegraphics[width=0.95\linewidth,bb=0 0 1440 1332]{figures/nonlinear_geometry_estimation_examples.png}
+\caption{非線形位相図、Lyapunov 準位集合、局所線形化領域、EKF の線形化楕円、UKF シグマ点、粒子雲の対応。上段は減衰係数 $0.35$ の正規化振子で、$V=2$ が上向き平衡点を通る境界になる。下段は $h(x)=x_1^2+0.35x_2$、$y=0.55$、$R=0.08^2$ の測定更新で、接線近似とサンプル表現の違いを示している。}
+\label{fig:nonlinear-geometry-estimation-examples}
+\end{figure}
+
+図\ref{fig:nonlinear-geometry-estimation-examples}の数値は、局所近似と集合による判定を具体的に結び付けている。橙色の局所線形化領域の端である $\theta=0.55\,\mathrm{rad}$ では
+\begin{equation}
+  \frac{\abs{\sin 0.55-0.55}}{0.55}
+  =
+  \frac{\abs{0.5227-0.55}}{0.55}
+  \simeq 4.97\times10^{-2}
+\end{equation}
+であり、小角近似 $\sin\theta\simeq\theta$ の相対誤差は約 $5.0\,\%$ である。この値は、橙色の長方形が「完全な線形領域」ではなく、数パーセント程度の曲率を許した局所モデルの作業領域であることを示す。エネルギー関数については
+\begin{equation}
+  V(\pi,0)
+  =
+  \frac{1}{2}0^2+1-\cos\pi
+  =
+  2
+\end{equation}
+となるため、$c=1.8$ の準位集合は上向き平衡点 $(\pi,0)$ を含まない。さらに $\dot{V}=0$ は $\omega=0$ の直線全体で成り立つが、その直線上で運動が止まり続けるには同時に $\dot{\omega}=-\sin\theta=0$ も必要である。したがって $c<2$ の内側で残る最大不変集合は下向き平衡点 $(0,0)$ だけであり、LaSalle の議論では $\dot{V}=0$ の集合そのものではなく、その中の最大不変集合を見る。
+
+下段の測定写像でも、同じ局所化が接線として現れる。$h(x)=x_1^2+0.35x_2$ なので
+\begin{equation}
+  \left.\frac{\pp h}{\pp x}\right|_{\bar{x}}
+  =
+  \begin{bmatrix}
+    2\bar{x}_1&0.35
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1.10&0.35
+  \end{bmatrix}
+\end{equation}
+である。また、平均点での予測測定は $h(\bar{x})=0.55^2+0.35\cdot0.05=0.32$ であり、実測 $y=0.55$ との差は $0.23$ である。EKF はこの差を $H$ が張る接線方向の線形革新として扱うため、曲がった尤度集合を一つの楕円で表す。一方、UKF のシグマ点と粒子フィルタの粒子雲は、同じ測定曲線の曲率をサンプルの配置と重みに残す。

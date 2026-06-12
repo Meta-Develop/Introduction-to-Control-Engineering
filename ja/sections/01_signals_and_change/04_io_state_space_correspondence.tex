@@ -91,6 +91,44 @@
 である。
 \end{derivation}
 
+\begin{figure}[tb]
+\centering
+\begin{tikzpicture}[x=1cm,y=1cm,font=\small]
+  \node[align=center] (xzero) at (0,1.25) {初期状態\\$x(0)$};
+  \node[control block,minimum width=23mm] (resnat) at (2.70,1.25) {$(sI-A)^{-1}$};
+  \node[control small block] (cnat) at (5.05,1.25) {$C$};
+  \node[control sum] (sum) at (8.20,0.00) {$+$};
+  \node[align=center] (ys) at (9.55,0.00) {出力\\$Y(s)$};
+
+  \node[align=center] (us) at (0,-0.65) {入力\\$U(s)$};
+  \node[control dot] (branch) at (1.05,-0.65) {};
+  \node[control small block] (bmap) at (2.70,-0.65) {$B$};
+  \node[control block,minimum width=23mm] (resinp) at (5.05,-0.65) {$(sI-A)^{-1}$};
+  \node[control small block] (cout) at (6.85,-0.65) {$C$};
+  \node[control small block] (dmap) at (5.05,-1.90) {$D$};
+
+  \draw[control signal] (xzero) -- (resnat);
+  \draw[control signal] (resnat) -- (cnat);
+  \draw[control signal] (cnat.east) -- ++(1.25,0)
+    node[control signal label,above,pos=0.45] {$C(sI-A)^{-1}x(0)$} |- (sum.north);
+
+  \draw[control signal] (us) -- (branch);
+  \draw[control signal] (branch) -- (bmap);
+  \draw[control signal] (bmap) -- (resinp);
+  \draw[control signal] (resinp) -- (cout);
+  \draw[control signal] (cout.east) -- node[control signal label,above] {$C(sI-A)^{-1}BU(s)$} (sum.west);
+
+  \draw[control signal] (branch) |- (dmap.west);
+  \draw[control signal] (dmap.east) -- ++(2.00,0)
+    node[control signal label,below,pos=0.55] {$DU(s)$} |- (sum.south);
+  \draw[control signal] (sum) -- (ys);
+\end{tikzpicture}
+\caption{状態空間モデルから出力 $Y(s)$ へ至る三つの信号経路。初期状態は自然応答を作り、入力は $B$ と $(sI-A)^{-1}$ と $C$ を通る経路、および直達行列 $D$ の経路を通って出力で加算される。}
+\label{fig:ss-transfer-paths}
+\end{figure}
+
+\wfig{ss-transfer-paths} は、\weq{ss-laplace-with-initial} の三つの項が同じ出力で足し合わされることを確認している。上段は初期状態 $x(0)$ が $A$ の内部モードを通って出力へ現れる自然応答であり、入力 $U(s)$ とは独立である。下段の主経路は、入力が $B$ によって状態方程式へ入り、$(sI-A)^{-1}$ で状態応答になり、$C$ によって出力へ写される過程を表す。さらに $D$ の経路は、状態の蓄積や積分を待たずに入力が出力へ同時に現れる直達成分である。したがって $x(0)=0$ としたときだけ、入力から出力への経路全体が \weq{ss-transfer-function} の $G(s)$ として取り出される。
+
 \weq{ss-laplace-with-initial} の第一項は、入力とは独立に初期状態から生じる自然応答である。したがって伝達関数 $G(s)$ は「初期状態を 0 にそろえたとき、入力が出力へどう伝わるか」を表す。初期状態が 0 でなければ、同じ入力を加えても出力は変わる。実験で伝達関数を測るときに、対象を十分静止させる、コンデンサを放電する、温度を基準値へ戻す、といった操作を行うのは、初期状態による応答を入力応答から分けるためである。
 
 \subsubsection{最小実現と非最小実現}

@@ -132,7 +132,7 @@ def main() -> None:
     plt.rcParams.update(
         {
             "font.size": 9,
-            "font.family": ["Noto Sans", "DejaVu Sans"],
+            "font.family": ["Noto Sans CJK JP", "Noto Sans", "DejaVu Sans"],
             "mathtext.fontset": "dejavusans",
             "figure.dpi": 180,
             "savefig.dpi": 180,
@@ -150,15 +150,15 @@ def main() -> None:
     axis.axhspan(0.08, 0.47, facecolor="#f7fff7", edgecolor="none", zorder=0)
     axis.axhline(0.505, color="#bbbbbb", linewidth=1.0, linestyle="--", zorder=1)
 
-    add_lane_label(axis, 0.91, r"nominal state $\hat{x}$ on manifold", BLUE)
-    add_lane_label(axis, 0.43, r"error state $\delta x$ in tangent space", GREEN)
+    add_lane_label(axis, 0.91, r"名目状態 $\hat{x}$（多様体上）", BLUE)
+    add_lane_label(axis, 0.43, r"誤差状態 $\delta x$（接空間）", GREEN)
 
     draw_box(
         axis,
         (0.05, 0.63),
         0.16,
         0.17,
-        r"IMU measurement" "\n" r"$\omega_m,\ a_m$",
+        "IMU計測" "\n" r"$\omega_m,\ a_m$",
         edgecolor=GRAY,
         facecolor="white",
     )
@@ -167,7 +167,7 @@ def main() -> None:
         (0.27, 0.63),
         0.20,
         0.17,
-        r"nominal propagation" "\n" r"$\hat{x}^{-}=f(\hat{x},u_m)$",
+        "名目状態伝播" "\n" r"$\hat{x}^{-}=f(\hat{x},u_m)$",
         edgecolor=BLUE,
         facecolor=FILL_BLUE,
     )
@@ -176,7 +176,7 @@ def main() -> None:
         (0.54, 0.63),
         0.17,
         0.17,
-        r"predicted output" "\n" r"$\hat{y}=h(\hat{x}^{-})$",
+        "予測出力" "\n" r"$\hat{y}=h(\hat{x}^{-})$",
         edgecolor=BLUE,
         facecolor=FILL_BLUE,
         fontsize=8.3,
@@ -186,7 +186,7 @@ def main() -> None:
         (0.79, 0.63),
         0.17,
         0.17,
-        r"error injection/reset" "\n" r"$\hat{x}^{+}=\hat{x}^{-}\oplus\widehat{\delta x}$" "\n" r"$\delta x\leftarrow0$",
+        "誤差注入・リセット" "\n" r"$\hat{x}^{+}=\hat{x}^{-}\oplus\widehat{\delta x}$" "\n" r"$\delta x\leftarrow0$",
         edgecolor=ORANGE,
         facecolor=FILL_ORANGE,
         fontsize=8.4,
@@ -197,7 +197,7 @@ def main() -> None:
         (0.27, 0.18),
         0.20,
         0.17,
-        r"linearized error model" "\n" r"$\delta x_{k+1}\simeq\Phi\delta x_k+w$",
+        "線形化誤差モデル" "\n" r"$\delta x_{k+1}\simeq\Phi\delta x_k+w$",
         edgecolor=GREEN,
         facecolor=FILL_GREEN,
         fontsize=8.9,
@@ -207,7 +207,7 @@ def main() -> None:
         (0.54, 0.18),
         0.17,
         0.17,
-        r"covariance propagation" "\n" r"$P^{-}=\Phi P\Phi^\mathsf{T}+Q$",
+        "共分散伝播" "\n" r"$P^{-}=\Phi P\Phi^\mathsf{T}+Q$",
         edgecolor=GREEN,
         facecolor=FILL_GREEN,
         fontsize=8.8,
@@ -217,7 +217,7 @@ def main() -> None:
         (0.79, 0.18),
         0.17,
         0.17,
-        r"Kalman error update" "\n" r"$\widehat{\delta x}=K\nu$" "\n" r"Joseph form $P^{+}$",
+        "Kalman誤差更新" "\n" r"$\widehat{\delta x}=K\nu$" "\n" r"Joseph形式 $P^{+}$",
         edgecolor=GREEN,
         facecolor=FILL_GREEN,
         fontsize=8.4,
@@ -227,7 +227,7 @@ def main() -> None:
         (0.54, 0.40),
         0.17,
         0.10,
-        r"innovation $\nu=y-\hat{y}$" "\n" r"Jacobian $H_\delta$",
+        "残差 " r"$\nu=y-\hat{y}$" "\n" "ヤコビアン " r"$H_\delta$",
         edgecolor=ORANGE,
         facecolor=FILL_ORANGE,
         fontsize=8.5,

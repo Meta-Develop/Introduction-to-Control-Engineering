@@ -119,6 +119,68 @@ Luenberger オブザーバは
 
 オブザーバ極を左へ大きく動かすほど、初期推定誤差は速く消える。しかし、イノベーション $y-C\hat{x}$ には測定ノイズも含まれるので、$L$ を大きくしすぎると推定状態がノイズに敏感になる。可観測性と極配置は代数的な可能性を与えるが、実装ではセンサ帯域、サンプリング周期、量子化、モデル誤差を合わせて確認する。
 
+\subsubsection{離散時間オブザーバの誤差更新}
+
+実装ではオブザーバもサンプル時刻 $kT_s$ ごとに更新される。すでに導入した離散時間モデルを
+\begin{align}
+  x_{k+1}&=A_d x_k+B_d u_k,\\
+  y_k&=C_d x_k
+\end{align}
+と書くと、Luenberger オブザーバの離散時間版は
+\begin{equation}
+  \hat{x}_{k+1}=A_d\hat{x}_k+B_d u_k+L_d(y_k-C_d\hat{x}_k)
+\end{equation}
+である。推定誤差を $e_{x,k}=x_k-\hat{x}_k$ とおけば、
+\begin{align}
+  e_{x,k+1}
+  &=x_{k+1}-\hat{x}_{k+1}\\
+  &=(A_d x_k+B_d u_k)
+    -\{A_d\hat{x}_k+B_d u_k+L_d(C_d x_k-C_d\hat{x}_k)\}\\
+  &=(A_d-L_d C_d)(x_k-\hat{x}_k)\\
+  &=(A_d-L_d C_d)e_{x,k}.
+\end{align}
+連続時間では $A-LC$ が Hurwitz であることを見たが、離散時間では
+$A_d-L_d C_d$ の固有値がすべて単位円の内側に入ることが推定誤差の安定条件である。
+
+同じ二状態モデルをサンプリング周期 $T_s=0.1$ で離散化すると、数値的には
+\begin{equation}
+  A_d\simeq
+  \begin{bmatrix}
+    0.99094&0.08611\\
+    -0.17221&0.73262
+  \end{bmatrix},
+  \qquad
+  C_d=\begin{bmatrix}1&0\end{bmatrix}
+\end{equation}
+である。連続時間で選んだ目標オブザーバ極 $-6,-7$ は、サンプル値系では
+\begin{equation}
+  e^{-6T_s}\simeq0.54881,\qquad e^{-7T_s}\simeq0.49659
+\end{equation}
+へ写る。$L_d=\begin{bmatrix}l_{d1}&l_{d2}\end{bmatrix}^\T$ とおくと
+\begin{equation}
+  A_d-L_d C_d\simeq
+  \begin{bmatrix}
+    0.99094-l_{d1}&0.08611\\
+    -0.17221-l_{d2}&0.73262
+  \end{bmatrix}
+\end{equation}
+なので、目標多項式 $(z-0.54881)(z-0.49659)$ との係数比較から
+\begin{equation}
+  L_d\simeq
+  \begin{bmatrix}0.67817\\0.33166\end{bmatrix}
+\end{equation}
+を得る。このとき
+\begin{equation}
+  A_d-L_d C_d\simeq
+  \begin{bmatrix}
+    0.31277&0.08611\\
+    -0.50387&0.73262
+  \end{bmatrix}
+\end{equation}
+となり、固有値は $0.49659,0.54881$ で、いずれも単位円の内側にある。
+
+この $L_d$ は連続時間ゲイン $L=\begin{bmatrix}10&10\end{bmatrix}^\T$ をそのまま再利用したものではない。離散時間の補正項 $L_d(y_k-C_d\hat{x}_k)$ は「一サンプル後の推定値」へ直接加わる量であり、連続時間の微分方程式に入る $L(y-C\hat{x})$ とは単位時間あたりの意味が異なる。したがって、極を左へ置くという連続時間の直感は $z=e^{sT_s}$ によって単位円内の極へ写してから使う必要がある。さらに、$T_s$ が大きいほど更新は粗くなり、測定ノイズや量子化もイノベーションにそのまま入るので、離散時間でも極配置だけでなくサンプリング周期、センサ帯域、ノイズ感度を合わせて評価する。
+
 推定状態を使って $u=-K\hat{x}$ とする。$e_x=x-\hat{x}$ なので $\hat{x}=x-e_x$ であり、
 \begin{align}
   \dot{x}

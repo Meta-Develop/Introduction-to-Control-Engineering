@@ -142,23 +142,19 @@ $x=x_e+\tilde{x}$、$u=u_e+\tilde{u}$ を $\dot{x}=f(x,u)$ に代入する。$x_
 であり、$A$ の単位は 1/s、$B$ の単位は K/(s\,V) である。$v_e=0$ の動作点では $B=0$ となり、電圧の小さな正負の偏差は一次近似では温度を変えないという式になる。これはヒータ電力を電圧の二乗で近似したためであり、制御入力を電力 $P=\eta v^2$ として選ぶか、実際に使う非零の動作点まわりで線形化する必要がある。
 \end{example}
 
-倒立振子で $x=[\theta,\dot{\theta}]^\T$ とし、
+同じヤコビアン計算を、測定しやすい水槽の水位で確認する。断面積を $A_t$、水位を $h>0$、流入量を $u=q_{\mathrm{in}}$、流出係数を $k_o$ とし、
 \begin{equation}
-  f(x,u)=\begin{bmatrix}x_2\\ (mgl\sin x_1+bu)/J\end{bmatrix}
+  \dot{h}=f(h,u)=\frac{1}{A_t}\{u-k_o\sqrt{h}\}
 \end{equation}
-と書く。直立平衡点 $(x_e,u_e)=(0,0)$ まわりのヤコビアンは
+と書く。一定水位 $h_e$ を保つ流入量は
+\begin{equation}
+  u_e=k_o\sqrt{h_e}
+\end{equation}
+である。偏差 $\tilde{h}=h-h_e$、$\tilde{u}=u-u_e$ に対する一次モデルの係数は
 \begin{align}
-  A&=\left.\frac{\pp f}{\pp x}\right|_{(0,0)}
-   =\begin{bmatrix}
-      \pp f_1/\pp x_1 & \pp f_1/\pp x_2\\
-      \pp f_2/\pp x_1 & \pp f_2/\pp x_2
-    \end{bmatrix}_{(0,0)}\\
-   &=\begin{bmatrix}
-      0&1\\
-      (mgl/J)\cos x_1&0
-    \end{bmatrix}_{x_1=0}
-    =\begin{bmatrix}0&1\\ mgl/J&0\end{bmatrix},\\
-  B&=\left.\frac{\pp f}{\pp u}\right|_{(0,0)}
-   =\begin{bmatrix}0\\ b/J\end{bmatrix}.
+  A&=\left.\frac{\pp f}{\pp h}\right|_{(h_e,u_e)}
+    =-\frac{k_o}{2A_t\sqrt{h_e}},\\
+  B&=\left.\frac{\pp f}{\pp u}\right|_{(h_e,u_e)}
+    =\frac{1}{A_t}
 \end{align}
-この計算で、$\sin\theta\simeq\theta$ という近似を単独の経験則として使ったのではない。ヤコビアンを計算した結果として、直立近傍の一次モデルが得られている。
+である。たとえば $A_t=0.50\,\mathrm{m^2}$、$h_e=0.64\,\mathrm{m}$、$k_o=0.10\,\mathrm{m^{5/2}/s}$ なら $A=-0.125\,\mathrm{s^{-1}}$、$B=2.0\,\mathrm{m^{-2}}$ であり、水位偏差は時定数 $8.0\,\mathrm{s}$ で減る局所モデルになる。同じタンクでも $h_e$ を変えると $\sqrt{h_e}$ が変わるため、線形化係数と時定数も変わる。この計算は、ヤコビアンが「非線形式を平衡点近くでどの傾きとして見るか」を数値で固定する操作であることを示している。

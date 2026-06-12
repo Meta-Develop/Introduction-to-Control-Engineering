@@ -636,6 +636,19 @@ NMPC では実行可能性の扱いが線形 MPC より繊細である。非線�
 \end{equation}
 も許容値以下であり、QP と後処理が計算締切 $T_{\mathrm{dead}}$ 内に終わり、監視フラグが正常である場合に限られる。逆に、ハード制約違反が残る入力、欠陥残差が大きく予測軌道として信用できない入力、締切後に返ってきた入力、数値発散、スケーリング異常、センサ外れ値、復旧段階への遷移などを示す監視フラグ付きの入力は、SQP が一回進んでいても非採用である。この場合は、前回の実行可能入力の制限付き保持、低ゲイン制御、入力遮断など、外側の安全側制御へ切り替える。
 
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=0.96\linewidth,bb=0 0 648 324]{figures/w07_nmpc_mesh_solver_horizon.png}
+  \caption{直接多重射撃法で見た NMPC のメッシュ、後退ホライズン、ソルバ監視量。左はシフト後の節点 $\bar{x}_{i|k}$、区間積分 $\Phi_i(\bar{x}_{i|k},\bar{u}_{i|k})$、欠陥 $d_i$、RTI ステップ $\Delta z$、更新後の予測節点 $x^+_{i|k}$ を同じ平面上に重ねる。右上は障害物安全半径に対する状態余裕 $m_i$ とヨーレート入力 $\omega_i$ を示し、先頭入力 $u_{0|k}$ が入力上限で能動になっていることを示す。右下は KKT 停留残差、ハード制約違反 $v_{\mathrm{hard}}$、欠陥残差 $r_{\mathrm{def}}$、締切 $T_{\mathrm{dead}}$ を同じサンプルの採用判定として並べる。}
+  \label{fig:w07-nmpc-mesh-solver-horizon}
+\end{figure}
+
+\wfig{w07-nmpc-mesh-solver-horizon} の左図では、節点を単に滑らかな線で結ぶだけでは直接法の検証にならないことが分かる。灰色のシフト軌道 $\bar{x}_{i|k}$ は前回解から作った初期値であり、各区間を非線形モデルで積分した点 $\Phi_i(\bar{x}_{i|k},\bar{u}_{i|k})$ と次節点のずれが欠陥 $d_i$ である。RTI の $\Delta z$ は追従誤差を小さくするだけでなく、この欠陥を物理モデルに沿う連続軌道へ戻す修正として解釈する。したがって、予測経路の形、節点、区間、欠陥矢印を同時に残すと、ソルバがきれいな入力列を返しただけなのか、力学制約を満たす予測を返したのかを分離できる。
+
+右上のホライズン表示では、障害物中心からの距離に安全半径を引いた余裕 $m_i$ を [m] で読み、入力列の先頭 $u_{0|k}$ を同じ時刻のヨーレート上限と照合する。この例では先頭の $\omega_{0|k}$ が上限で能動になり、数ステップ後の状態余裕が小さくなるため、最初の入力の飽和は単なる数値クリップではなく、将来の安全制約を見た結果である。後退ホライズンで実機へ入るのは $u_{0|k}$ だけであるが、その採用理由は将来節点の制約余裕と同時に説明される。
+
+右下の残差ログでは、一回の RTI ステップ後に KKT 停留残差が完全収束値までは下がっていなくても、元の非線形制約で評価した $v_{\mathrm{hard}}$ と $r_{\mathrm{def}}$ が物理単位の許容値を下回り、かつ締切前に候補入力が得られている。追加の SQP 反復は残差をさらに下げるが、$T_{\mathrm{dead}}$ を越えた時点では現在サンプルの入力としては古くなる。したがって、NMPC のログは無次元の成功フラグだけでなく、[m]、[rad/s]、[ms] の余裕と違反量へ戻して読み、採用された $u_{0|k}$ が実際の制約を破らないことを確認する。
+
 \subsection{制御配分の最小ノルム解の導出}
 
 \begin{derivation}
@@ -677,6 +690,145 @@ NMPC では実行可能性の扱いが線形 MPC より繊細である。非線�
   \begin{bmatrix}0.5\\1.5\end{bmatrix}
 \end{equation}
 になる。この点では $u_2^*=1.5$ で第二入力の上限制約が能動であり、第一入力には上限まで $1.0$ の余裕が残る。実現一般化力は $Bu^*=0.5+1.5=2$ だから $w-Bu^*=0$ で、制御器側から見ると要求した一般化力そのものは失われていない。一方で、飽和フラグは第二アクチュエータが境界で使われたことを示し、対応する KKT 乗数はその境界が目的関数の勾配を支えている強さを示す。実際、$\frac{1}{2}\norm{u-r}^{2}+\lambda(Bu-w)+\mu_2(u_2-1.5)$ と置けば停留条件から $\lambda=0.5$、$\mu_2=1>0$ となり、配分が境界に張り付いた原因が数値誤差ではなく、希望値 $r$ と上限制約の衝突であることを診断できる。
+
+上の例では、境界へ移っても $Bu=w$ は保てた。しかし、MPC や NMPC が出す要求一般化力そのものがアクチュエータ上限で作れる集合の外へ出ると、制御器が要求した合力とモーメントを同時に実現できない。二つの反対向きに効くアクチュエータで
+\begin{equation}
+  B=
+  \begin{bmatrix}
+    1&1\\
+    1&-1
+  \end{bmatrix},
+  \qquad
+  w_{\mathrm{req}}=
+  \begin{bmatrix}
+    F_{\mathrm{req}}\\M_{\mathrm{req}}
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    2.4\\0.6
+  \end{bmatrix}
+\end{equation}
+とする。ここで第一成分は合力、第二成分は左右差から生じるモーメントを表す。制約なしの擬似逆配分は
+\begin{equation}
+  u^\dagger
+  =
+  B^+w_{\mathrm{req}}
+  =
+  \frac{1}{2}
+  \begin{bmatrix}
+    1&1\\
+    1&-1
+  \end{bmatrix}
+  \begin{bmatrix}
+    2.4\\0.6
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    1.5\\0.9
+  \end{bmatrix}
+\end{equation}
+である。したがって、上限が $u_{\max}=1.2$ なら第一入力だけが上限を $0.3$ 越え、要求点は実現可能な一般化力領域の外側にある。このときは等式 $Bu=w_{\mathrm{req}}$ を無理に保つのではなく、
+\begin{equation}
+  \min_{\abs{u_i}\le u_{\max}}
+  \frac{1}{2}\norm{Bu-w_{\mathrm{req}}}^{2}
+\end{equation}
+として、実現一般化力を要求点へ最も近づける配分を求める。
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.96\linewidth,bb=0 0 1296 666]{figures/allocation_saturation_geometry.png}
+  \caption{制御配分の飽和幾何。左はアクチュエータ空間で、制約なし配分 $u^\dagger=(1.5,0.9)^\T$ が上限 $u_1=1.2$ の外へ出ることを示す。右は同じ上限制約を合力 $F$ とモーメント $M$ の空間へ写した図であり、要求 $w_{\mathrm{req}}=(2.4,0.6)^\T$ は実現可能領域の外にある。飽和後の実現値は $Bu^*=(2.1,0.3)^\T$ で、赤い矢印が残差、緑の線分が第二入力側に残る余裕を表す。}
+  \label{fig:allocation-saturation-geometry}
+\end{figure}
+
+能動集合を $u_1=u_{\max}=1.2$ と仮定すると、第二入力の停留条件は
+\begin{align}
+  \frac{\pp}{\pp u_2}
+  \frac{1}{2}\norm{Bu-w_{\mathrm{req}}}^{2}
+  &=
+  \begin{bmatrix}1&-1\end{bmatrix}
+  (Bu-w_{\mathrm{req}})=0,\\
+  u_2^*&=\frac{F_{\mathrm{req}}-M_{\mathrm{req}}}{2}=0.9
+\end{align}
+である。したがって
+\begin{equation}
+  u^*=
+  \begin{bmatrix}
+    1.2\\0.9
+  \end{bmatrix},
+  \qquad
+  Bu^*=
+  \begin{bmatrix}
+    2.1\\0.3
+  \end{bmatrix},
+  \qquad
+  r_w=w_{\mathrm{req}}-Bu^*
+  =
+  \begin{bmatrix}
+    0.3\\0.3
+  \end{bmatrix}
+\end{equation}
+となる。第一入力の余裕は 0 で、第二入力には $u_{\max}-u_2^*=0.3$ の余裕が残る。合力もモーメントも要求値から $0.3$ ずつ不足しているので、この残差は「アクチュエータを丸めた」という実装上の注記ではなく、対象へ本当に届かなかった一般化指令である。
+
+KKT 条件で見ると、この不足がどの境界に支えられているかが分かる。残差を
+\begin{equation}
+  e=Bu^*-w_{\mathrm{req}}
+  =
+  \begin{bmatrix}
+    -0.3&-0.3
+  \end{bmatrix}^\T
+\end{equation}
+とし、能動な上限制約だけを入れて
+\begin{equation}
+  \mathcal{L}(u,\mu_1)
+  =
+  \frac{1}{2}\norm{Bu-w_{\mathrm{req}}}^{2}
+  +\mu_1(u_1-1.2)
+\end{equation}
+と置く。停留条件は
+\begin{equation}
+  B^\T e+
+  \begin{bmatrix}
+    \mu_1\\0
+  \end{bmatrix}
+  =
+  \begin{bmatrix}
+    -0.6\\0
+  \end{bmatrix}
+  +
+  \begin{bmatrix}
+    \mu_1\\0
+  \end{bmatrix}
+  =0
+\end{equation}
+であり、$\mu_1=0.6>0$、$\mu_1(u_1^*-1.2)=0$ となる。正の乗数は、要求点へ向かう残差をさらに減らす方向が、まさに $u_1$ 上限の外向き法線へ押し出されていることを示す。したがってログでは、$u^\dagger$ の上限超過量、実際に送った $u^*$、$Bu^*$、残差 $r_w$、能動境界、乗数、残り余裕を一組として残す必要がある。
+
+上限を変えたときの変化も、同じ式で読める。
+\begin{equation}
+  \begin{array}{c|c|c|c|c}
+    u_{\max}
+    &u^*
+    &Bu^*
+    &w_{\mathrm{req}}-Bu^*
+    &u_{\max}-u_2^*\\ \hline
+    1.5
+    &\begin{bmatrix}1.5\\0.9\end{bmatrix}
+    &\begin{bmatrix}2.4\\0.6\end{bmatrix}
+    &\begin{bmatrix}0\\0\end{bmatrix}
+    &0.6\\
+    1.2
+    &\begin{bmatrix}1.2\\0.9\end{bmatrix}
+    &\begin{bmatrix}2.1\\0.3\end{bmatrix}
+    &\begin{bmatrix}0.3\\0.3\end{bmatrix}
+    &0.3\\
+    1.0
+    &\begin{bmatrix}1.0\\0.9\end{bmatrix}
+    &\begin{bmatrix}1.9\\0.1\end{bmatrix}
+    &\begin{bmatrix}0.5\\0.5\end{bmatrix}
+    &0.1
+  \end{array}
+\end{equation}
+$u_{\max}=1.5$ では要求点は境界上にあり、第一入力の余裕はないが残差は 0 である。$u_{\max}=1.2$、$1.0$ と狭めると、図の実現可能な菱形領域が内側へ縮み、同じ要求点に対する残差が大きくなる。さらに $u_{\max}<0.9$ まで狭めると第二入力も能動になり、残差の向きは第一入力だけの法線では説明できなくなる。この変化を本文中の数値で追うことで、配分飽和は単なるクリップ処理ではなく、一般化力空間の可行領域、能動境界、残差、余裕を同時に変える制約付き最適化問題であることが確認できる。
 
 \subsection{実装条件をモデルへ入れる}
 
