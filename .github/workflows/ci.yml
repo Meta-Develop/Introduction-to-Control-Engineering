@@ -1,0 +1,114 @@
+name: Public Repository CI
+
+"on":
+  push: {}
+  pull_request: {}
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: >-
+    public-ci-${{ github.workflow }}-${{
+    github.event.pull_request.head.repo.full_name || github.repository }}-${{
+    github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.edition-name }} PDF (${{ matrix.edition }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - edition: ja
+            edition-name: Japanese
+            make-target: ja
+            output-pdf: pdf/control-engineering-ja.pdf
+          - edition: en
+            edition-name: English
+            make-target: en
+            output-pdf: pdf/control-engineering-en.pdf
+    env:
+      MAKE_PACKAGE_VERSION: "4.3-4.1build2"
+      TEXLIVE_BINARIES_VERSION: "2023.20230311.66589-9build3"
+      TEXLIVE_PACKAGE_VERSION: "2023.20240207-1"
+      LMODERN_PACKAGE_VERSION: "2.005-1"
+      HARANOAJI_MINCHO_SHA256: "e61e4860983e18a7872facc98b32fbf6690ef5822890597bbdbe8067d8a40179"
+      HARANOAJI_GOTHIC_SHA256: "9afd65b60f8dcba631d11046178b751c18e6db2f9b42405eb2e41addcd1d582c"
+    steps:
+      - name: Check out source without persisted credentials
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install and verify the pinned TeX and font toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends \
+            "make=${MAKE_PACKAGE_VERSION}" \
+            "texlive-binaries=${TEXLIVE_BINARIES_VERSION}" \
+            "texlive-lang-japanese=${TEXLIVE_PACKAGE_VERSION}" \
+            "texlive-latex-recommended=${TEXLIVE_PACKAGE_VERSION}" \
+            "lmodern=${LMODERN_PACKAGE_VERSION}"
+
+          test "$(dpkg-query -W -f='${Version}' make)" = "$MAKE_PACKAGE_VERSION"
+          test "$(dpkg-query -W -f='${Version}' texlive-binaries)" = "$TEXLIVE_BINARIES_VERSION"
+          test "$(dpkg-query -W -f='${Version}' texlive-lang-japanese)" = "$TEXLIVE_PACKAGE_VERSION"
+          test "$(dpkg-query -W -f='${Version}' texlive-latex-recommended)" = "$TEXLIVE_PACKAGE_VERSION"
+          test "$(dpkg-query -W -f='${Version}' lmodern)" = "$LMODERN_PACKAGE_VERSION"
+
+          mincho_source="$(kpsewhich HaranoAjiMincho-Regular.otf)"
+          gothic_source="$(kpsewhich HaranoAjiGothic-Medium.otf)"
+          test -n "$mincho_source"
+          test -n "$gothic_source"
+
+          font_dir="$HOME/.local/share/fonts/haranoaji"
+          mkdir -p "$font_dir"
+          install -m 0644 "$mincho_source" "$font_dir/HaranoAjiMincho-Regular.otf"
+          install -m 0644 "$gothic_source" "$font_dir/HaranoAjiGothic-Medium.otf"
+          printf '%s  %s\n' \
+            "$HARANOAJI_MINCHO_SHA256" \
+            "$font_dir/HaranoAjiMincho-Regular.otf" \
+            "$HARANOAJI_GOTHIC_SHA256" \
+            "$font_dir/HaranoAjiGothic-Medium.otf" |
+            sha256sum --check
+
+          uplatex --version | grep -F "TeX Live 2023"
+          dvipdfmx --version
+
+      - name: Build the top-level edition target
+        shell: bash
+        env:
+          EDITION: ${{ matrix.edition }}
+          MAKE_TARGET: ${{ matrix.make-target }}
+          OUTPUT_PDF: ${{ matrix.output-pdf }}
+        run: |
+          set -euo pipefail
+
+          case "$EDITION" in
+            ja)
+              test "$MAKE_TARGET" = "ja"
+              test "$OUTPUT_PDF" = "pdf/control-engineering-ja.pdf"
+              ;;
+            en)
+              test "$MAKE_TARGET" = "en"
+              test "$OUTPUT_PDF" = "pdf/control-engineering-en.pdf"
+              ;;
+            *)
+              echo "::error::Unknown textbook edition: $EDITION"
+              exit 1
+              ;;
+          esac
+
+          make "$MAKE_TARGET"
+          test -s "$OUTPUT_PDF"
